@@ -12,6 +12,11 @@ pygame.init()
 myfont = pygame.font.SysFont('Fixedsys', 22)
 clock = pygame.time.Clock()
 
+class Point():
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+
 class FrameInfo():
     def __init__(self):
         self.firingphasers = False
@@ -26,12 +31,15 @@ class EnemyShip():
         self.x = 800
         self.y = 800
         self.visible = True
+        self.width = 50
+        self.index = 0
 
 class SpaceStation():
     def __init__(self):
         self.x = -1000
         self.y = -1000
         self.rotation = 0
+        self.width = 1024
 
 class MyShip():
     def __init__(self):
@@ -45,11 +53,8 @@ class MyShip():
         self.rotation = 0
         self.targeted = None
     def nextTarget(self, enemyships):
-        tot_targets = 0
-        ava_targets = []
         tgt = self.targeted
         start_tgt = tgt
-        new_target = None
         ships_checked = 0
         if tgt == None: tgt = 0
         else: tgt += 1
@@ -66,10 +71,9 @@ class MyShip():
             tgt += 1
             ships_checked += 1
             dist = distance(self, next_target)
-            if dist > 300:
+            if dist > 2000:
                 continue
             else:
-                new_target = tgt - 1
                 self.targeted = tgt - 1
                 break
 
@@ -81,6 +85,31 @@ def update_fps():
 
 def get_fps():
     return int(clock.get_fps())
+
+def onScreen(obj, ship):
+    # detects whether a circle with radius obj.width is on the screen
+
+    # screen:
+    # A ---- B
+    # |      |
+    # C ---- D
+
+    obj_left = obj.x - obj.width / 2
+    obj_right = obj.x + obj.width / 2
+    obj_top = obj.y + obj.width / 2
+    obj_bottom = obj.y - obj.width / 2
+    pointA_x = ship.x - width / 2
+    pointA_y = ship.y + height / 2
+    pointB_x = ship.x + width / 2
+    pointB_y = pointA_y
+    pointC_x = pointA_x
+    pointC_y = ship.y - height / 2
+    pointD_x = pointB_x
+    pointD_y = pointC_y
+    if obj_right >= pointA_x and obj_left <= pointB_x and obj_top >= pointC_y and obj_bottom <= pointA_y:
+        return True
+    return False
+
 
 def distance(ship1, ship2):
     # c ^ 2 = a ^ 2 + b ^ 2
@@ -103,6 +132,74 @@ def drawStars(screen, stars, myship):
 def drawHealthBar(enemyship):
     percentage = enemyship.hull * 100 / enemyship.maxhull
 
+def drawTargetLine(screen, myship, enemyship):
+    # x1, y1 = point at edge of screen
+    # x2, y2 = point which intersects with line between ships at (x1, y2 - 200)
+    centre = (width / 2, height / 2)
+
+    # find direction
+    lowest_dist = 0
+    x_dist = abs(enemyship.x - myship.x)
+    y_dist = abs(enemyship.y - myship.y)
+    dir = "left"
+    if enemyship.x <= myship.x:
+        dir = "left"
+        lowest_dist = x_dist
+    if enemyship.y <= myship.y:
+        if y_dist >= lowest_dist:
+            dir = "bottom"
+            lowest_dist = y_dist
+    if enemyship.x >= myship.x:
+        if x_dist >= lowest_dist:
+            dir = "right"
+            lowest_dist = x_dist
+    if enemyship.y >= myship.y:
+        if y_dist >= lowest_dist:
+            dir = "top"
+    x1, y1, x2, y2, m, c = 0, 0, 0, 0, 0, 0
+    if enemyship.x - myship.x == 0: m = 0
+    else: m = (enemyship.y - myship.y) / (enemyship.x - myship.x)
+    if m == 0: m = 0.00001
+    c = myship.y - m * myship.x
+    if dir == "bottom":
+        y1 = myship.y - height / 2
+        x1 = (y1 - c) / m
+        y2 = y1 + 150
+        x2 = (y2 - c) / m
+    elif dir == "top":
+        y1 = myship.y + height / 2
+        x1 = (y1 - c) / m
+        y2 = y1 - 150
+        x2 = (y2 - c) / m
+    elif dir == "left":
+        x1 = myship.x - width / 2
+        y1 = m * x1 + c
+        x2 = x1 + 150
+        y2 = m * x2 + c
+    elif dir == "right":
+        x1 = myship.x + width / 2
+        y1 = m * x1 + c
+        x2 = x1 - 150
+        y2 = m * x2 + c
+    else: return
+    draw_x1 = int(centre[0] + x1 - myship.x)
+    draw_y1 = int(centre[1] - y1 + myship.y)
+    draw_x2 = int(centre[0] + x2 - myship.x)
+    draw_y2 = int(centre[1] - y2 + myship.y)
+    colour = (128, 0, 0)
+    if enemyship.index == myship.targeted:
+        colour = (0, 0, 128)
+    pygame.draw.line(screen, colour, (draw_x1, draw_y1), (draw_x2, draw_y2), 3)
+    thisfont = pygame.font.SysFont('Fixedsys', 16)
+    dist = distance(myship, enemyship)
+    distanceText = thisfont.render(str(int(dist)), False, (255, 255, 255))
+    drawX = -1000
+    drawY = -1000
+    if dir == "top":
+        drawX = draw_x2 + 20
+        drawY = draw_y2 - 20
+    #screen.blit(distanceText, (drawX, drawY))
+
 def physicsTick(myship, spacestation, time_since_phys_tick):
     # Calculate new position
     myship.rotation += myship.rotaccel * time_since_phys_tick
@@ -115,6 +212,7 @@ def physicsTick(myship, spacestation, time_since_phys_tick):
     if myship.vel <= 0: myship.vel = 0
     myship.x += (myship.vel) * math.sin(rotation_rads) * time_since_phys_tick
     myship.y += (myship.vel) * math.cos(rotation_rads) * time_since_phys_tick
+
 def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, shipIMG, enemyshipIMG, spacestationIMG):
 
     # Fill the background with white
@@ -130,33 +228,40 @@ def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, ship
 
     (shipIMG, newcentre) = rot_center(shipIMG, myship.rotation, centre[0], centre[1]) # rotate ship appropriately
     screen.blit(shipIMG, newcentre)
-    i = 0
+    i = -1
     enemytotarget = False
     targeteddrawX = 0
     targeteddrawY = 0
     targetedenemy = None
     for enemyship in enemyships:
+        i += 1
         dist = distance(myship, enemyship)
+        if dist > 2000: continue
+        if (not onScreen(enemyship, myship)): drawTargetLine(screen, myship, enemyship)
         if dist > 1400: continue
         # Draw enemy ship
         enemydrawX = centre[0] + enemyship.x - myship.x
         enemydrawY = centre[1] - enemyship.y + myship.y
         if enemyship.visible:
             screen.blit(enemyshipIMG, (enemydrawX, enemydrawY))
+            thisfont = pygame.font.SysFont('Fixedsys', 16)
+            indexText = thisfont.render(str(i), False, (255, 255, 255))
+            distanceText = thisfont.render(str(int(dist)), False, (255, 255, 255))
+            screen.blit(indexText, (enemydrawX - 10, enemydrawY - 10))
+            screen.blit(distanceText, (enemydrawX - 10, enemydrawY + 20))
             if myship.targeted == i:
                 pygame.draw.rect(screen, (255, 0, 0), (enemydrawX, enemydrawY, 48, 46), 2)
                 targeteddrawX = enemydrawX
                 targeteddrawY = enemydrawY
                 enemytotarget = True
                 targetedenemy = enemyship
-        i += 1
 
 
     # Draw space station
     spacestationX = centre[0] + spacestation.x - myship.x
     spacestationY = centre[1] - spacestation.y + myship.y
     dist = distance(myship, spacestation)
-    if dist <= 1400:
+    if onScreen(spacestation, myship):
         (spacestationIMG, spacestationcentre) = rot_center(spacestationIMG, spacestation.rotation, spacestationX, spacestationY)
         screen.blit(spacestationIMG, spacestationcentre)
     # Draw phasers
@@ -214,10 +319,13 @@ for i in range(250):
   stars[i]['y'] = random.random()*height
 myship = MyShip()
 enemyships = []
-for i in range(10000):
+for i in range(100):
     enemyships.append(EnemyShip())
-    enemyships[i].x = random.randint(-100000,100000)
-    enemyships[i].y = random.randint(-100000,100000)
+    enemyships[i].x = random.randint(-10000, 10000)
+    enemyships[i].y = random.randint(-10000, 10000)
+    enemyships[i].index = i
+    #enemyships[i].x = 0
+    #enemyships[i].y = 0
 
 #enemyship = EnemyShip()
 spacestation = SpaceStation()
