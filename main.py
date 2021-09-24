@@ -115,7 +115,7 @@ def physicsTick(myship, spacestation, time_since_phys_tick):
     if myship.vel <= 0: myship.vel = 0
     myship.x += (myship.vel) * math.sin(rotation_rads) * time_since_phys_tick
     myship.y += (myship.vel) * math.cos(rotation_rads) * time_since_phys_tick
-def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo):
+def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, shipIMG, enemyshipIMG, spacestationIMG):
 
     # Fill the background with white
     screen.fill((0, 0, 0))
@@ -128,7 +128,6 @@ def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo):
 
     # Draw ship
 
-    shipIMG = pygame.image.load(os.path.join('images','ship.png')).convert_alpha()
     (shipIMG, newcentre) = rot_center(shipIMG, myship.rotation, centre[0], centre[1]) # rotate ship appropriately
     screen.blit(shipIMG, newcentre)
     i = 0
@@ -138,9 +137,8 @@ def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo):
     targetedenemy = None
     for enemyship in enemyships:
         dist = distance(myship, enemyship)
-        if dist > 700: continue
+        if dist > 1400: continue
         # Draw enemy ship
-        enemyshipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
         enemydrawX = centre[0] + enemyship.x - myship.x
         enemydrawY = centre[1] - enemyship.y + myship.y
         if enemyship.visible:
@@ -155,11 +153,12 @@ def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo):
 
 
     # Draw space station
-    spacestationIMG = pygame.image.load(os.path.join('images', 'station.png')).convert_alpha()
     spacestationX = centre[0] + spacestation.x - myship.x
     spacestationY = centre[1] - spacestation.y + myship.y
-    (spacestationIMG, spacestationcentre) = rot_center(spacestationIMG, spacestation.rotation, spacestationX, spacestationY)
-    screen.blit(spacestationIMG, spacestationcentre)
+    dist = distance(myship, spacestation)
+    if dist <= 1400:
+        (spacestationIMG, spacestationcentre) = rot_center(spacestationIMG, spacestation.rotation, spacestationX, spacestationY)
+        screen.blit(spacestationIMG, spacestationcentre)
     # Draw phasers
 
     if frameinfo.firingphasers and enemytotarget:
@@ -168,7 +167,7 @@ def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo):
             frameinfo.firingphasers = False
             targetedenemy.hull -= 10
 
-    if frameinfo.enemyexploding and myship.targeted != None:
+    if frameinfo.enemyexploding and myship.targeted is not None:
         time_elapsed = time.time() - frameinfo.explodestart
         if time_elapsed >= 0.25:
             frameinfo.enemyexploding = False
@@ -196,13 +195,17 @@ def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo):
     fps_text = myfont.render(str(curfps) + " FPS", 1, pygame.Color("coral"))
     screen.blit(fps_text, (10, 5))
 
-pygame.init()
 
 width = 1280
 height = 720
 
 # Set up the drawing window
 screen = pygame.display.set_mode([width, height])
+
+spacestationIMG = pygame.image.load(os.path.join('images', 'station.png')).convert_alpha()
+shipIMG = pygame.image.load(os.path.join('images','ship.png')).convert_alpha()
+enemyshipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
+
 fullscreen = False
 stars = []
 for i in range(250):
@@ -211,10 +214,10 @@ for i in range(250):
   stars[i]['y'] = random.random()*height
 myship = MyShip()
 enemyships = []
-for i in range(10):
+for i in range(10000):
     enemyships.append(EnemyShip())
-    enemyships[i].x = random.randint(-1000,1000)
-    enemyships[i].y = random.randint(-1000,1000)
+    enemyships[i].x = random.randint(-100000,100000)
+    enemyships[i].y = random.randint(-100000,100000)
 
 #enemyship = EnemyShip()
 spacestation = SpaceStation()
@@ -285,9 +288,9 @@ while running:
     physicsTick(myship, spacestation, time_since_phys_tick)
     last_phys_tick = time.time()
 
-    renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo)
+    renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, shipIMG, enemyshipIMG, spacestationIMG)
 
-    clock.tick(1000)
+    clock.tick(100000)
 
     # Flip the display
     pygame.display.flip()
