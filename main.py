@@ -10,6 +10,7 @@ import sys
 
 pygame.init()
 myfont = pygame.font.SysFont('Fixedsys', 22)
+dir_label_font = pygame.font.SysFont('Courier', 12)
 clock = pygame.time.Clock()
 
 class Point():
@@ -33,6 +34,35 @@ class EnemyShip():
         self.visible = True
         self.width = 50
         self.index = 0
+        self.type = "Frigate"
+        self.state = "patrol"
+        self.vel = 0
+        self.rotation = 0
+        self.rotaccel = 0
+        self.patrolstart = [0, 0]
+        self.accel = 0
+        self.patrolgoal = [0, 0]
+        self.patrolangle = 0
+        self.patrolspeed = 0
+        self.shipIMG = None
+    def startPatrol(self):
+        self.accel = 250
+        self.rotaccel = 120
+        self.patrolstart = [self.x, self.y]
+        self.patrolangle = random.randint(-180, 180)
+        self.patrolangle = self.rotation + self.patrolangle
+        if self.patrolangle < 0: self.patrolangle += 360
+        if self.patrolangle > 360: self.patrolangle -= 360
+        self.patroldist = random.randint(500, 2000)
+        patrolanglerads = self.patrolangle * math.pi / 180
+        a = patrolanglerads
+        d = self.patroldist
+        self.patrolspeed = random.randint(120, 300)
+        opp = abs(math.cos(a) * d)
+        adj = abs(math.sin(a) * d)
+        x2 = self.x + opp
+        y2 = self.y + adj
+        self.patrolgoal = (x2, y2)
 
 class SpaceStation():
     def __init__(self):
@@ -40,6 +70,7 @@ class SpaceStation():
         self.y = -1000
         self.rotation = 0
         self.width = 1024
+        self.type = "Space Station"
 
 class MyShip():
     def __init__(self):
@@ -85,6 +116,61 @@ def update_fps():
 
 def get_fps():
     return int(clock.get_fps())
+
+
+def detectKeyPresses(event_get, fullscreen):
+    alt_pressed = False
+    enter_pressed = False
+    for event in event_get:
+        if event.type == pygame.QUIT:
+            running = False
+            pygame.quit()
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_F3:
+            if not fullscreen:
+                screen = pygame.display.set_mode([width, height], pygame.FULLSCREEN)
+            else:
+                screen = pygame.display.set_mode([width, height])
+            fullscreen = not fullscreen
+        # set alt and enter flags if the keys are pressed
+        if event.type == pygame.KEYDOWN and (event.key == pygame.K_RALT or event.key == pygame.K_LALT):
+            alt_pressed = True
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+            enter_pressed = True
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_t:
+            myship.nextTarget(enemyships)
+    if alt_pressed and enter_pressed: # full screen with alt+enter
+        if not fullscreen:
+            screen = pygame.display.set_mode([width, height], pygame.FULLSCREEN)
+        else:
+            screen = pygame.display.set_mode([width, height])
+        fullscreen = not fullscreen
+
+    keys = pygame.key.get_pressed()  # checking pressed keys
+
+    # unset alt and enter flags if they're not pressed
+
+    if not keys[pygame.K_RALT] and not keys[pygame.K_LALT]:
+        alt_pressed = False
+    if not keys[pygame.K_RETURN]:
+        enter_pressed = False
+    if keys[pygame.K_LEFT]:
+        myship.rotaccel = -120
+    elif keys[pygame.K_RIGHT]:
+        myship.rotaccel = 120
+    else:
+        myship.rotaccel = 0
+    if keys[pygame.K_UP]:
+        myship.accel = 250
+    elif keys[pygame.K_DOWN]:
+        myship.accel = -250
+    else:
+        myship.accel = 0
+    if keys[pygame.K_ESCAPE]:
+        sys.exit()
+    if keys[pygame.K_SPACE]:
+        if myship.targeted != None:
+            frameinfo.firingphasers = True
+            frameinfo.phaserstart = time.time()
 
 def onScreen(obj, ship):
     # detects whether a circle with radius obj.width is on the screen
@@ -135,8 +221,12 @@ def drawHealthBar(enemyship):
 def drawTargetLine(screen, myship, enemyship):
     # x1, y1 = point at edge of screen
     # x2, y2 = point which intersects with line between ships at (x1, y2 - 200)
+    # x3, y3 = arrow one co-ord
+    # x4, y4 = arrow two co-ord
+
     centre = (width / 2, height / 2)
 
+    shiptype = enemyship.type
     # find direction
     lowest_dist = 0
     x_dist = abs(enemyship.x - myship.x)
@@ -148,7 +238,7 @@ def drawTargetLine(screen, myship, enemyship):
     if enemyship.y <= myship.y:
         if y_dist >= lowest_dist:
             dir = "bottom"
-            lowest_dist = y_dist
+            lowest_dist = y_dist + width - height
     if enemyship.x >= myship.x:
         if x_dist >= lowest_dist:
             dir = "right"
@@ -156,7 +246,8 @@ def drawTargetLine(screen, myship, enemyship):
     if enemyship.y >= myship.y:
         if y_dist >= lowest_dist:
             dir = "top"
-    x1, y1, x2, y2, m, c = 0, 0, 0, 0, 0, 0
+    x1, y1, x2, y2, x3, x4, y3, y4, m, c = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    a = 30 # arrow size
     if enemyship.x - myship.x == 0: m = 0
     else: m = (enemyship.y - myship.y) / (enemyship.x - myship.x)
     if m == 0: m = 0.00001
@@ -166,52 +257,133 @@ def drawTargetLine(screen, myship, enemyship):
         x1 = (y1 - c) / m
         y2 = y1 + 150
         x2 = (y2 - c) / m
+        x3 = x1 - a
+        y3 = y1 + a
+        x4 = x1 + a
+        y4 = y1 + a
     elif dir == "top":
         y1 = myship.y + height / 2
         x1 = (y1 - c) / m
         y2 = y1 - 150
         x2 = (y2 - c) / m
+        x3 = x1 - a
+        y3 = y1 - a
+        x4 = x1 + a
+        y4 = y1 - a
     elif dir == "left":
         x1 = myship.x - width / 2
         y1 = m * x1 + c
         x2 = x1 + 150
         y2 = m * x2 + c
+        x3 = x1 + a
+        y3 = y1 + a
+        x4 = x1 + a
+        y4 = y1 - a
     elif dir == "right":
         x1 = myship.x + width / 2
         y1 = m * x1 + c
         x2 = x1 - 150
         y2 = m * x2 + c
+        x3 = x1 - a
+        y3 = y1 + a
+        x4 = x1 - a
+        y4 = y1 - a
     else: return
     draw_x1 = int(centre[0] + x1 - myship.x)
     draw_y1 = int(centre[1] - y1 + myship.y)
     draw_x2 = int(centre[0] + x2 - myship.x)
     draw_y2 = int(centre[1] - y2 + myship.y)
-    colour = (128, 0, 0)
-    if enemyship.index == myship.targeted:
-        colour = (0, 0, 128)
-    pygame.draw.line(screen, colour, (draw_x1, draw_y1), (draw_x2, draw_y2), 3)
-    thisfont = pygame.font.SysFont('Fixedsys', 16)
-    dist = distance(myship, enemyship)
-    distanceText = thisfont.render(str(int(dist)), False, (255, 255, 255))
-    drawX = -1000
-    drawY = -1000
-    if dir == "top":
-        drawX = draw_x2 + 20
-        drawY = draw_y2 - 20
-    #screen.blit(distanceText, (drawX, drawY))
+    draw_x3 = int(centre[0] + x3 - myship.x)
+    draw_y3 = int(centre[1] - y3 + myship.y)
+    draw_x4 = int(centre[0] + x4 - myship.x)
+    draw_y4 = int(centre[1] - y4 + myship.y)
 
-def physicsTick(myship, spacestation, time_since_phys_tick):
+    colour = (192, 192, 192)
+    if enemyship.type == "Space Station":
+        colour = (0, 255, 0)
+    elif enemyship.index == myship.targeted:
+        colour = (0, 0, 192)
+
+    #pygame.draw.line(screen, colour, (draw_x1, draw_y1), (draw_x2, draw_y2), 3)
+    pygame.draw.line(screen, colour, (draw_x1, draw_y1), (draw_x3, draw_y3), 7)
+    pygame.draw.line(screen, colour, (draw_x1, draw_y1), (draw_x4, draw_y4), 7)
+    dist = distance(myship, enemyship)
+    typeText = dir_label_font.render("type: " + shiptype, False, colour)
+    distanceText = dir_label_font.render("dist: " + str(int(dist)), False, colour)
+    drawX_dist = -1000
+    drawY_dist = -1000
+    drawX_type = -1000
+    drawY_type = -1000
+    if dir == "top":
+        drawX_dist = draw_x3 + 0
+        drawY_dist = draw_y3 + 5
+        drawX_type = draw_x3 + 0
+        drawY_type = draw_y3 + 25
+    if dir == "left":
+        drawX_dist = draw_x3 + 5
+        drawY_dist = draw_y3 + 13
+        drawX_type = draw_x3 + 5
+        drawY_type = draw_y3 + 33
+    if dir == "bottom":
+        drawX_dist = draw_x3 + 0
+        drawY_dist = draw_y3 - 35
+        drawX_type = draw_x3 + 0
+        drawY_type = draw_y3 - 15
+    if dir == "right":
+        drawX_dist = draw_x3 - 105
+        drawY_dist = draw_y3 + 13
+        drawX_type = draw_x3 - 105
+        drawY_type = draw_y3 + 33
+    screen.blit(distanceText, (drawX_dist, drawY_dist))
+    screen.blit(typeText, (drawX_type, drawY_type))
+
+def enemyAITick(myship, enemyship):
+    if enemyship.state == "patrol":
+        if enemyship.vel == 0 and enemyship.accel == 0:
+            enemyship.startPatrol()
+        if abs(enemyship.patrolangle - enemyship.rotation) < 10:
+            enemyship.rotation = enemyship.patrolangle
+            enemyship.rotaccel = 0
+        if enemyship.rotation != enemyship.patrolangle:
+            enemyship.rotaccel = 120
+        if enemyship.vel >= enemyship.patrolspeed:
+            enemyship.vel = enemyship.patrolspeed
+            enemyship.accel = 0
+        mypoint = Point()
+        mypoint.x = enemyship.patrolstart[0]
+        mypoint.y = enemyship.patrolstart[1]
+        dist = distance(enemyship, mypoint)
+        if dist >= enemyship.patroldist:
+            enemyship.vel = 0
+            enemyship.accel = 0
+
+def physicsTick(myship, enemyships, spacestation, time_since_phys_tick):
     # Calculate new position
     myship.rotation += myship.rotaccel * time_since_phys_tick
     spacestation.rotation += 15 * time_since_phys_tick
-    if myship.rotation > 360: myship.rotation = 0
     if myship.rotation > 360: myship.rotation -= 360
+    if myship.rotation < 0: myship.rotation += 360
     rotation_rads = myship.rotation * math.pi / 180
-    myship.vel = myship.vel + myship.accel
+    myship.vel = myship.vel + myship.accel * time_since_phys_tick
     if myship.vel >= 500: myship.vel = 500
     if myship.vel <= 0: myship.vel = 0
     myship.x += (myship.vel) * math.sin(rotation_rads) * time_since_phys_tick
     myship.y += (myship.vel) * math.cos(rotation_rads) * time_since_phys_tick
+
+    # enemy ships
+
+    for enemyship in enemyships:
+        enemyship.rotation += enemyship.rotaccel * time_since_phys_tick
+        if enemyship.rotation > 360: enemyship.rotation -= 360
+        if enemyship.rotation < 0: enemyship.rotation += 360
+        rotation_rads = enemyship.rotation * math.pi / 180
+        enemyship.vel = enemyship.vel + enemyship.accel * time_since_phys_tick
+        if enemyship.vel >= 500: enemyship.vel = 500
+        if enemyship.vel <= 0: enemyship.vel = 0
+        enemyship.x += (enemyship.vel) * math.sin(rotation_rads) * time_since_phys_tick
+        enemyship.y += (enemyship.vel) * math.cos(rotation_rads) * time_since_phys_tick
+
+
 
 def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, shipIMG, enemyshipIMG, spacestationIMG):
 
@@ -237,20 +409,26 @@ def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, ship
         i += 1
         dist = distance(myship, enemyship)
         if dist > 2000: continue
-        if (not onScreen(enemyship, myship)): drawTargetLine(screen, myship, enemyship)
-        if dist > 1400: continue
+        if (not onScreen(enemyship, myship)):
+            drawTargetLine(screen, myship, enemyship)
+            continue
         # Draw enemy ship
         enemydrawX = centre[0] + enemyship.x - myship.x
         enemydrawY = centre[1] - enemyship.y + myship.y
         if enemyship.visible:
-            screen.blit(enemyshipIMG, (enemydrawX, enemydrawY))
+            #screen.blit(enemyshipIMG, (enemydrawX, enemydrawY))
+            es_centre = (enemydrawX + enemyship.width, enemydrawY + enemyship.width)
+            (newIMG, es_centre) = rot_center(enemyship.shipIMG, enemyship.rotation, es_centre[0],
+                                              es_centre[1])  # rotate ship appropriately
+            screen.blit(newIMG, es_centre)
             thisfont = pygame.font.SysFont('Fixedsys', 16)
             indexText = thisfont.render(str(i), False, (255, 255, 255))
             distanceText = thisfont.render(str(int(dist)), False, (255, 255, 255))
             screen.blit(indexText, (enemydrawX - 10, enemydrawY - 10))
             screen.blit(distanceText, (enemydrawX - 10, enemydrawY + 20))
             if myship.targeted == i:
-                pygame.draw.rect(screen, (255, 0, 0), (enemydrawX, enemydrawY, 48, 46), 2)
+                margin = 10
+                pygame.draw.rect(screen, (255, 0, 0), (enemydrawX + enemyship.width / 2 , enemydrawY + enemyship.width / 2 - 5, enemyship.width + margin, enemyship.width + margin), 2)
                 targeteddrawX = enemydrawX
                 targeteddrawY = enemydrawY
                 enemytotarget = True
@@ -261,9 +439,11 @@ def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, ship
     spacestationX = centre[0] + spacestation.x - myship.x
     spacestationY = centre[1] - spacestation.y + myship.y
     dist = distance(myship, spacestation)
-    if onScreen(spacestation, myship):
+    if onScreen(spacestation, myship): # on screen
         (spacestationIMG, spacestationcentre) = rot_center(spacestationIMG, spacestation.rotation, spacestationX, spacestationY)
         screen.blit(spacestationIMG, spacestationcentre)
+    elif dist < 5000: # not on screen and within short range sensor range
+        drawTargetLine(screen, myship, spacestation)
     # Draw phasers
 
     if frameinfo.firingphasers and enemytotarget:
@@ -319,13 +499,14 @@ for i in range(250):
   stars[i]['y'] = random.random()*height
 myship = MyShip()
 enemyships = []
-for i in range(100):
+for i in range(500):
     enemyships.append(EnemyShip())
     enemyships[i].x = random.randint(-10000, 10000)
     enemyships[i].y = random.randint(-10000, 10000)
     enemyships[i].index = i
-    #enemyships[i].x = 0
-    #enemyships[i].y = 0
+    #enemyships[i].x = 50
+    #enemyships[i].y = 50
+    enemyships[i].shipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
 
 #enemyship = EnemyShip()
 spacestation = SpaceStation()
@@ -338,67 +519,21 @@ curfps = 0
 alt_pressed = False
 enter_pressed = False
 last_phys_tick = time.time()
-
+last_keys_poll = time.time()
 while running:
     i+= 1
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-            pygame.quit()
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_F3:
-            if not fullscreen:
-                screen = pygame.display.set_mode([width, height], pygame.FULLSCREEN)
-            else:
-                screen = pygame.display.set_mode([width, height])
-            fullscreen = not fullscreen
-        # set alt and enter flags if the keys are pressed
-        if event.type == pygame.KEYDOWN and (event.key == pygame.K_RALT or event.key == pygame.K_LALT):
-            alt_pressed = True
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-            enter_pressed = True
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_t:
-            myship.nextTarget(enemyships)
-    if alt_pressed and enter_pressed: # full screen with alt+enter
-        if not fullscreen:
-            screen = pygame.display.set_mode([width, height], pygame.FULLSCREEN)
-        else:
-            screen = pygame.display.set_mode([width, height])
-        fullscreen = not fullscreen
-
-    keys = pygame.key.get_pressed()  # checking pressed keys
-
-    # unset alt and enter flags if they're not pressed
-
-    if not keys[pygame.K_RALT] and not keys[pygame.K_LALT]:
-        alt_pressed = False
-    if not keys[pygame.K_RETURN]:
-        enter_pressed = False
-    if keys[pygame.K_LEFT]:
-        myship.rotaccel = -120
-    elif keys[pygame.K_RIGHT]:
-        myship.rotaccel = 120
-    else:
-        myship.rotaccel = 0
-    if keys[pygame.K_UP]:
-        myship.accel = 10
-    elif keys[pygame.K_DOWN]:
-        myship.accel = -10
-    else:
-        myship.accel = 0
-    if keys[pygame.K_ESCAPE]:
-        sys.exit()
-    if keys[pygame.K_SPACE]:
-        if myship.targeted != None:
-            frameinfo.firingphasers = True
-            frameinfo.phaserstart = time.time()
-
-    time_since_phys_tick = time.time() - last_phys_tick
-    physicsTick(myship, spacestation, time_since_phys_tick)
-    last_phys_tick = time.time()
+    time_since_key_poll = time.time() - last_keys_poll
+    detectKeyPresses(pygame.event.get(), fullscreen)
+    cur_time = time.time()
+    time_since_phys_tick = cur_time - last_phys_tick
+    physicsTick(myship, enemyships, spacestation, time_since_phys_tick)
+    last_phys_tick = cur_time
+    for enemyship in enemyships:
+        enemyAITick(myship,enemyship)
 
     renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, shipIMG, enemyshipIMG, spacestationIMG)
 
-    clock.tick(100000)
+    clock.tick(10000)
 
     # Flip the display
     pygame.display.flip()
