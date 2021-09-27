@@ -8,15 +8,22 @@ import random
 import time
 import sys
 
+random.seed(1)
 pygame.init()
 myfont = pygame.font.SysFont('Fixedsys', 22)
 dir_label_font = pygame.font.SysFont('Courier', 12)
 clock = pygame.time.Clock()
 
+class GameInfo():
+    def __init__(self):
+        self.timefactor = 1
+        self.redalert = False
+
 class Point():
     def __init__(self):
         self.x = 0
         self.y = 0
+        self.width = 0
 
 class FrameInfo():
     def __init__(self):
@@ -27,6 +34,7 @@ class FrameInfo():
 
 class EnemyShip():
     def __init__(self):
+        self.objtype = "enemy"
         self.hull = 100
         self.maxhull = 100
         self.x = 800
@@ -39,18 +47,30 @@ class EnemyShip():
         self.vel = 0
         self.rotation = 0
         self.rotaccel = 0
+        self.patroldist = 0
         self.patrolstart = [0, 0]
         self.accel = 0
         self.patrolgoal = [0, 0]
         self.patrolangle = 0
         self.patrolspeed = 0
+        self.totrotations = 0
+        self.patroltotrotations = 0
         self.shipIMG = None
+        self.lastx = 0
+        self.lasty = 0
+        self.radius = 24
+        self.resttime = 0
+        self.reststart = 0
+        self.origangle = 0
     def startPatrol(self):
+        self.totrotations = 0
         self.accel = 250
         self.rotaccel = 120
         self.patrolstart = [self.x, self.y]
         self.patrolangle = random.randint(-180, 180)
         self.patrolangle = self.rotation + self.patrolangle
+        self.origangle = self.patrolangle
+        self.patroltotrotations = abs(self.patrolangle - self.rotation)
         if self.patrolangle < 0: self.patrolangle += 360
         if self.patrolangle > 360: self.patrolangle -= 360
         self.patroldist = random.randint(500, 2000)
@@ -63,14 +83,56 @@ class EnemyShip():
         x2 = self.x + opp
         y2 = self.y + adj
         self.patrolgoal = (x2, y2)
+    def startLeaveStation_rot(self):
+        self.totrotations = 0
+        self.patrolstart = [self.x, self.y]
+        self.rotaccel = 120
+        self.patrolangle = self.rotation - 180
+        self.origangle = self.patrolangle
+        if self.patrolangle > 360: self.patrolangle -= 360
+        elif self.patrolangle < 0: self.patrolangle += 360
+        self.patroltotrotations = 180
+    def startLeaveStation_fly(self):
+        self.totrotations = 0
+        self.patrolstart = [self.x, self.y]
+        self.accel = 250
+        self.rotaccel = 0
+        self.patrolstart = [self.x, self.y]
+        self.patroldist = random.randint(1500, 2500)
+    def startGoToStation(self, spacestation):
+        self.totrotations = 0
+        self.patrolstart = [self.x, self.y]
+        self.accel = 250
+        self.rotaccel = 120
+        dy = self.y - spacestation.y
+        dx = self.x - spacestation.x
+        angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi - 90
+        self.patrolangle = angle_deg
+        self.origangle = self.patrolangle
+        self.patroltotrotations = abs(self.patrolangle - self.rotation)
+        if self.patrolangle < 0: self.patrolangle += 360
+        if self.patrolangle > 360: self.patrolangle -= 360
+        mypoint = Point()
+        mypoint.x = spacestation.x
+        mypoint.y = spacestation.y
+        dist = int(distance(self, mypoint))
+        self.patroldist = dist - spacestation.radius - random.randint(30,150)
+        #r = random.randint(1,2)
+        #if r == 1:
+         #   self.patroldist += random.randint(20, 50)
+        #elif r == 2:
+            #self.patroldist -= random.randint(20, 50)
+        self.patrolspeed = random.randint(120, 300)
 
 class SpaceStation():
     def __init__(self):
+        self.objtype = "spacestation"
         self.x = -1000
         self.y = -1000
         self.rotation = 0
-        self.width = 1024
+        self.width = 922
         self.type = "Space Station"
+        self.radius = 922 / 2
 
 class MyShip():
     def __init__(self):
@@ -78,11 +140,17 @@ class MyShip():
         self.maxhull = 100
         self.x = 0
         self.y = 0
+        self.lastx = 0
+        self.lasty = 0
         self.accel = 0
         self.vel = 0
         self.rotaccel = 0
         self.rotation = 0
         self.targeted = None
+        self.sensorrange_ships = 2000
+        self.sensorrange_stations = 5000
+        self.width = 49
+        self.radius = 24
     def nextTarget(self, enemyships):
         tgt = self.targeted
         start_tgt = tgt
@@ -118,9 +186,7 @@ def get_fps():
     return int(clock.get_fps())
 
 
-def detectKeyPresses(event_get, fullscreen):
-    alt_pressed = False
-    enter_pressed = False
+def detectKeyPresses(event_get, fullscreen, alt_pressed, enter_pressed, gameinfo):
     for event in event_get:
         if event.type == pygame.QUIT:
             running = False
@@ -138,6 +204,12 @@ def detectKeyPresses(event_get, fullscreen):
             enter_pressed = True
         if event.type == pygame.KEYDOWN and event.key == pygame.K_t:
             myship.nextTarget(enemyships)
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+            gameinfo.redalert = not gameinfo.redalert
+            if gameinfo.redalert == True:
+                gameinfo.timefactor = 0.5
+            else:
+                gameinfo.timefactor = 1
     if alt_pressed and enter_pressed: # full screen with alt+enter
         if not fullscreen:
             screen = pygame.display.set_mode([width, height], pygame.FULLSCREEN)
@@ -153,15 +225,15 @@ def detectKeyPresses(event_get, fullscreen):
         alt_pressed = False
     if not keys[pygame.K_RETURN]:
         enter_pressed = False
-    if keys[pygame.K_LEFT]:
+    if keys[pygame.K_LEFT] or keys[pygame.K_a]:
         myship.rotaccel = -120
-    elif keys[pygame.K_RIGHT]:
+    elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
         myship.rotaccel = 120
     else:
         myship.rotaccel = 0
-    if keys[pygame.K_UP]:
+    if keys[pygame.K_UP] or keys[pygame.K_w]:
         myship.accel = 250
-    elif keys[pygame.K_DOWN]:
+    elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
         myship.accel = -250
     else:
         myship.accel = 0
@@ -200,7 +272,11 @@ def onScreen(obj, ship):
 def distance(ship1, ship2):
     # c ^ 2 = a ^ 2 + b ^ 2
     # c = sqrt(a ^ 2 + b ^ 2)
-    return math.sqrt((abs(ship1.x - ship2.x) ** 2) + (abs(ship1.y - ship2.y) ** 2))
+    centrex1 = ship1.x
+    centrey1 = ship1.y
+    centrex2 = ship2.x
+    centrey2 = ship2.y
+    return math.sqrt((abs(centrex1 - centrex2) ** 2) + (abs(centrey1 - centrey2) ** 2))
 
 def rot_center(image, angle, x, y):
     angle = 360 - angle
@@ -218,7 +294,7 @@ def drawStars(screen, stars, myship):
 def drawHealthBar(enemyship):
     percentage = enemyship.hull * 100 / enemyship.maxhull
 
-def drawTargetLine(screen, myship, enemyship):
+def drawTargetLine(screen, myship, enemyship, spacestation):
     # x1, y1 = point at edge of screen
     # x2, y2 = point which intersects with line between ships at (x1, y2 - 200)
     # x3, y3 = arrow one co-ord
@@ -247,13 +323,16 @@ def drawTargetLine(screen, myship, enemyship):
         if y_dist >= lowest_dist:
             dir = "top"
     x1, y1, x2, y2, x3, x4, y3, y4, m, c = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    dist = distance(myship, enemyship)
     a = 30 # arrow size
+    # 10 + (distance / 30 * sensorrange_ships) # a goes from 10 to 30
+    a = 10 + (1 - dist / myship.sensorrange_ships) * 20
     if enemyship.x - myship.x == 0: m = 0
     else: m = (enemyship.y - myship.y) / (enemyship.x - myship.x)
     if m == 0: m = 0.00001
     c = myship.y - m * myship.x
     if dir == "bottom":
-        y1 = myship.y - height / 2
+        y1 = myship.y - height / 2 + 10
         x1 = (y1 - c) / m
         y2 = y1 + 150
         x2 = (y2 - c) / m
@@ -262,7 +341,7 @@ def drawTargetLine(screen, myship, enemyship):
         x4 = x1 + a
         y4 = y1 + a
     elif dir == "top":
-        y1 = myship.y + height / 2
+        y1 = myship.y + height / 2 - 10
         x1 = (y1 - c) / m
         y2 = y1 - 150
         x2 = (y2 - c) / m
@@ -271,7 +350,7 @@ def drawTargetLine(screen, myship, enemyship):
         x4 = x1 + a
         y4 = y1 - a
     elif dir == "left":
-        x1 = myship.x - width / 2
+        x1 = myship.x - width / 2 + 10
         y1 = m * x1 + c
         x2 = x1 + 150
         y2 = m * x2 + c
@@ -280,7 +359,7 @@ def drawTargetLine(screen, myship, enemyship):
         x4 = x1 + a
         y4 = y1 - a
     elif dir == "right":
-        x1 = myship.x + width / 2
+        x1 = myship.x + width / 2 - 10
         y1 = m * x1 + c
         x2 = x1 - 150
         y2 = m * x2 + c
@@ -307,7 +386,7 @@ def drawTargetLine(screen, myship, enemyship):
     #pygame.draw.line(screen, colour, (draw_x1, draw_y1), (draw_x2, draw_y2), 3)
     pygame.draw.line(screen, colour, (draw_x1, draw_y1), (draw_x3, draw_y3), 7)
     pygame.draw.line(screen, colour, (draw_x1, draw_y1), (draw_x4, draw_y4), 7)
-    dist = distance(myship, enemyship)
+    dist = distance(spacestation, enemyship)
     typeText = dir_label_font.render("type: " + shiptype, False, colour)
     distanceText = dir_label_font.render("dist: " + str(int(dist)), False, colour)
     drawX_dist = -1000
@@ -337,7 +416,7 @@ def drawTargetLine(screen, myship, enemyship):
     screen.blit(distanceText, (drawX_dist, drawY_dist))
     screen.blit(typeText, (drawX_type, drawY_type))
 
-def enemyAITick(myship, enemyship):
+def enemyAITick(myship, enemyship, spacestation):
     if enemyship.state == "patrol":
         if enemyship.vel == 0 and enemyship.accel == 0:
             enemyship.startPatrol()
@@ -356,32 +435,90 @@ def enemyAITick(myship, enemyship):
         if dist >= enemyship.patroldist:
             enemyship.vel = 0
             enemyship.accel = 0
+            if random.randint(0,1) == 0:
+                enemyship.state = "gotostation"
+                enemyship.startGoToStation(spacestation)
+    elif enemyship.state == "leavestation_rot":
+        if abs(enemyship.patrolangle - enemyship.rotation) < 10:
+            enemyship.rotation = enemyship.patrolangle
+            enemyship.rotaccel = 0
+            enemyship.state = "leavestation_fly"
+            enemyship.startLeaveStation_fly()
+        if enemyship.rotation != enemyship.patrolangle:
+            enemyship.rotaccel = 120
+    elif enemyship.state == "leavestation_fly":
+        if enemyship.vel >= enemyship.patrolspeed:
+            enemyship.vel = enemyship.patrolspeed
+            enemyship.accel = 0
+        mypoint = Point()
+        mypoint.x = enemyship.patrolstart[0]
+        mypoint.y = enemyship.patrolstart[1]
+        dist = distance(enemyship, mypoint)
+        if dist >= enemyship.patroldist:
+            enemyship.vel = 0
+            enemyship.accel = 0
+            enemyship.state = "patrol"
+    elif enemyship.state == "gotostation":
+        if abs(enemyship.patrolangle - enemyship.rotation) < 10:
+            enemyship.rotation = enemyship.patrolangle
+            enemyship.rotaccel = 0
+        if enemyship.rotation != enemyship.patrolangle:
+            enemyship.rotaccel = 120
+        if enemyship.vel >= enemyship.patrolspeed:
+            enemyship.vel = enemyship.patrolspeed
+            enemyship.accel = 0
+        mypoint = Point()
+        mypoint.x = enemyship.patrolstart[0]
+        mypoint.y = enemyship.patrolstart[1]
+        dist = distance(enemyship, mypoint)
+        if dist >= enemyship.patroldist:
+            enemyship.vel = 0
+            enemyship.accel = 0
+            enemyship.rotaccel = 0
+            enemyship.state = "gotostation_rest"
+            enemyship.reststart = time.time()
+            enemyship.resttime = random.randint(1, 20)
+    elif enemyship.state == "gotostation_rest":
+        time_elapsed = time.time() - enemyship.reststart
+        if time_elapsed >= enemyship.resttime:
+            enemyship.vel = 0
+            enemyship.accel = 0
+            enemyship.state = "leavestation_rot"
+            enemyship.x = enemyship.lastx
+            enemyship.y = enemyship.lasty
+            enemyship.startLeaveStation_rot()
 
-def physicsTick(myship, enemyships, spacestation, time_since_phys_tick):
+def physicsTick(myship, enemyships, spacestation, time_since_phys_tick, gameinfo):
+
+    timefactor = gameinfo.timefactor
     # Calculate new position
-    myship.rotation += myship.rotaccel * time_since_phys_tick
-    spacestation.rotation += 15 * time_since_phys_tick
+    myship.rotation += myship.rotaccel * time_since_phys_tick * timefactor
+    spacestation.rotation += 15 * time_since_phys_tick * timefactor
     if myship.rotation > 360: myship.rotation -= 360
     if myship.rotation < 0: myship.rotation += 360
     rotation_rads = myship.rotation * math.pi / 180
-    myship.vel = myship.vel + myship.accel * time_since_phys_tick
+    myship.vel = myship.vel + myship.accel * time_since_phys_tick * timefactor
     if myship.vel >= 500: myship.vel = 500
     if myship.vel <= 0: myship.vel = 0
-    myship.x += (myship.vel) * math.sin(rotation_rads) * time_since_phys_tick
-    myship.y += (myship.vel) * math.cos(rotation_rads) * time_since_phys_tick
-
+    myship.lastx = myship.x
+    myship.lasty = myship.y
+    myship.x += (myship.vel) * math.sin(rotation_rads) * time_since_phys_tick * timefactor
+    myship.y += (myship.vel) * math.cos(rotation_rads) * time_since_phys_tick * timefactor
     # enemy ships
 
     for enemyship in enemyships:
-        enemyship.rotation += enemyship.rotaccel * time_since_phys_tick
+        enemyship.rotation += enemyship.rotaccel * time_since_phys_tick * timefactor
         if enemyship.rotation > 360: enemyship.rotation -= 360
         if enemyship.rotation < 0: enemyship.rotation += 360
+        enemyship.totrotations += enemyship.rotaccel * time_since_phys_tick * timefactor
         rotation_rads = enemyship.rotation * math.pi / 180
-        enemyship.vel = enemyship.vel + enemyship.accel * time_since_phys_tick
+        enemyship.vel = enemyship.vel + enemyship.accel * time_since_phys_tick * timefactor
         if enemyship.vel >= 500: enemyship.vel = 500
         if enemyship.vel <= 0: enemyship.vel = 0
-        enemyship.x += (enemyship.vel) * math.sin(rotation_rads) * time_since_phys_tick
-        enemyship.y += (enemyship.vel) * math.cos(rotation_rads) * time_since_phys_tick
+        enemyship.lastx = enemyship.x
+        enemyship.lasty = enemyship.y
+        enemyship.x += (enemyship.vel) * math.sin(rotation_rads) * time_since_phys_tick * timefactor
+        enemyship.y += (enemyship.vel) * math.cos(rotation_rads) * time_since_phys_tick * timefactor
 
 
 
@@ -396,10 +533,6 @@ def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, ship
 
     centre = (width / 2, height / 2)
 
-    # Draw ship
-
-    (shipIMG, newcentre) = rot_center(shipIMG, myship.rotation, centre[0], centre[1]) # rotate ship appropriately
-    screen.blit(shipIMG, newcentre)
     i = -1
     enemytotarget = False
     targeteddrawX = 0
@@ -408,32 +541,38 @@ def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, ship
     for enemyship in enemyships:
         i += 1
         dist = distance(myship, enemyship)
+        if enemyship.visible and myship.targeted == i:
+            enemydrawX = centre[0] + enemyship.x - myship.x
+            enemydrawY = centre[1] - enemyship.y + myship.y
+            margin = 10
+            pygame.draw.rect(screen, (255, 0, 0),
+                             (enemydrawX - enemyship.width / 2 - 5, enemydrawY - enemyship.width / 2 - 5, enemyship.width + margin,
+            enemyship.width + margin), 2)
+            targeteddrawX = enemydrawX
+            targeteddrawY = enemydrawY
+            enemytotarget = True
+            targetedenemy = enemyship
+
         if dist > 2000: continue
         if (not onScreen(enemyship, myship)):
-            drawTargetLine(screen, myship, enemyship)
+            drawTargetLine(screen, myship, enemyship, spacestation)
             continue
         # Draw enemy ship
         enemydrawX = centre[0] + enemyship.x - myship.x
         enemydrawY = centre[1] - enemyship.y + myship.y
         if enemyship.visible:
             #screen.blit(enemyshipIMG, (enemydrawX, enemydrawY))
-            es_centre = (enemydrawX + enemyship.width, enemydrawY + enemyship.width)
+            es_centre = (enemydrawX, enemydrawY)
             (newIMG, es_centre) = rot_center(enemyship.shipIMG, enemyship.rotation, es_centre[0],
                                               es_centre[1])  # rotate ship appropriately
             screen.blit(newIMG, es_centre)
-            thisfont = pygame.font.SysFont('Fixedsys', 16)
-            indexText = thisfont.render(str(i), False, (255, 255, 255))
-            distanceText = thisfont.render(str(int(dist)), False, (255, 255, 255))
-            screen.blit(indexText, (enemydrawX - 10, enemydrawY - 10))
-            screen.blit(distanceText, (enemydrawX - 10, enemydrawY + 20))
-            if myship.targeted == i:
-                margin = 10
-                pygame.draw.rect(screen, (255, 0, 0), (enemydrawX + enemyship.width / 2 , enemydrawY + enemyship.width / 2 - 5, enemyship.width + margin, enemyship.width + margin), 2)
-                targeteddrawX = enemydrawX
-                targeteddrawY = enemydrawY
-                enemytotarget = True
-                targetedenemy = enemyship
-
+            #thisfont = pygame.font.SysFont('Fixedsys', 16)
+            #indexText = thisfont.render(str(i), False, (255, 255, 255))
+            #distanceText = thisfont.render(str(int(dist)), False, (255, 255, 255))
+            #xyText = thisfont.render("xy: (" + str(int(enemyship.x)) + "," + str(int(enemyship.y)) + ")", False, (255, 255, 255))
+            #screen.blit(indexText, (enemydrawX - 10, enemydrawY - 10))
+            #screen.blit(distanceText, (enemydrawX - 10, enemydrawY + 20))
+            #screen.blit(xyText, (enemydrawX - 10, enemydrawY + 50))
 
     # Draw space station
     spacestationX = centre[0] + spacestation.x - myship.x
@@ -442,12 +581,12 @@ def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, ship
     if onScreen(spacestation, myship): # on screen
         (spacestationIMG, spacestationcentre) = rot_center(spacestationIMG, spacestation.rotation, spacestationX, spacestationY)
         screen.blit(spacestationIMG, spacestationcentre)
+        spacestation.centre = spacestationcentre
     elif dist < 5000: # not on screen and within short range sensor range
-        drawTargetLine(screen, myship, spacestation)
-    # Draw phasers
-
+        drawTargetLine(screen, myship, spacestation, spacestation)
+    # Draw lasers
     if frameinfo.firingphasers and enemytotarget:
-        pygame.draw.line(screen, (255, 0, 0), (centre[0], centre[1]), (targeteddrawX + 15, targeteddrawY + 15), 4)
+        pygame.draw.line(screen, (255, 0, 0), (centre[0], centre[1]), (targeteddrawX - enemyships[myship.targeted].width / 2 + 30, targeteddrawY - enemyships[myship.targeted].width / 2 + 30), 4)
         if (time.time() - frameinfo.phaserstart > 0.03):
             frameinfo.firingphasers = False
             targetedenemy.hull -= 10
@@ -456,14 +595,21 @@ def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, ship
         time_elapsed = time.time() - frameinfo.explodestart
         if time_elapsed >= 0.25:
             frameinfo.enemyexploding = False
-            targetedenemy.visible = False
+            if targetedenemy.objtype == "enemy": targetedenemy.visible = False
+            myship.targeted = None
+            enemyships.pop(targetedenemy.index)
         else:
             circlesize = 160 * (0.25 - time_elapsed)
-            pygame.draw.circle(screen, (255, 50, 50), (targeteddrawX + 25, targeteddrawY + 25), circlesize)
+            pygame.draw.circle(screen, (255, 50, 50), (targeteddrawX - enemyships[myship.targeted].width / 2 + 30, targeteddrawY - enemyships[myship.targeted].width / 2 + 30), circlesize)
 
     if targetedenemy != None and targetedenemy.visible and not frameinfo.enemyexploding and targetedenemy.hull <= 0:
         frameinfo.enemyexploding = True
         frameinfo.explodestart = time.time()
+
+    # Draw ship
+
+    (shipIMG, newcentre) = rot_center(shipIMG, myship.rotation, centre[0], centre[1]) # rotate ship appropriately
+    screen.blit(shipIMG, newcentre)
 
     # Draw text:
 
@@ -479,6 +625,48 @@ def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, ship
     curfps = get_fps()
     fps_text = myfont.render(str(curfps) + " FPS", 1, pygame.Color("coral"))
     screen.blit(fps_text, (10, 5))
+
+    centre = (width / 2, height / 2)
+    drawX = centre[0] + enemyships[0].x - myship.x
+    drawY = centre[1] + enemyships[0].y + myship.y
+    #enemyshipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
+    #screen.blit(enemyshipIMG, (drawX, drawY))
+    #screen.set_at((int(drawX), int(drawY)), (255, 255, 0))
+    if gameinfo.redalert:
+        redalert_text = myfont.render("Red Alert", 1, (255, 0, 0))
+        screen.blit(redalert_text, (80, 5))
+
+
+def objectCollisionDetection(object1, object2):
+    '''
+    obj1_centre_x = object1.x
+    obj1_centre_y = object1.y
+    obj2_centre_x = object2.x
+    obj2_centre_y = object2.y
+    dx = obj1_centre_x - obj2_centre_x
+    dy = obj1_centre_y - obj2_centre_y
+    dist = math.sqrt(dx * dx + dy * dy)
+    '''
+    dist = distance(object1, object2)
+    if dist < object1.radius + object2.radius:
+        return True
+    return False
+
+def collisionDetection(myship, enemyships, spacestation):
+    for enemyship in enemyships:
+        if objectCollisionDetection(enemyship, spacestation):
+            enemyship.vel = 0
+            enemyship.accel = 0
+            enemyship.state = "leavestation_rot"
+            enemyship.x = enemyship.lastx
+            enemyship.y = enemyship.lasty
+            enemyship.startLeaveStation_rot()
+    if objectCollisionDetection(myship, spacestation):
+        myship.vel = 0
+        myship.accel = 0
+        myship.x = myship.lastx
+        myship.y = myship.lasty
+
 
 
 width = 1280
@@ -497,19 +685,43 @@ for i in range(250):
   stars.append(dict({'x': 0, 'y': 0}))
   stars[i]['x'] = random.random()*width
   stars[i]['y'] = random.random()*height
+
+# create game info
+
+gameinfo = GameInfo()
+
+# create my ship object
+
 myship = MyShip()
+
+
+# create space station object
+
+spacestation = SpaceStation()
+
+# spawn enemies
+
 enemyships = []
-for i in range(500):
+for i in range(100):
     enemyships.append(EnemyShip())
-    enemyships[i].x = random.randint(-10000, 10000)
-    enemyships[i].y = random.randint(-10000, 10000)
+    enemyships[i].x = 200
+    enemyships[i].y = 200
+    #enemyships[i].x = random.randint(-10000, 10000)
+    #enemyships[i].y = random.randint(-10000, 10000)
     enemyships[i].index = i
-    #enemyships[i].x = 50
-    #enemyships[i].y = 50
+    '''
+    r = random.randint(1, 2)
+    if r == 1:
+        enemyships[i].x = spacestation.x + 1000 + random.randint(-3000, 3000)
+        enemyships[i].y = spacestation.y + 1000 + random.randint(-3000, 3000)
+    else:
+        enemyships[i].x = -spacestation.x - 1000 + random.randint(-3000, 3000)
+        enemyships[i].y = spacestation.y - 1000 + random.randint(-3000, 3000)
+    '''
     enemyships[i].shipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
+    enemyships[i].startGoToStation(spacestation)
 
 #enemyship = EnemyShip()
-spacestation = SpaceStation()
 
 frameinfo = FrameInfo()
 # Run until the user asks to quit
@@ -520,20 +732,26 @@ alt_pressed = False
 enter_pressed = False
 last_phys_tick = time.time()
 last_keys_poll = time.time()
+
+# main game loop
+
 while running:
     i+= 1
     time_since_key_poll = time.time() - last_keys_poll
-    detectKeyPresses(pygame.event.get(), fullscreen)
+    detectKeyPresses(pygame.event.get(), fullscreen, alt_pressed, enter_pressed, gameinfo)
     cur_time = time.time()
     time_since_phys_tick = cur_time - last_phys_tick
-    physicsTick(myship, enemyships, spacestation, time_since_phys_tick)
+    physicsTick(myship, enemyships, spacestation, time_since_phys_tick, gameinfo)
     last_phys_tick = cur_time
+    collisionDetection(myship, enemyships, spacestation)
     for enemyship in enemyships:
-        enemyAITick(myship,enemyship)
+        enemyAITick(myship,enemyship, spacestation)
 
     renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, shipIMG, enemyshipIMG, spacestationIMG)
-
-    clock.tick(10000)
+    dy = myship.y - spacestation.y
+    dx = myship.x - spacestation.x
+    angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi - 90
+    clock.tick(165)
 
     # Flip the display
     pygame.display.flip()
