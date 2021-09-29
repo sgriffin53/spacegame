@@ -9,7 +9,6 @@ import time
 import sys
 from datetime import datetime
 
-random.seed(time.time())
 pygame.init()
 myfont = pygame.font.SysFont('Fixedsys', 22)
 dir_label_font = pygame.font.SysFont('Courier', 12)
@@ -80,13 +79,15 @@ class EnemyShip():
         self.reststart = 0
         self.weapons = []
         self.lastattacked = 0
-        self.maxspeed = 700
+        self.maxspeed = 400
         self.substate = None
         self.attackstart = 0
     def startPatrol(self):
         self.totrotations = 0
         self.accel = 250
         self.rotaccel = 120
+        if random.randint(0,1) == 0:
+            self.rotaccel = -120
         self.patrolstart = [self.x, self.y]
         self.patrolangle = random.randint(-360, 360)
         #self.patrolangle = self.rotation + self.patrolangle
@@ -146,6 +147,18 @@ class EnemyShip():
         #elif r == 2:
             #self.patroldist -= random.randint(20, 50)
         self.patrolspeed = random.randint(120, 300)
+    def startRetreat(self):
+        self.patrolspeed = self.maxspeed
+        self.patrolstart = [self.x, self.y]
+        self.patroldist = 5000
+        self.accel = 250
+        dy = self.y - myship.y
+        dx = self.x - myship.x
+        angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi - 90 - 180
+        self.patrolangle = angle_deg
+        self.rotaccel = 120
+        if angle_deg >= 180:
+            self.rotaccel = -120
     def explode(self, animations):
         self.vel = 0
         animation = Animation()
@@ -258,6 +271,9 @@ class MyShip():
                 enemyships[myship.targeted].hull -= 10
                 if enemyships[myship.targeted].hull <= 0:
                     enemyships[myship.targeted].explode(animations)
+                if enemyships[myship.targeted].hull <= 100 and enemyships[myship.targeted].state != "retreat":
+                    enemyships[myship.targeted].state = "retreat"
+                    enemyships[myship.targeted].startRetreat()
                 enemyships[self.targeted].lastattacked = time.time()
                 # add animation
 
@@ -519,6 +535,36 @@ def drawTargetLine(screen, myship, enemyship, spacestation):
 
 def enemyAITick(myship, enemyship, spacestation, animations):
     origstate = enemyship.state
+    print(origstate)
+    if enemyship.state == "retreat":
+        if enemyship.rotation != enemyship.patrolangle:
+            enemyship.rotaccel = 120
+        if abs(enemyship.patrolangle - enemyship.rotation) < 10:
+            enemyship.rotation = enemyship.patrolangle
+            enemyship.rotaccel = 0
+        if enemyship.accel >= 0 and enemyship.vel >= enemyship.patrolspeed:
+            enemyship.vel = enemyship.patrolspeed
+            enemyship.accel = 0
+        elif enemyship.accel < 0 and enemyship.vel <= enemyship.patrolspeed:
+            enemyship.vel = enemyship.patrolspeed
+            enemyship.accel = 0
+        targetx = myship.x
+        targety = myship.y
+        dy = targety - enemyship.y
+        dx = targetx - enemyship.x
+        angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi - 90
+        if angle_deg >= 180 and enemyship.rotaccel == 120:
+            enemyship.rotaccel = -120
+        enemyship.patrolangle = angle_deg
+        if enemyship.patrolangle < 0: enemyship.patrolangle += 360
+        if enemyship.patrolangle > 360: enemyship.patrolangle -= 360
+        print(enemyship.patrolangle)
+        mypoint = Point()
+        mypoint.x = enemyship.patrolstart[0]
+        mypoint.y = enemyship.patrolstart[1]
+        dist = distance(enemyship, mypoint)
+        if dist >= enemyship.patroldist:
+            enemyship.state == "patrol"
     if enemyship.state == "attack_delay":
         if time.time() - enemyship.attackstart >= 1.0 or enemyship.substate == "attack":
             enemyship.state = "attack"
@@ -530,7 +576,7 @@ def enemyAITick(myship, enemyship, spacestation, animations):
             targety = myship.y + random.randint(-10,+10)
             dy = targety - enemyship.y
             dx = targetx - enemyship.x
-            angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi - 90 - 180
+            angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi - 90
             if angle_deg >= 180:
                 enemyship.rotaccel = -120
             enemyship.patrolangle = angle_deg
@@ -543,14 +589,17 @@ def enemyAITick(myship, enemyship, spacestation, animations):
             enemyship.patroldist = dist - spacestation.radius - random.randint(30, 150)
     if enemyship.state == "attack":
         enemyship.fireNextWeapon(myship, animations)
-        if enemyship.vel == 0 and enemyship.accel == 0:
-            enemyship.startPatrol()
+        #if enemyship.vel == 0 and enemyship.accel == 0:
+        #    enemyship.startPatrol()
         if abs(enemyship.patrolangle - enemyship.rotation) < 10:
             enemyship.rotation = enemyship.patrolangle
             enemyship.rotaccel = 0
         if enemyship.rotation != enemyship.patrolangle:
             enemyship.rotaccel = 120
-        if enemyship.vel >= enemyship.patrolspeed:
+        if enemyship.accel >= 0 and enemyship.vel >= enemyship.patrolspeed:
+            enemyship.vel = enemyship.patrolspeed
+            enemyship.accel = 0
+        elif enemyship.accel < 0 and enemyship.vel <= enemyship.patrolspeed:
             enemyship.vel = enemyship.patrolspeed
             enemyship.accel = 0
         targetx = myship.x + random.randint(-10, +10)
@@ -569,22 +618,28 @@ def enemyAITick(myship, enemyship, spacestation, animations):
         dist = distance(enemyship, mypoint)
         myshipdist = distance(enemyship, myship)
         if myshipdist >= 700:
-            enemyship.vel = enemyship.maxspeed
+            enemyship.patrolspeed = enemyship.maxspeed
         if myshipdist <= 300:
-            enemyship.vel = myship.vel - 50
+            enemyship.patrolspeed = myship.vel - 50
+            if enemyship.patrolspeed >= enemyship.maxspeed: enemyship.patrolspeed = enemyship.maxspeed
+        if enemyship.patrolspeed >= enemyship.vel:
+            enemyship.accel = 250
+        else:
+            enemyship.accel = -250
         if dist >= enemyship.patroldist:
-            enemyship.state = "attack_delay"
-            if time.time() - enemyship.lastattacked >= 60.0:
-                enemyship.state = "patrol"
-                enemyship.startPatrol()
+            pass
+            #enemyship.state = "attack_delay"
+            #if time.time() - enemyship.lastattacked >= 60.0:
+             #   enemyship.state = "patrol"
+              #  enemyship.startPatrol()
     if enemyship.state == "patrol":
         if enemyship.vel == 0 and enemyship.accel == 0:
             enemyship.startPatrol()
         if abs(enemyship.patrolangle - enemyship.rotation) < 10:
             enemyship.rotation = enemyship.patrolangle
             enemyship.rotaccel = 0
-        if enemyship.rotation != enemyship.patrolangle:
-            enemyship.rotaccel = 120
+        #if enemyship.rotation != enemyship.patrolangle:
+            #enemyship.rotaccel = 120
         if enemyship.vel >= enemyship.patrolspeed:
             enemyship.vel = enemyship.patrolspeed
             enemyship.accel = 0
@@ -595,7 +650,7 @@ def enemyAITick(myship, enemyship, spacestation, animations):
         if dist >= enemyship.patroldist:
             enemyship.vel = 0
             enemyship.accel = 0
-            if random.randint(0,1) == 0:
+            if random.randint(0,3) == 0:
                 enemyship.state = "gotostation"
                 enemyship.startGoToStation(spacestation)
     elif enemyship.state == "leavestation_rot":
@@ -617,10 +672,7 @@ def enemyAITick(myship, enemyship, spacestation, animations):
         if dist >= enemyship.patroldist:
             enemyship.vel = 0
             enemyship.accel = 0
-            if enemyship.substate != None:
-                enemyship.state = enemyship.substate
-            else:
-                enemyship.state = "patrol"
+            enemyship.state = "patrol"
     elif enemyship.state == "gotostation":
         if abs(enemyship.patrolangle - enemyship.rotation) < 10:
             enemyship.rotation = enemyship.patrolangle
@@ -815,7 +867,6 @@ def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, ship
             time_elapsed = time.time() - animation.starttime
             if time.time() >= animation.endtime:
                 animations.pop(i)
-                print(len(enemyships), enemyships[myship.targeted].index)
                 enemyships.pop(enemyships[myship.targeted].index)
                 reIndexEnemies(enemyships)
                 myship.targeted = None
@@ -903,7 +954,7 @@ spacestation = SpaceStation()
 # spawn enemies
 
 enemyships = []
-for i in range(2):
+for i in range(1):
     enemyships.append(EnemyShip())
     enemyships[i].weapons.append(Weapon())
     enemyships[i].weapons[0].type = "laser"
@@ -917,8 +968,7 @@ for i in range(2):
     enemyships[i].index = i
     enemyships[i].state = "patrol"
     enemyships[i].startPatrol()
-    enemyships[i].startPatrol()
-    enemyships[i].patroldist = 2
+    enemyships[i].patroldist = 20
     '''
     r = random.randint(1, 2)
     if r == 1:
@@ -929,7 +979,6 @@ for i in range(2):
         enemyships[i].y = spacestation.y - 1000 + random.randint(-3000, 3000)
     '''
     enemyships[i].shipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
-    enemyships[i].startGoToStation(spacestation)
 
 #enemyship = EnemyShip()
 
