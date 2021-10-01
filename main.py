@@ -22,6 +22,17 @@ class Animation():
         self.startpos = 0
         self.endpos = 0
         self.colour = (255, 0, 0)
+        self.targettype = None
+
+class Music():
+    def __init__(self):
+        self.file = None
+
+class Sound():
+    def __init__(self):
+        self.file = None
+        self.mixer = None
+
 
 class Weapon():
     def __init__(self):
@@ -29,11 +40,14 @@ class Weapon():
         self.duration = None
         self.chargetime = 0
         self.lastfired = 0
+        self.range = 0
 
 class GameInfo():
     def __init__(self):
         self.timefactor = 1
         self.redalert = False
+        self.alive = True
+        self.lastdied = 0
 
 class Point():
     def __init__(self):
@@ -166,19 +180,31 @@ class EnemyShip():
         animation.starttime = time.time()
         animation.endtime = time.time() + 0.25
         animation.startpos = (self.x, self.y)
+        animation.targettype = "enemyship"
+        animation.width = enemyship.width
         animations.append(animation)
 
-    def fireNextWeapon(self, myship, animations):
+    def fireNextWeapon(self, myship, animations, sounds):
+        dist = distance(self, myship)
         for weapon in self.weapons:
+            if dist > weapon.range: continue
             charged = False
             if time.time() - weapon.lastfired >= weapon.chargetime:
                 # weapon is charged
 
                 weapon.lastfired = time.time()
-
+                pygame.mixer.Sound.play(sounds[0].mixer)
                 # fired weapon on target
 
-                self.state = "attack"
+                myship.hull -= 10
+                if myship.hull <= 0:
+                    myship.alive = False
+                    gameinfo.alive = False
+                    gameinfo.lastdied = time.time()
+                    myship.vel = 0
+                    myship.rotaccel = 0
+                    myship.accel = 0
+                    myship.explode(animations)
                 myship.lastattacker = self.index
                 # add animation
 
@@ -203,8 +229,8 @@ class SpaceStation():
 
 class MyShip():
     def __init__(self):
-        self.hull = 100
-        self.maxhull = 100
+        self.hull = 200
+        self.maxhull = 200
         self.x = 0
         self.y = 0
         self.lastx = 0
@@ -220,6 +246,21 @@ class MyShip():
         self.radius = 24
         self.weapons = []
         self.lastattacker = None
+        self.alive = True
+    def respawn(self, spacestation):
+        dist = spacestation.width / 2 + 75
+        angle = random.randint(0, 360)
+        #angle = 90
+        angle_rads = (angle) * math.pi / 180
+        newx = spacestation.x + math.sin(angle_rads) * dist
+        newy = spacestation.y + math.cos(angle_rads) * dist
+        self.x = newx
+        self.y = newy
+        self.vel = 0
+        self.accel = 0
+        self.rotaccel = 0
+        self.rotation = angle
+        self.hull = self.maxhull
     def nextTarget(self, enemyships):
         tgt = self.targeted
         start_tgt = tgt
@@ -256,8 +297,10 @@ class MyShip():
         self.targeted = closestship
     def attackerTarget(self):
         self.targeted = self.lastattacker
-    def fireNextWeapon(self, enemyships, animations):
+    def fireNextWeapon(self, enemyships, animations, sounds):
+        dist = distance(self, enemyships[self.targeted])
         for weapon in self.weapons:
+            if dist > weapon.range: continue
             charged = False
             if time.time() - weapon.lastfired >= weapon.chargetime:
                 # weapon is charged
@@ -269,9 +312,10 @@ class MyShip():
                 enemyships[self.targeted].state = "attack_delay"
 
                 enemyships[myship.targeted].hull -= 10
+                pygame.mixer.Sound.play(sounds[0].mixer)
                 if enemyships[myship.targeted].hull <= 0:
                     enemyships[myship.targeted].explode(animations)
-                if enemyships[myship.targeted].hull <= 100 and enemyships[myship.targeted].state != "retreat":
+                if enemyships[myship.targeted].hull <= 50 and enemyships[myship.targeted].state != "retreat":
                     enemyships[myship.targeted].state = "retreat"
                     enemyships[myship.targeted].startRetreat()
                 enemyships[self.targeted].lastattacked = time.time()
@@ -285,6 +329,16 @@ class MyShip():
                 animation.startpos = (myship.x, myship.y)
                 animation.endpos = (enemyships[self.targeted].x, enemyships[self.targeted].y)
                 animations.append(animation)
+    def explode(self, animations):
+        self.vel = 0
+        animation = Animation()
+        animation.type = "explosion"
+        animation.starttime = time.time()
+        animation.endtime = time.time() + 0.25
+        animation.startpos = (self.x, self.y)
+        animation.targettype = "myship"
+        animation.width = myship.width
+        animations.append(animation)
 
 def update_fps():
     fps = str(int(clock.get_fps()))
@@ -295,7 +349,7 @@ def get_fps():
     return int(clock.get_fps())
 
 
-def detectKeyPresses(event_get, fullscreen, alt_pressed, enter_pressed, gameinfo, animations):
+def detectKeyPresses(event_get, fullscreen, alt_pressed, enter_pressed, gameinfo, animations, sounds):
     for event in event_get:
         if event.type == pygame.QUIT:
             running = False
@@ -306,26 +360,29 @@ def detectKeyPresses(event_get, fullscreen, alt_pressed, enter_pressed, gameinfo
             else:
                 screen = pygame.display.set_mode([width, height])
             fullscreen = not fullscreen
+        if event.type == pygame.KEYDOWN:
+
+            if (event.key == pygame.K_RALT or event.key == pygame.K_LALT):
+                alt_pressed = True
+            if event.key == pygame.K_RETURN:
+                enter_pressed = True
+            if gameinfo.alive:
+                if event.key == pygame.K_t:
+                    myship.nextTarget(enemyships)
+                if event.key == pygame.K_c:
+                    myship.closestTarget(enemyships)
+                if event.key == pygame.K_r:
+                    gameinfo.redalert = not gameinfo.redalert
+                    if gameinfo.redalert == True:
+                        gameinfo.timefactor = 0.5
+                    else:
+                        gameinfo.timefactor = 1
+                if event.key == pygame.K_y:
+                    myship.attackerTarget()
+                if event.key == pygame.K_SPACE:
+                   if myship.targeted != None:
+                        myship.fireNextWeapon(enemyships, animations, sounds)
         # set alt and enter flags if the keys are pressed
-        if event.type == pygame.KEYDOWN and (event.key == pygame.K_RALT or event.key == pygame.K_LALT):
-            alt_pressed = True
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-            enter_pressed = True
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_t:
-            myship.nextTarget(enemyships)
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_c:
-            myship.closestTarget(enemyships)
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-            gameinfo.redalert = not gameinfo.redalert
-            if gameinfo.redalert == True:
-                gameinfo.timefactor = 0.5
-            else:
-                gameinfo.timefactor = 1
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_y:
-            myship.attackerTarget()
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-            if myship.targeted != None:
-                myship.fireNextWeapon(enemyships, animations)
     if alt_pressed and enter_pressed: # full screen with alt+enter
         if not fullscreen:
             screen = pygame.display.set_mode([width, height], pygame.FULLSCREEN)
@@ -341,18 +398,19 @@ def detectKeyPresses(event_get, fullscreen, alt_pressed, enter_pressed, gameinfo
         alt_pressed = False
     if not keys[pygame.K_RETURN]:
         enter_pressed = False
-    if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        myship.rotaccel = -120
-    elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        myship.rotaccel = 120
-    else:
-        myship.rotaccel = 0
-    if keys[pygame.K_UP] or keys[pygame.K_w]:
-        myship.accel = 250
-    elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
-        myship.accel = -250
-    else:
-        myship.accel = 0
+    if gameinfo.alive:
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+            myship.rotaccel = -120
+        elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            myship.rotaccel = 120
+        else:
+            myship.rotaccel = 0
+        if keys[pygame.K_UP] or keys[pygame.K_w]:
+            myship.accel = 250
+        elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
+            myship.accel = -250
+        else:
+            myship.accel = 0
     if keys[pygame.K_ESCAPE]:
         sys.exit()
     if keys[pygame.K_SPACE]:
@@ -533,10 +591,13 @@ def drawTargetLine(screen, myship, enemyship, spacestation):
     screen.blit(distanceText, (drawX_dist, drawY_dist))
     screen.blit(typeText, (drawX_type, drawY_type))
 
-def enemyAITick(myship, enemyship, spacestation, animations):
+def enemyAITick(myship, enemyship, spacestation, animations, sounds):
     origstate = enemyship.state
-    print(origstate)
     if enemyship.state == "retreat":
+        if not myship.alive:
+            enemyship.state = "patrol"
+            return
+        enemyship.fireNextWeapon(myship, animations, sounds)
         if enemyship.rotation != enemyship.patrolangle:
             enemyship.rotaccel = 120
         if abs(enemyship.patrolangle - enemyship.rotation) < 10:
@@ -558,7 +619,6 @@ def enemyAITick(myship, enemyship, spacestation, animations):
         enemyship.patrolangle = angle_deg
         if enemyship.patrolangle < 0: enemyship.patrolangle += 360
         if enemyship.patrolangle > 360: enemyship.patrolangle -= 360
-        print(enemyship.patrolangle)
         mypoint = Point()
         mypoint.x = enemyship.patrolstart[0]
         mypoint.y = enemyship.patrolstart[1]
@@ -566,6 +626,9 @@ def enemyAITick(myship, enemyship, spacestation, animations):
         if dist >= enemyship.patroldist:
             enemyship.state == "patrol"
     if enemyship.state == "attack_delay":
+        if not myship.alive:
+            enemyship.state = "patrol"
+            return
         if time.time() - enemyship.attackstart >= 1.0 or enemyship.substate == "attack":
             enemyship.state = "attack"
             enemyship.patrolspeed = random.randint(int(0.7 * enemyship.maxspeed), int(1 * enemyship.maxspeed))
@@ -588,7 +651,10 @@ def enemyAITick(myship, enemyship, spacestation, animations):
             dist = int(distance(enemyship, mypoint))
             enemyship.patroldist = dist - spacestation.radius - random.randint(30, 150)
     if enemyship.state == "attack":
-        enemyship.fireNextWeapon(myship, animations)
+        if not myship.alive:
+            enemyship.state = "patrol"
+            return
+        enemyship.fireNextWeapon(myship, animations, sounds)
         #if enemyship.vel == 0 and enemyship.accel == 0:
         #    enemyship.startPatrol()
         if abs(enemyship.patrolangle - enemyship.rotation) < 10:
@@ -617,9 +683,9 @@ def enemyAITick(myship, enemyship, spacestation, animations):
         mypoint.y = enemyship.patrolstart[1]
         dist = distance(enemyship, mypoint)
         myshipdist = distance(enemyship, myship)
-        if myshipdist >= 700:
+        if myshipdist >= 450:
             enemyship.patrolspeed = enemyship.maxspeed
-        if myshipdist <= 300:
+        if myshipdist <= 250:
             enemyship.patrolspeed = myship.vel - 50
             if enemyship.patrolspeed >= enemyship.maxspeed: enemyship.patrolspeed = enemyship.maxspeed
         if enemyship.patrolspeed >= enemyship.vel:
@@ -826,7 +892,7 @@ def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, ship
     # Draw ship
 
     (shipIMG, newcentre) = rot_center(shipIMG, myship.rotation, centre[0], centre[1]) # rotate ship appropriately
-    screen.blit(shipIMG, newcentre)
+    if myship.alive: screen.blit(shipIMG, newcentre)
 
     # Draw text:
 
@@ -853,6 +919,11 @@ def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, ship
     i = -1
     for animation in animations:
         i+=1
+        drawX = targeteddrawX
+        drawY = targeteddrawY
+        if animation.targettype == "myship":
+            drawX = centre[0]
+            drawY = centre[1]
         if animation.type == "laser":
             # draw red line for duration
             if time.time() >= animation.endtime:
@@ -866,14 +937,14 @@ def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, ship
         if animation.type == "explosion":
             time_elapsed = time.time() - animation.starttime
             if time.time() >= animation.endtime:
+                if animation.targettype != "myship": enemyships.pop(enemyships[myship.targeted].index)
                 animations.pop(i)
-                enemyships.pop(enemyships[myship.targeted].index)
                 reIndexEnemies(enemyships)
                 myship.targeted = None
                 break
             circlesize = 160 * (0.25 - time_elapsed)
-            pygame.draw.circle(screen, (255, 50, 50), (targeteddrawX - enemyships[myship.targeted].width / 2 + 30,
-                                                       targeteddrawY - enemyships[myship.targeted].width / 2 + 30),
+            pygame.draw.circle(screen, (255, 50, 50), (drawX - animation.width / 2 + 30,
+                                                      drawY - animation.width / 2 + 30),
                                circlesize)
 
 def reIndexEnemies(enemyships):
@@ -933,10 +1004,38 @@ for i in range(250):
   stars[i]['y'] = random.random()*height
 
 animations = []
+music = []
+sounds = []
+
+path = 'music'
+
+files = os.listdir(path)
+
+i = -1
+for f in files:
+    i+=1
+    music.append(Music())
+    music[i].file = os.path.join('music', f)
+
+sounds.append(Sound())
+i = len(sounds) - 1
+sounds[i].file = os.path.join('sounds', 'Laser-Shot-1.mp3')
+sounds[i].mixer = pygame.mixer.Sound(sounds[i].file)
+
+
+music_track = random.randint(0,len(music) - 1)
+music_playing = music[music_track]
+pygame.mixer.music.load(music_playing.file)
+pygame.mixer.music.play(-100000)
 
 # create game info
 
 gameinfo = GameInfo()
+
+
+# create space station object
+
+spacestation = SpaceStation()
 
 # create my ship object
 
@@ -946,25 +1045,24 @@ myship.weapons[0].type = "laser"
 myship.weapons[0].duration = 0.02
 myship.weapons[0].chargetime = 0.5
 myship.weapons[0].lastfired = 0
-
-# create space station object
-
-spacestation = SpaceStation()
+myship.weapons[0].range = 600
+myship.respawn(spacestation)
 
 # spawn enemies
 
 enemyships = []
-for i in range(1):
+for i in range(200):
     enemyships.append(EnemyShip())
     enemyships[i].weapons.append(Weapon())
     enemyships[i].weapons[0].type = "laser"
     enemyships[i].weapons[0].duration = 0.02
     enemyships[i].weapons[0].chargetime = 1.0
     enemyships[i].weapons[0].lastfired = 0
-    enemyships[i].x = 200
-    enemyships[i].y = 200
-    #enemyships[i].x = random.randint(-10000, 10000)
-    #enemyships[i].y = random.randint(-10000, 10000)
+    enemyships[i].weapons[0].range = 600
+    #enemyships[i].x = 200
+    #enemyships[i].y = 200
+    enemyships[i].x = random.randint(-10000, 10000)
+    enemyships[i].y = random.randint(-10000, 10000)
     enemyships[i].index = i
     enemyships[i].state = "patrol"
     enemyships[i].startPatrol()
@@ -996,15 +1094,21 @@ last_keys_poll = time.time()
 
 while running:
     i+= 1
+    if not gameinfo.alive:
+        time_since_died = time.time() - gameinfo.lastdied
+        if time_since_died >= 5:
+            gameinfo.alive = True
+            myship.alive = True
+            myship.respawn(spacestation)
     time_since_key_poll = time.time() - last_keys_poll
-    detectKeyPresses(pygame.event.get(), fullscreen, alt_pressed, enter_pressed, gameinfo, animations)
+    detectKeyPresses(pygame.event.get(), fullscreen, alt_pressed, enter_pressed, gameinfo, animations, sounds)
     cur_time = time.time()
     time_since_phys_tick = cur_time - last_phys_tick
     physicsTick(myship, enemyships, spacestation, time_since_phys_tick, gameinfo)
     last_phys_tick = cur_time
     collisionDetection(myship, enemyships, spacestation)
     for enemyship in enemyships:
-        enemyAITick(myship,enemyship, spacestation, animations)
+        enemyAITick(myship,enemyship, spacestation, animations, sounds)
 
     renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, shipIMG, enemyshipIMG, spacestationIMG)
     dy = myship.y - spacestation.y
