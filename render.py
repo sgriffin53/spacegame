@@ -232,6 +232,23 @@ def drawMyShields(screen, myship, gameinfo):
         centre[0] - myship.width / 2 - margin, centre[1] - myship.width / 2 - margin, myship.width + margin * 2,
         myship.width + margin * 2), start_ang_rads, end_ang_rads, 2)
 
+def drawEnemyShields(screen, enemyship, myship, gameinfo):
+    enemyship_rotation_rads = (360 - enemyship.rotation) * math.pi / 180
+    centre = (gameinfo. width / 2, gameinfo.height / 2)
+    margin = 10
+    n = -1
+    for i in range(45, 403, 90):
+        n += 1
+        start_ang_rads = (i + 5) * math.pi / 180 + enemyship_rotation_rads
+        end_ang_rads = (i + 85) * math.pi / 180 + enemyship_rotation_rads
+        colour = myship.shields[n].charge * 255 / enemyship.shields[n].maxcharge
+        if colour < 0: colour = 0
+        enemydrawX = centre[0] + enemyship.x - myship.x
+        enemydrawY = centre[1] - enemyship.y + myship.y
+        pygame.draw.arc(screen, (0, colour, 0), (
+        enemydrawX - enemyship.width / 2 - margin, enemydrawY - myship.width / 2 - margin, enemyship.width + margin * 2,
+        enemyship.width + margin * 2), start_ang_rads, end_ang_rads, 2)
+
 
 def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shipIMG, enemyshipIMG, spacestationIMG, gameinfo, animations):
     if gameinfo.screen == "map":
@@ -292,19 +309,6 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shi
         for enemyship in enemyships:
             i += 1
             dist = functions.distance(myship, enemyship)
-            if enemyship.visible and myship.targeted == i:
-                enemydrawX = centre[0] + enemyship.x - myship.x
-                enemydrawY = centre[1] - enemyship.y + myship.y
-                margin = 10
-                pygame.draw.rect(screen, (255, 0, 0),
-                                 (enemydrawX - enemyship.width / 2 - 5, enemydrawY - enemyship.width / 2 - 5, enemyship.width + margin,
-                enemyship.width + margin), 2)
-                targeteddrawX = enemydrawX
-                targeteddrawY = enemydrawY
-                targetedship = enemyships[myship.targeted]
-                enemytotarget = True
-                targetedenemy = enemyship
-
             if dist > 2000: continue
             if (not onScreen(enemyship, myship, gameinfo)):
                 drawTargetLine(screen, myship, enemyship, spacestations, gameinfo)
@@ -319,6 +323,21 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shi
                                                   es_centre[1])  # rotate ship appropriately
                 screen.blit(newIMG, es_centre)
                 drawEnemyHealthBar(screen, enemyship, myship, gameinfo)
+                drawEnemyShields(screen, enemyship, myship, gameinfo)
+                if enemyship.visible and myship.targeted == i:
+                    enemydrawX = centre[0] + enemyship.x - myship.x
+                    enemydrawY = centre[1] - enemyship.y + myship.y
+                    margin = 40
+                    pygame.draw.rect(screen, (255, 0, 0),
+                                     (enemydrawX - enemyship.width / 2 - margin / 2, enemydrawY - enemyship.width / 2 - margin / 2,
+                                      enemyship.width + margin,
+                                      enemyship.width + margin), 2)
+                    targeteddrawX = enemydrawX
+                    targeteddrawY = enemydrawY
+                    targetedship = enemyships[myship.targeted]
+                    enemytotarget = True
+                    targetedenemy = enemyship
+
                 #thisfont = pygame.font.SysFont('Fixedsys', 16)
                 #indexText = thisfont.render(str(i), False, (255, 255, 255))
                 #distanceText = thisfont.render(str(int(dist)), False, (255, 255, 255))
@@ -460,7 +479,6 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shi
                         if shieldnum >= 4: shieldnum = 3
                         if angle <= 45: shieldnum = 0
                         if angle >= 315: shieldnum = 0
-                        print(shieldnum)
                         shieldcharge = myship.shields[shieldnum].charge
                         if shieldcharge <= 0:
                             myship.hull -= 20

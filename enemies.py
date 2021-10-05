@@ -5,7 +5,7 @@ import render
 import functions
 import pygame
 import os
-from classes import Animation, Point, Weapon
+from classes import Animation, Point, Weapon, Shield
 
 class EnemyShip():
     def __init__(self):
@@ -42,6 +42,7 @@ class EnemyShip():
         self.substate = None
         self.attackstart = 0
         self.gridsector = 0
+        self.shields = []
     def startPatrol(self):
         self.totrotations = 0
         self.accel = 250
@@ -189,6 +190,11 @@ def spawnEnemyShips(enemyships, spacestations):
             enemyships[k].index = k
             enemyships[k].state = "patrol"
             enemyships[k].shipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
+            enemyships[k].shields.append(Shield())
+            enemyships[k].shields.append(Shield())
+            enemyships[k].shields.append(Shield())
+            enemyships[k].shields.append(Shield())
+
             while True:
                 enemyships[k].x = random.randint(spacestation.x - 5000, spacestation.x + 5000)
                 enemyships[k].y = random.randint(spacestation.y - 5000, spacestation.y + 5000)
