@@ -1,6 +1,7 @@
 # Simple pygame program
 
 # Import and initialize the pygame library
+import copy
 import pygame
 import os
 import math
@@ -110,11 +111,13 @@ myship.weapons[1].chargetime = 1
 myship.weapons[1].lastfired = 0
 myship.weapons[1].range = 600
 
-myship.shields.append(Shield())
-myship.shields.append(Shield())
-myship.shields.append(Shield())
-myship.shields.append(Shield())
-
+myship.shields.append(copy.deepcopy(Shield()))
+myship.shields.append(copy.deepcopy(Shield()))
+myship.shields.append(copy.deepcopy(Shield()))
+myship.shields.append(copy.deepcopy(Shield()))
+for shield in myship.shields:
+    shield.charge = 250
+    shield.maxcharge = 250
 
 myship.respawn(spacestations[7])
 

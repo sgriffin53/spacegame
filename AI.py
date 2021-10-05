@@ -15,7 +15,6 @@ def enemyAITick(myship, enemyship, spacestations, animations, sounds, gameinfo):
     allowedSectors = myship.allowedsectors
     if enemyship.gridsector not in allowedSectors: return
     origstate = enemyship.state
-    enemyship.vel = 0
    # enemyship.rotaccel = 0
    # enemyship.vel = 0
    # return

@@ -51,6 +51,8 @@ class MyShip():
         self.rotaccel = 0
         self.rotation = angle
         self.hull = self.maxhull
+        for shield in self.shields:
+            shield.charge = shield.maxcharge
     def nextTarget(self, enemyships):
         tgt = self.targeted
         start_tgt = tgt
@@ -101,17 +103,20 @@ class MyShip():
                 if enemyships[self.targeted].state != "attack_delay": enemyships[self.targeted].attackstart = time.time()
                 enemyships[self.targeted].state = "attack_delay"
 
-                if weapon.type == "laser": enemyships[self.targeted].hull -= 10
+#                if weapon.type == "laser": enemyships[self.targeted].hull -= 10
                 pygame.mixer.Sound.play(sounds[0].mixer)
-                if enemyships[self.targeted].hull <= 0:
-                    enemyships[self.targeted].explode(animations)
-                if enemyships[self.targeted].hull <= 50 and enemyships[self.targeted].state != "retreat":
-                    enemyships[self.targeted].state = "retreat"
-                    enemyships[self.targeted].startRetreat(self)
+ #               if enemyships[self.targeted].hull <= 0:
+  #                  enemyships[self.targeted].explode(animations)
                 enemyships[self.targeted].lastattacked = time.time()
                 # add animation
 
                 animation = Animation()
+                targetx = enemyships[self.targeted].x
+                targety = enemyships[self.targeted].y
+                dy = targety - self.y
+                dx = targetx - self.x
+                angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi
+                animation.angle = angle_deg
                 animation.type = weapon.type
                 animation.colour = (255, 0, 0)
                 animation.starttime = time.time()

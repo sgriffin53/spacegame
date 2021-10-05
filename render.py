@@ -226,9 +226,14 @@ def drawMyShields(screen, myship, gameinfo):
         n += 1
         start_ang_rads = (i + 5) * math.pi / 180 + myship_rotation_rads
         end_ang_rads = (i + 85) * math.pi / 180 + myship_rotation_rads
-        colour = myship.shields[n].charge * 255 / myship.shields[n].maxcharge
-        if colour < 0: colour = 0
-        pygame.draw.arc(screen, (0, colour, 0), (
+        redcolour = 0
+        greencolour = 0
+        percent = myship.shields[n].charge * 100 / myship.shields[n].maxcharge
+        if percent > 50: greencolour = myship.shields[n].charge * 255 / myship.shields[n].maxcharge
+        else: redcolour = myship.shields[n].charge * 255 / myship.shields[n].maxcharge
+        if greencolour < 0: greencolour = 0
+        if redcolour < 0: redcolour = 0
+        pygame.draw.arc(screen, (redcolour, greencolour, 0), (
         centre[0] - myship.width / 2 - margin, centre[1] - myship.width / 2 - margin, myship.width + margin * 2,
         myship.width + margin * 2), start_ang_rads, end_ang_rads, 2)
 
@@ -241,11 +246,19 @@ def drawEnemyShields(screen, enemyship, myship, gameinfo):
         n += 1
         start_ang_rads = (i + 5) * math.pi / 180 + enemyship_rotation_rads
         end_ang_rads = (i + 85) * math.pi / 180 + enemyship_rotation_rads
-        colour = myship.shields[n].charge * 255 / enemyship.shields[n].maxcharge
-        if colour < 0: colour = 0
+        redcolour = 0
+        greencolour = 0
+        percent = enemyship.shields[n].charge * 100 / enemyship.shields[n].maxcharge
+        if percent > 50:
+            greencolour = enemyship.shields[n].charge * 255 / enemyship.shields[n].maxcharge
+        else:
+            redcolour = enemyship.shields[n].charge * 255 / enemyship.shields[n].maxcharge
+            greencolour = redcolour / 2
+        if greencolour < 0: greencolour = 0
+        if redcolour < 0: redcolour = 0
         enemydrawX = centre[0] + enemyship.x - myship.x
         enemydrawY = centre[1] - enemyship.y + myship.y
-        pygame.draw.arc(screen, (0, colour, 0), (
+        pygame.draw.arc(screen, (redcolour, greencolour, 0), (
         enemydrawX - enemyship.width / 2 - margin, enemydrawY - myship.width / 2 - margin, enemyship.width + margin * 2,
         enemyship.width + margin * 2), start_ang_rads, end_ang_rads, 2)
 
@@ -424,13 +437,48 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shi
                                 myship.explode(animations)
                         else:
                             myship.shields[shieldnum].charge -= 20
+                    if animation.firer == "myship":
+                        enemyship = animation.target
+                        angle = 360 - (animation.angle) + 90 + enemyship.rotation
+                        if angle < 0: angle += 360
+                        if angle >= 360: angle -= 360
+                        shieldnum = int(((angle + 45)/ 360) * 4)
+                        if angle <= 45: shieldnum = 0
+                        if angle >= 315: shieldnum = 0
+                        if shieldnum >= 4: shieldnum = 3
+                        shieldcharge = enemyship.shields[shieldnum].charge
+                        if shieldcharge <= 0:
+                            enemyship.hull -= 10
+                            if enemyship.hull <= 50 and enemyship.state != "retreat":
+                                enemyship.state = "retreat"
+                                enemyship.startRetreat(enemyship)
+                            if enemyship.hull <= 0:
+                                enemyship.explode(animations)
+                        else:
+                            enemyship.shields[shieldnum].charge -= 20
                     animations.pop(i)
                     break
-                if animation.firer == "myship":
+                if animation.firer == "myship" and myship.targeted != None:
+                    enemyship = enemyships[myship.targeted]
+                    angle_deg = animation.angle - 180
+                    angle_rads = angle_deg * math.pi / 180
 
-                    enemydrawX = centre[0] + animation.target.x - myship.x
-                    enemydrawY = centre[1] - animation.target.y + myship.y
-                    pygame.draw.line(screen, animation.colour, (centre[0], centre[1]), (
+                    enemydrawX = centre[0] + animation.target.x - myship.x + math.cos(angle_rads) * (enemyship.width / 2 + 10)
+                    enemydrawY = centre[1] - animation.target.y + myship.y + math.sin(angle_rads) * (enemyship.width / 2 + 10)
+                    angle = 360 - (animation.angle) + 90 + enemyship.rotation
+                    if angle < 0: angle += 360
+                    if angle >= 360: angle -= 360
+                    shieldnum = int(((angle + 45) / 360) * 4)
+                    if shieldnum >= 4: shieldnum = 3
+                    if angle <= 45: shieldnum = 0
+                    if angle >= 315: shieldnum = 0
+                    shieldcharge = enemyship.shields[shieldnum].charge
+                    if shieldcharge <= 0:
+                        enemydrawX = centre[0] + animation.target.x - myship.x
+                        enemydrawY = centre[1] - animation.target.y + myship.y
+                    lineendX = centre[0]
+                    lineendY = centre[1]
+                    pygame.draw.line(screen, animation.colour, (lineendX, lineendY), (
                     enemydrawX - enemyships[0].width / 2 + 30,
                     enemydrawY - enemyships[0].width / 2 + 30), 4)
                 elif animation.firer == "enemyship":
@@ -467,11 +515,7 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shi
                                    circlesize)
             elif animation.type == "torpedo":
                 if time.time() >= animation.endtime:
-                    if animation.firer == "myship" and targetedship != None:
-                        targetedship.hull -= 20
-                        if targetedship.hull <= 0:
-                            targetedship.explode(animations)
-                    elif animation.firer == "enemyship":
+                    if animation.firer == "enemyship":
                         angle = 360 - (animation.angle) + 90 + myship.rotation
                         if angle < 0: angle += 360
                         if angle >= 360: angle -= 360
@@ -492,6 +536,25 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shi
                                 myship.explode(animations)
                         else:
                             myship.shields[shieldnum].charge -= 20
+                    if animation.firer == "myship" and targetedship != None:
+                        enemyship = animation.target
+                        angle = 360 - (animation.angle) + 90 + enemyship.rotation
+                        if angle < 0: angle += 360
+                        if angle >= 360: angle -= 360
+                        shieldnum = int(((angle + 45)/ 360) * 4)
+                        if shieldnum >= 4: shieldnum = 3
+                        if angle <= 45: shieldnum = 0
+                        if angle >= 315: shieldnum = 0
+                        shieldcharge = enemyship.shields[shieldnum].charge
+                        if shieldcharge <= 0:
+                            enemyship.hull -= 10
+                            if enemyship.hull <= 50 and enemyship.state != "retreat":
+                                enemyship.state = "retreat"
+                                enemyship.startRetreat(enemyship)
+                            if enemyship.hull <= 0:
+                                enemyship.explode(animations)
+                        else:
+                            enemyship.shields[shieldnum].charge -= 20
                     animations.pop(i)
                     break
                 if animation.firer == "myship":
