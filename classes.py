@@ -6,11 +6,14 @@ class Animation():
         self.type = None
         self.starttime = 0
         self.endtime = 0
+        self.duration = 0
         self.startpos = 0
         self.endpos = 0
         self.colour = (255, 0, 0)
         self.targettype = None
-
+        self.targetship = None
+        self.firer = None
+        self.target = None
 
 
 class Music():
@@ -39,6 +42,10 @@ class GameInfo():
         self.lastdied = 0
         self.myfont = pygame.font.SysFont('Fixedsys', 22)
         self.dir_label_font = pygame.font.SysFont('Courier', 12)
+        self.map_title_font = pygame.font.SysFont('Calibri', 34 )
+        self.screen = "game"
+        self.mapstars = []
+        self.selectedstation = None
 
 class Point():
     def __init__(self):

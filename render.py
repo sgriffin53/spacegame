@@ -1,6 +1,9 @@
 import time
 import functions
 import pygame
+import math
+import random
+from classes import Point
 
 def drawStars(screen, stars, myship, gameinfo):
     for i in range(0,len(stars)):
@@ -23,7 +26,44 @@ def update_fps(gameinfo):
 def get_fps(gameinfo):
     return int(gameinfo.clock.get_fps())
 
-def drawTargetLine(screen, myship, enemyship, spacestation, gameinfo):
+def drawMyHealthBar(screen, myship, gameinfo):
+    percentage = myship.hull * 100 / myship.maxhull
+    centre = (gameinfo.width / 2, gameinfo.height / 2)
+    drawX = centre[0] - myship.width / 2 + 10
+    drawY = centre[1] + myship.width / 2 + 8
+
+    drawW = (myship.width - 10) * (percentage / 100)
+    # draw health bar
+    colour = (0, 168, 0)
+    if percentage <= 50: colour = (168, 0, 0)
+
+    pygame.draw.rect(screen, colour, (drawX, drawY, drawW, 12), 0)
+
+    # draw border
+
+    pygame.draw.rect(screen, (0, 0 , 128), (drawX, drawY, myship.width - 10, 12), 2)
+
+def drawEnemyHealthBar(screen, enemyship, myship, gameinfo):
+
+
+    percentage = enemyship.hull * 100 / enemyship.maxhull
+    centre = (gameinfo.width / 2, gameinfo.height / 2)
+
+    drawX = centre[0] + enemyship.x - myship.x  - enemyship.width / 2 + 10
+    drawY = centre[1] - enemyship.y + myship.y  +  myship.width / 2 + 8
+
+    drawW = (myship.width - 10) * (percentage / 100)
+    # draw health bar
+    colour = (0, 168, 0)
+    if percentage <= 50: colour = (168, 0, 0)
+
+    pygame.draw.rect(screen, colour, (drawX, drawY, drawW, 12), 0)
+
+    # draw border
+
+    pygame.draw.rect(screen, (0, 0 , 128), (drawX, drawY, enemyship.width - 10, 12), 2)
+
+def drawTargetLine(screen, myship, enemyship, spacestations, gameinfo):
     # x1, y1 = point at edge of screen
     # x2, y2 = point which intersects with line between ships at (x1, y2 - 200)
     # x3, y3 = arrow one co-ord
@@ -173,124 +213,231 @@ def onScreen(obj, ship, gameinfo):
         return True
     return False
 
-def renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, shipIMG, enemyshipIMG, spacestationIMG, gameinfo, animations):
+def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shipIMG, enemyshipIMG, spacestationIMG, gameinfo, animations):
+    if gameinfo.screen == "map":
+        screen.fill((0, 0, 0))
 
-    # Fill the background with white
-    screen.fill((0, 0, 0))
 
-    drawStars(screen, stars, myship, gameinfo)
+        titlefont = gameinfo.map_title_font
+        titleText = titlefont.render("Map:", False,
+                                 (255, 255, 255))
+        screen.blit(titleText, (100, 30))
+        pygame.draw.rect(screen, (255, 255, 255), (200, 30, 600, 600), 1)
 
-    # Calculate centre
+        for (x, y) in gameinfo.mapstars:
+            screen.set_at((x, y), (255, 255, 255))
+        i = -1
+        # draw each spaces station
+        for spacestation in spacestations:
+            i += 1
+            x = spacestation.x
+            y = spacestation.y
+            drawX = 200 + (x / 2000000) * 600
+            drawY = 630 - (y / 2000000) * 600
+            img = spacestation.image
+            img = pygame.transform.scale(img, (64, 64))
+            (img, spacestationcentre) = rot_center(img, spacestation.rotation, drawX, drawY)
+            screen.blit(img, spacestationcentre)
+            spacestation.centre = spacestationcentre
+            if i == gameinfo.selectedstation:
+                pygame.draw.rect(screen, (255, 0, 0), (drawX - 32, drawY - 32, 64, 64), 1)
 
-    centre = (gameinfo.width / 2, gameinfo.height / 2)
+        # draw red circle for my ship
 
-    i = -1
-    enemytotarget = False
-    targeteddrawX = 0
-    targeteddrawY = 0
-    targetedenemy = None
-    for enemyship in enemyships:
-        i += 1
-        dist = functions.distance(myship, enemyship)
-        if enemyship.visible and myship.targeted == i:
+        x = myship.x
+        y = myship.y
+        drawX = 200 + (x / 2000000) * 600
+        drawY = 630 - (y / 2000000) * 600
+        pygame.draw.circle(screen, (255, 0, 0), (drawX, drawY), 5)
+
+        pygame.draw.rect(screen, (255, 255, 255), (820, 30, 200, 50), 1)
+        warpButtonText = gameinfo.map_title_font.render("Warp Here", False, (255, 255, 255))
+        screen.blit(warpButtonText, (842, 40))
+    if gameinfo.screen == "game":
+        # Fill the background with white
+        screen.fill((0, 0, 0))
+
+        drawStars(screen, stars, myship, gameinfo)
+
+        # Calculate centre
+
+        centre = (gameinfo.width / 2, gameinfo.height / 2)
+
+        i = -1
+        enemytotarget = False
+        targeteddrawX = 0
+        targeteddrawY = 0
+        targetedenemy = None
+        targetedship = None
+        for enemyship in enemyships:
+            i += 1
+            dist = functions.distance(myship, enemyship)
+            if enemyship.visible and myship.targeted == i:
+                enemydrawX = centre[0] + enemyship.x - myship.x
+                enemydrawY = centre[1] - enemyship.y + myship.y
+                margin = 10
+                pygame.draw.rect(screen, (255, 0, 0),
+                                 (enemydrawX - enemyship.width / 2 - 5, enemydrawY - enemyship.width / 2 - 5, enemyship.width + margin,
+                enemyship.width + margin), 2)
+                targeteddrawX = enemydrawX
+                targeteddrawY = enemydrawY
+                targetedship = enemyships[myship.targeted]
+                enemytotarget = True
+                targetedenemy = enemyship
+
+            if dist > 2000: continue
+            if (not onScreen(enemyship, myship, gameinfo)):
+                drawTargetLine(screen, myship, enemyship, spacestations, gameinfo)
+                continue
+            # Draw enemy ship
             enemydrawX = centre[0] + enemyship.x - myship.x
             enemydrawY = centre[1] - enemyship.y + myship.y
-            margin = 10
-            pygame.draw.rect(screen, (255, 0, 0),
-                             (enemydrawX - enemyship.width / 2 - 5, enemydrawY - enemyship.width / 2 - 5, enemyship.width + margin,
-            enemyship.width + margin), 2)
-            targeteddrawX = enemydrawX
-            targeteddrawY = enemydrawY
-            enemytotarget = True
-            targetedenemy = enemyship
+            if enemyship.visible:
+                #screen.blit(enemyshipIMG, (enemydrawX, enemydrawY))
+                es_centre = (enemydrawX, enemydrawY)
+                (newIMG, es_centre) = rot_center(enemyship.shipIMG, enemyship.rotation, es_centre[0],
+                                                  es_centre[1])  # rotate ship appropriately
+                screen.blit(newIMG, es_centre)
+                drawEnemyHealthBar(screen, enemyship, myship, gameinfo)
+                #thisfont = pygame.font.SysFont('Fixedsys', 16)
+                #indexText = thisfont.render(str(i), False, (255, 255, 255))
+                #distanceText = thisfont.render(str(int(dist)), False, (255, 255, 255))
+                #xyText = thisfont.render("xy: (" + str(int(enemyship.x)) + "," + str(int(enemyship.y)) + ")", False, (255, 255, 255))
+                #screen.blit(indexText, (enemydrawX - 10, enemydrawY - 10))
+                #screen.blit(distanceText, (enemydrawX - 10, enemydrawY + 20))
+                #screen.blit(xyText, (enemydrawX - 10, enemydrawY + 50))
 
-        if dist > 2000: continue
-        if (not onScreen(enemyship, myship, gameinfo)):
-            drawTargetLine(screen, myship, enemyship, spacestation, gameinfo)
-            continue
-        # Draw enemy ship
-        enemydrawX = centre[0] + enemyship.x - myship.x
-        enemydrawY = centre[1] - enemyship.y + myship.y
-        if enemyship.visible:
-            #screen.blit(enemyshipIMG, (enemydrawX, enemydrawY))
-            es_centre = (enemydrawX, enemydrawY)
-            (newIMG, es_centre) = rot_center(enemyship.shipIMG, enemyship.rotation, es_centre[0],
-                                              es_centre[1])  # rotate ship appropriately
-            screen.blit(newIMG, es_centre)
-            #thisfont = pygame.font.SysFont('Fixedsys', 16)
-            #indexText = thisfont.render(str(i), False, (255, 255, 255))
-            #distanceText = thisfont.render(str(int(dist)), False, (255, 255, 255))
-            #xyText = thisfont.render("xy: (" + str(int(enemyship.x)) + "," + str(int(enemyship.y)) + ")", False, (255, 255, 255))
-            #screen.blit(indexText, (enemydrawX - 10, enemydrawY - 10))
-            #screen.blit(distanceText, (enemydrawX - 10, enemydrawY + 20))
-            #screen.blit(xyText, (enemydrawX - 10, enemydrawY + 50))
+        # Draw space station
+        for spacestation in spacestations:
+            spacestationX = centre[0] + spacestation.x - myship.x
+            spacestationY = centre[1] - spacestation.y + myship.y
+            dist = functions.distance(myship, spacestation)
+            img = spacestation.image
+            if onScreen(spacestation, myship, gameinfo): # on screen
+                (img, spacestationcentre) = rot_center(img, spacestation.rotation, spacestationX, spacestationY)
+                screen.blit(img, spacestationcentre)
+                spacestation.centre = spacestationcentre
+            elif dist < 5000: # not on screen and within short range sensor range
+                drawTargetLine(screen, myship, spacestation, spacestations, gameinfo)
 
-    # Draw space station
-    spacestationX = centre[0] + spacestation.x - myship.x
-    spacestationY = centre[1] - spacestation.y + myship.y
-    dist = functions.distance(myship, spacestation)
-    if onScreen(spacestation, myship, gameinfo): # on screen
-        (spacestationIMG, spacestationcentre) = rot_center(spacestationIMG, spacestation.rotation, spacestationX, spacestationY)
-        screen.blit(spacestationIMG, spacestationcentre)
-        spacestation.centre = spacestationcentre
-    elif dist < 5000: # not on screen and within short range sensor range
-        drawTargetLine(screen, myship, spacestation, spacestation, gameinfo)
+        # Draw my ship
 
-    # Draw ship
+        (shipIMG, newcentre) = rot_center(shipIMG, myship.rotation, centre[0], centre[1]) # rotate ship appropriately
+        if myship.alive:
+            screen.blit(shipIMG, newcentre) # draw ship
+            drawMyHealthBar(screen, myship, gameinfo)
 
-    (shipIMG, newcentre) = rot_center(shipIMG, myship.rotation, centre[0], centre[1]) # rotate ship appropriately
-    if myship.alive: screen.blit(shipIMG, newcentre)
+        # Draw text:
 
-    # Draw text:
+        pygame.font.init()  # you have to call this at the start,
+        # if you want to use this module.
+        myfont = gameinfo.myfont
+        velText = myfont.render('Velocity: ' + str(round(myship.vel,1)), False, (255, 255, 255))
+        shipXText = myfont.render('X: ' + str(round(myship.x,0)), False, (255, 255, 255))
+        shipYText = myfont.render('Y: ' + str(round(myship.y,0)), False, (255, 255, 255))
+        sectorText = myfont.render('Sector: ' + str(myship.gridsector), False, (255, 255, 255))
+        screen.blit(shipXText, (2, 540))
+        screen.blit(shipYText, (2, 560))
+        screen.blit(velText, (2, 580))
+        screen.blit(sectorText, (2, 600))
+        curfps = get_fps(gameinfo)
+        fps_text = myfont.render(str(curfps) + " FPS", 1, pygame.Color("coral"))
+        screen.blit(fps_text, (10, 5))
+        width = gameinfo.width
+        height = gameinfo.height
+        centre = (width / 2, height / 2)
+        #enemyshipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
+        #screen.blit(enemyshipIMG, (drawX, drawY))
+        #screen.set_at((int(drawX), int(drawY)), (255, 255, 0))
+        if gameinfo.redalert:
+            redalert_text = myfont.render("Red Alert", 1, (255, 0, 0))
+            screen.blit(redalert_text, (80, 5))
+        i = -1
+        for animation in animations:
+            i+=1
+            drawX = targeteddrawX
+            drawY = targeteddrawY
+            if animation.targettype == "myship":
+                drawX = centre[0]
+                drawY = centre[1]
+            if animation.type == "laser":
+                # draw red line for duration
+                if time.time() >= animation.endtime:
+                    animations.pop(i)
+                    break
+                enemydrawX = centre[0] + animation.target.x - myship.x
+                enemydrawY = centre[1] - animation.target.y + myship.y
+                pygame.draw.line(screen, animation.colour, (centre[0], centre[1]), (
+                enemydrawX - enemyships[0].width / 2 + 30,
+                enemydrawY - enemyships[0].width / 2 + 30), 4)
+            if animation.type == "explosion":
+                time_elapsed = time.time() - animation.starttime
+                if time.time() >= animation.endtime:
+                    if animation.targettype != "myship" and myship.targeted != None: enemyships.pop(enemyships[myship.targeted].index)
+                    animations.pop(i)
+                    functions.reIndexEnemies(enemyships)
+                    myship.targeted = None
+                    break
+                circlesize = 160 * (0.25 - time_elapsed)
+                pygame.draw.circle(screen, (255, 50, 50), (drawX - animation.width / 2 + 30,
+                                                          drawY - animation.width / 2 + 30),
+                                   circlesize)
+            elif animation.type == "torpedo":
+                if time.time() >= animation.endtime:
+                    if animation.firer == "myship" and targetedship != None:
+                        targetedship.hull -= 20
+                        if targetedship.hull <= 0:
+                            targetedship.explode(animations)
+                    elif animation.firer == "enemyship":
+                        myship.hull -= 20
+                        if myship.hull <= 0:
+                            myship.alive = False
+                            gameinfo.alive = False
+                            gameinfo.lastdied = time.time()
+                            myship.vel = 0
+                            myship.rotaccel = 0
+                            myship.accel = 0
+                            myship.explode(animations)
+                    animations.pop(i)
+                    break
+                if animation.firer == "myship":
+                    targetx = myship.x
+                    targety = myship.y
+                    dy = targety - animation.targetship.y
+                    dx = targetx - animation.targetship.x
+                    angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi - 90
+                    angle_rads = angle_deg * math.pi / 180
+                    completed = (time.time() - animation.starttime) / animation.duration
+                    endpoint = Point()
+                    endpoint.x = myship.x
+                    endpoint.y = myship.y
+                    startpoint = Point()
+                    startpoint.x = animation.startpos[0]
+                    startpoint.y = animation.startpos[1]
+                    dist = functions.distance(myship, animation.targetship)
+                    drawX = centre[0] + math.sin(angle_rads) * dist * completed
+                    drawY = centre[1] - math.cos(angle_rads) * dist * completed
+                    pygame.draw.circle(screen, (255, 0, 0), (drawX, drawY), 3)
+                elif animation.firer == "enemyship":
+                    targetx = myship.x
+                    targety = myship.y
+                    dy = targety - animation.startpos[1]
+                    dx = targetx - animation.startpos[0]
+                    angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi - 270
+                    angle_rads = angle_deg * math.pi / 180
+                    completed = (time.time() - animation.starttime) / animation.duration
+                    endpoint = Point()
+                    endpoint.x = myship.x
+                    endpoint.y = myship.y
+                    startpoint = Point()
+                    startpoint.x = animation.startpos[0]
+                    startpoint.y = animation.startpos[1]
+                    dist = functions.distance(myship, startpoint)
+                    enemydrawX = centre[0] + startpoint.x - myship.x
+                    enemydrawY = centre[1] - startpoint.y + myship.y
+                    drawX = enemydrawX + math.sin(angle_rads) * dist * completed
+                    drawY = enemydrawY - math.cos(angle_rads) * dist * completed
+                    pygame.draw.circle(screen, (255, 0, 0), (drawX, drawY), 3)
 
-    pygame.font.init()  # you have to call this at the start,
-    # if you want to use this module.
-    myfont = gameinfo.myfont
-    velText = myfont.render('Velocity: ' + str(round(myship.vel,1)), False, (255, 255, 255))
-    shipXText = myfont.render('X: ' + str(round(myship.x,0)), False, (255, 255, 255))
-    shipYText = myfont.render('Y: ' + str(round(myship.y,0)), False, (255, 255, 255))
-    screen.blit(shipXText, (2, 540))
-    screen.blit(shipYText, (2, 560))
-    screen.blit(velText, (2, 580))
-    curfps = get_fps(gameinfo)
-    fps_text = myfont.render(str(curfps) + " FPS", 1, pygame.Color("coral"))
-    screen.blit(fps_text, (10, 5))
-    width = gameinfo.width
-    height = gameinfo.height
-    centre = (width / 2, height / 2)
-    #enemyshipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
-    #screen.blit(enemyshipIMG, (drawX, drawY))
-    #screen.set_at((int(drawX), int(drawY)), (255, 255, 0))
-    if gameinfo.redalert:
-        redalert_text = myfont.render("Red Alert", 1, (255, 0, 0))
-        screen.blit(redalert_text, (80, 5))
-    i = -1
-    for animation in animations:
-        i+=1
-        drawX = targeteddrawX
-        drawY = targeteddrawY
-        if animation.targettype == "myship":
-            drawX = centre[0]
-            drawY = centre[1]
-        if animation.type == "laser":
-            # draw red line for duration
-            if time.time() >= animation.endtime:
-                animations.pop(i)
-                break
-            enemydrawX = centre[0] + animation.endpos[0] - myship.x
-            enemydrawY = centre[1] - animation.endpos[1] + myship.y
-            pygame.draw.line(screen, animation.colour, (centre[0], centre[1]), (
-            enemydrawX - enemyships[0].width / 2 + 30,
-            enemydrawY - enemyships[0].width / 2 + 30), 4)
-        if animation.type == "explosion":
-            time_elapsed = time.time() - animation.starttime
-            if time.time() >= animation.endtime:
-                if animation.targettype != "myship": enemyships.pop(enemyships[myship.targeted].index)
-                animations.pop(i)
-                functions.reIndexEnemies(enemyships)
-                myship.targeted = None
-                break
-            circlesize = 160 * (0.25 - time_elapsed)
-            pygame.draw.circle(screen, (255, 50, 50), (drawX - animation.width / 2 + 30,
-                                                      drawY - animation.width / 2 + 30),
-                               circlesize)
+
+

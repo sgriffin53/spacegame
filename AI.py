@@ -10,13 +10,20 @@ class Point():
         self.y = 0
         self.width = 0
 
-def enemyAITick(myship, enemyship, spacestation, animations, sounds, gameinfo):
+def enemyAITick(myship, enemyship, spacestations, animations, sounds, gameinfo):
+    if gameinfo.screen != "game": return
+    sector = myship.gridsector
+    allowedSectors = functions.allowedSectors(sector)
+    if enemyship.gridsector not in allowedSectors: return
     origstate = enemyship.state
+   # enemyship.rotaccel = 0
+   # enemyship.vel = 0
+   # return
     if enemyship.state == "retreat":
         if not myship.alive:
             enemyship.state = "patrol"
             return
-        enemyship.fireNextWeapon(myship, animations, sounds)
+        enemyship.fireNextWeapon(myship, animations, sounds, gameinfo)
         if enemyship.rotation != enemyship.patrolangle:
             enemyship.rotaccel = 120
         if abs(enemyship.patrolangle - enemyship.rotation) < 10:
@@ -49,6 +56,7 @@ def enemyAITick(myship, enemyship, spacestation, animations, sounds, gameinfo):
             enemyship.state = "patrol"
             return
         if time.time() - enemyship.attackstart >= 1.0 or enemyship.substate == "attack":
+            spacestation = spacestations[0]
             enemyship.state = "attack"
             enemyship.patrolspeed = random.randint(int(0.7 * enemyship.maxspeed), int(1 * enemyship.maxspeed))
             enemyship.patrolstart = [enemyship.x, enemyship.y]
@@ -137,7 +145,7 @@ def enemyAITick(myship, enemyship, spacestation, animations, sounds, gameinfo):
             enemyship.accel = 0
             if random.randint(0,3) == 0:
                 enemyship.state = "gotostation"
-                enemyship.startGoToStation(spacestation)
+                enemyship.startGoToStation(spacestations[random.randint(0,len(spacestations) - 1)])
     elif enemyship.state == "leavestation_rot":
         if abs(enemyship.patrolangle - enemyship.rotation) < 10:
             enemyship.rotation = enemyship.patrolangle

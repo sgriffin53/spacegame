@@ -13,6 +13,9 @@ import collision
 import functions
 import render
 import AI
+import station
+import enemies
+from station import SpaceStation
 from myship import MyShip
 from classes import Animation, Music, Sound, Weapon, GameInfo, Point, FrameInfo
 from enemies import EnemyShip
@@ -20,23 +23,17 @@ from datetime import datetime
 
 pygame.init()
 
-class SpaceStation():
-    def __init__(self):
-        self.objtype = "spacestation"
-        self.x = -1000
-        self.y = -1000
-        self.rotation = 0
-        self.width = 922
-        self.type = "Space Station"
-        self.radius = 922 / 2
-
-
-def drawHealthBar(enemyship):
-    percentage = enemyship.hull * 100 / enemyship.maxhull
-
 # create game info
 
 gameinfo = GameInfo()
+
+# draw stars
+
+for i in range(0, 200):
+    thisX = random.randint(200, 800)
+    thisY = random.randint(30, 630)
+    gameinfo.mapstars.append((thisX, thisY))
+
 
 width = 1280
 height = 720
@@ -82,33 +79,59 @@ music_playing = music[music_track]
 pygame.mixer.music.load(music_playing.file)
 pygame.mixer.music.play(-100000)
 
+# spawn space stations
 
-# create space station object
+spacestations = []
 
-spacestation = SpaceStation()
+station.spawnSpaceStations(spacestations)
+
 
 # create my ship object
 
 myship = MyShip()
 myship.weapons.append(Weapon())
+'''
 myship.weapons[0].type = "laser"
 myship.weapons[0].duration = 0.02
 myship.weapons[0].chargetime = 0.5
 myship.weapons[0].lastfired = 0
 myship.weapons[0].range = 600
-myship.respawn(spacestation)
+'''
+myship.weapons[0].type = "torpedo"
+myship.weapons[0].duration = 0.5
+myship.weapons[0].chargetime = 3
+myship.weapons[0].lastfired = 0
+myship.weapons[0].range = 600
+
+myship.weapons.append(Weapon())
+myship.weapons[1].type = "laser"
+myship.weapons[1].duration = 0.2
+myship.weapons[1].chargetime = 1
+myship.weapons[1].lastfired = 0
+myship.weapons[1].range = 600
+
+myship.respawn(spacestations[7])
 
 # spawn enemies
 
 enemyships = []
+
+enemies.spawnEnemyShips(enemyships, spacestations)
+'''
 for i in range(200):
     enemyships.append(EnemyShip())
     enemyships[i].weapons.append(Weapon())
-    enemyships[i].weapons[0].type = "laser"
-    enemyships[i].weapons[0].duration = 0.02
-    enemyships[i].weapons[0].chargetime = 1.0
+    enemyships[i].weapons[0].type = "torpedo"
+    enemyships[i].weapons[0].duration = 0.5
+    enemyships[i].weapons[0].chargetime = 3
     enemyships[i].weapons[0].lastfired = 0
     enemyships[i].weapons[0].range = 600
+    enemyships[i].weapons.append(Weapon())
+    enemyships[i].weapons[1].type = "laser"
+    enemyships[i].weapons[1].duration = 0.2
+    enemyships[i].weapons[1].chargetime = 1
+    enemyships[i].weapons[1].lastfired = 0
+    enemyships[i].weapons[1].range = 600
     #enemyships[i].x = 200
     #enemyships[i].y = 200
     enemyships[i].x = random.randint(-10000, 10000)
@@ -116,18 +139,8 @@ for i in range(200):
     enemyships[i].index = i
     enemyships[i].state = "patrol"
     enemyships[i].startPatrol()
-    enemyships[i].patroldist = 20
-    '''
-    r = random.randint(1, 2)
-    if r == 1:
-        enemyships[i].x = spacestation.x + 1000 + random.randint(-3000, 3000)
-        enemyships[i].y = spacestation.y + 1000 + random.randint(-3000, 3000)
-    else:
-        enemyships[i].x = -spacestation.x - 1000 + random.randint(-3000, 3000)
-        enemyships[i].y = spacestation.y - 1000 + random.randint(-3000, 3000)
-    '''
     enemyships[i].shipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
-
+'''
 #enemyship = EnemyShip()
 
 frameinfo = FrameInfo()
@@ -149,22 +162,41 @@ while running:
         if time_since_died >= 5:
             gameinfo.alive = True
             myship.alive = True
-            myship.respawn(spacestation)
+            myship.respawn(spacestations[0])
     time_since_key_poll = time.time() - last_keys_poll
-    keypresses.detectKeyPresses(pygame.event.get(), fullscreen, alt_pressed, enter_pressed, myship, enemyships, gameinfo, animations, sounds)
+
+    # Full screen (alt+enter)
+
+    event_get = pygame.event.get()
+    for event in event_get:
+        if event.type == pygame.KEYDOWN:
+            if (event.key == pygame.K_RALT or event.key == pygame.K_LALT):
+                alt_pressed = True
+            if event.key == pygame.K_RETURN:
+                enter_pressed = True
+    if alt_pressed and enter_pressed: # full screen with alt+enter
+        if not fullscreen:
+            screen = pygame.display.set_mode([width, height], pygame.FULLSCREEN)
+        else:
+            screen = pygame.display.set_mode([width, height])
+        fullscreen = not fullscreen
+    keys = pygame.key.get_pressed()
+    if not keys[pygame.K_RALT] and not keys[pygame.K_LALT]:
+        alt_pressed = False
+    if not keys[pygame.K_RETURN]:
+        enter_pressed = False
+
+    keypresses.detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animations, sounds, spacestations)
     cur_time = time.time()
     time_since_phys_tick = cur_time - last_phys_tick
-    physics.physicsTick(myship, enemyships, spacestation, time_since_phys_tick, gameinfo)
+    physics.physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinfo)
     last_phys_tick = cur_time
-    collision.collisionDetection(myship, enemyships, spacestation)
+    collision.collisionDetection(myship, enemyships, spacestations)
     for enemyship in enemyships:
-        AI.enemyAITick(myship,enemyship, spacestation, animations, sounds, gameinfo)
-
-    render.renderFrame(screen, stars, myship, enemyships, spacestation, frameinfo, shipIMG, enemyshipIMG, spacestationIMG, gameinfo, animations)
-    dy = myship.y - spacestation.y
-    dx = myship.x - spacestation.x
-    angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi - 90
-    gameinfo.clock.tick(165)
+        AI.enemyAITick(myship,enemyship, spacestations, animations, sounds, gameinfo)
+    myship.autoTick(gameinfo, spacestations)
+    render.renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shipIMG, enemyshipIMG, spacestationIMG, gameinfo, animations)
+    gameinfo.clock.tick(165000)
 
     # Flip the display
     pygame.display.flip()

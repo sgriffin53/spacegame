@@ -14,3 +14,29 @@ def reIndexEnemies(enemyships):
     for enemyship in enemyships:
         i+=1
         enemyship.index = i
+
+def gridSector(ship):
+    gridsize = 40000
+    galaxysize = 2000000
+    totsidegrids = galaxysize / gridsize
+    x = int(ship.x / gridsize)
+    y = int(ship.y / gridsize)
+    sector = y * totsidegrids + x
+    return int(sector)
+
+def allowedSectors(sector):
+    gridsize = 40000
+    galaxysize = 2000000
+    totsidegrids = int(galaxysize / gridsize)
+    sector = sector
+    allowed = []
+    allowed.append(sector)
+    allowed.append(sector - 1) # left
+    allowed.append(sector + 1) # right
+    allowed.append(sector - totsidegrids) # north
+    allowed.append(sector - totsidegrids - 1) # northwest
+    allowed.append(sector - totsidegrids + 1) # northeast
+    allowed.append(sector + totsidegrids) # south
+    allowed.append(sector + totsidegrids - 1) # southwest
+    allowed.append(sector + totsidegrids + 1) # southeast
+    return allowed

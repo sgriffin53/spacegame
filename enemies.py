@@ -4,7 +4,8 @@ import math
 import render
 import functions
 import pygame
-from classes import Animation, Point
+import os
+from classes import Animation, Point, Weapon
 
 class EnemyShip():
     def __init__(self):
@@ -40,6 +41,7 @@ class EnemyShip():
         self.maxspeed = 400
         self.substate = None
         self.attackstart = 0
+        self.gridsector = 0
     def startPatrol(self):
         self.totrotations = 0
         self.accel = 250
@@ -153,10 +155,48 @@ class EnemyShip():
                 # add animation
 
                 animation = Animation()
-                animation.type = "laser"
+                animation.type = weapon.type
                 animation.colour = (0, 255, 0)
                 animation.starttime = time.time()
                 animation.endtime = time.time() + weapon.duration
-                animation.startpos = (myship.x, myship.y)
-                animation.endpos = (self.x, self.y)
+                animation.startpos = (self.x, self.y)
+                animation.duration = weapon.duration
+                animation.target = self
+                if weapon.type == "laser": animation.endpos = (self.x, self.y)
+                else: animation.endpos = (myship.x, myship.y)
+                animation.targetship = self
+                animation.firer = "enemyship"
                 animations.append(animation)
+                break
+
+def spawnEnemyShips(enemyships, spacestations):
+    j = 0
+    k = -1
+    for spacestation in spacestations:
+        for i in range(100):
+            k+=1
+            enemyships.append(EnemyShip())
+            enemyships[k].weapons.append(Weapon())
+            enemyships[k].weapons[0].type = "torpedo"
+            enemyships[k].weapons[0].duration = 0.5
+            enemyships[k].weapons[0].chargetime = 3
+            enemyships[k].weapons[0].lastfired = 0
+            enemyships[k].weapons[0].range = 600
+            enemyships[k].weapons.append(Weapon())
+            enemyships[k].weapons[1].type = "laser"
+            enemyships[k].weapons[1].duration = 0.2
+            enemyships[k].weapons[1].chargetime = 1
+            enemyships[k].weapons[1].lastfired = 0
+            enemyships[k].weapons[1].range = 600
+            enemyships[k].index = k
+            enemyships[k].state = "patrol"
+            enemyships[k].shipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
+            while True:
+                enemyships[k].x = random.randint(spacestation.x - 5000, spacestation.x + 5000)
+                enemyships[k].y = random.randint(spacestation.y - 5000, spacestation.y + 5000)
+                dist = functions.distance(spacestation, enemyships[k])
+                if dist > spacestation.width / 2 + 50:
+                   break
+
+            enemyships[k].startPatrol()
+        j += 1

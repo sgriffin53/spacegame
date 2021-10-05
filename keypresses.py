@@ -1,7 +1,44 @@
 import pygame
 import sys
+import functions
+from classes import Point
 
-def detectKeyPresses(event_get, fullscreen, alt_pressed, enter_pressed, myship, enemyships, gameinfo, animations, sounds):
+def handleMouseButtonUp(gameinfo, myship, mousepos, spacestations):
+    if gameinfo.screen == "map":
+        onmap = False
+        if mousepos[0] < 200 or mousepos[1] < 30 or mousepos[0] > 800 or mousepos[1] > 630:
+            onmap = False
+        else:
+            onmap = True
+        onWarpButton = False
+        if mousepos[0] < 842 or mousepos[1] < 30 or mousepos[0] > 1042 or mousepos[1] > 80:
+            onWarpButton = False
+        else:
+            onWarpButton = True
+        if onWarpButton and gameinfo.selectedstation != None:
+            myship.autostate = "warp_rot"
+            myship.warping = True
+            myship.startWarpRot(spacestations[gameinfo.selectedstation])
+            gameinfo.screen = "game"
+        if onmap:
+            i = -1
+            for spacestation in spacestations:
+                i += 1
+                drawX = 200 + (spacestation.x / 2000000) * 600
+                drawY = 630 - (spacestation.y / 2000000) * 600
+                point1 = Point()
+                point1.x = drawX
+                point1.y = drawY
+                point2 = Point()
+                point2.x = mousepos[0]
+                point2.y = mousepos[1]
+                dist = functions.distance(point1, point2)
+                if dist <= 25:
+                    gameinfo.selectedstation = i
+                    return
+            gameinfo.selectedstation = None
+
+def detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animations, sounds, spacestations):
     for event in event_get:
         if event.type == pygame.QUIT:
             running = False
@@ -12,13 +49,15 @@ def detectKeyPresses(event_get, fullscreen, alt_pressed, enter_pressed, myship, 
             else:
                 screen = pygame.display.set_mode([width, height])
             fullscreen = not fullscreen
+        if event.type == pygame.MOUSEBUTTONUP:
+            pos = pygame.mouse.get_pos()
+            handleMouseButtonUp(gameinfo, myship, pos, spacestations)
         if event.type == pygame.KEYDOWN:
-
-            if (event.key == pygame.K_RALT or event.key == pygame.K_LALT):
-                alt_pressed = True
-            if event.key == pygame.K_RETURN:
-                enter_pressed = True
             if gameinfo.alive:
+                if event.key == pygame.K_m:
+                    newscreen = "game"
+                    if gameinfo.screen == "game": newscreen = "map"
+                    gameinfo.screen = newscreen
                 if event.key == pygame.K_t:
                     myship.nextTarget(enemyships)
                 if event.key == pygame.K_c:
@@ -34,28 +73,17 @@ def detectKeyPresses(event_get, fullscreen, alt_pressed, enter_pressed, myship, 
                 if event.key == pygame.K_SPACE:
                    if myship.targeted != None:
                         myship.fireNextWeapon(enemyships, animations, sounds)
-        # set alt and enter flags if the keys are pressed
-    if alt_pressed and enter_pressed: # full screen with alt+enter
-        if not fullscreen:
-            screen = pygame.display.set_mode([width, height], pygame.FULLSCREEN)
-        else:
-            screen = pygame.display.set_mode([width, height])
-        fullscreen = not fullscreen
 
     keys = pygame.key.get_pressed()  # checking pressed keys
 
     # unset alt and enter flags if they're not pressed
 
-    if not keys[pygame.K_RALT] and not keys[pygame.K_LALT]:
-        alt_pressed = False
-    if not keys[pygame.K_RETURN]:
-        enter_pressed = False
-    if gameinfo.alive:
+    if gameinfo.alive and not myship.warping:
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             myship.rotaccel = -120
         elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             myship.rotaccel = 120
-        else:
+        elif not myship.warping:
             myship.rotaccel = 0
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             myship.accel = 250
