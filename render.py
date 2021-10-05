@@ -213,6 +213,26 @@ def onScreen(obj, ship, gameinfo):
         return True
     return False
 
+def drawMyShields(screen, myship, gameinfo):
+    myship_rotation_rads = (360 - myship.rotation) * math.pi / 180
+    start_ang = 43
+    start_ang_rads = start_ang * math.pi / 180 + myship_rotation_rads
+    end_ang_rads = (start_ang + 88) * math.pi / 180 + myship_rotation_rads
+    centre = (gameinfo.width / 2, gameinfo.height / 2)
+    margin = 10
+    # draw all four shields
+    n = -1
+    for i in range(45, 403, 90):
+        n += 1
+        start_ang_rads = (i + 5) * math.pi / 180 + myship_rotation_rads
+        end_ang_rads = (i + 85) * math.pi / 180 + myship_rotation_rads
+        colour = myship.shields[n].charge * 255 / myship.shields[n].maxcharge
+        if colour < 0: colour = 0
+        pygame.draw.arc(screen, (0, colour, 0), (
+        centre[0] - myship.width / 2 - margin, centre[1] - myship.width / 2 - margin, myship.width + margin * 2,
+        myship.width + margin * 2), start_ang_rads, end_ang_rads, 2)
+
+
 def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shipIMG, enemyshipIMG, spacestationIMG, gameinfo, animations):
     if gameinfo.screen == "map":
         screen.fill((0, 0, 0))
@@ -326,6 +346,7 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shi
         if myship.alive:
             screen.blit(shipIMG, newcentre) # draw ship
             drawMyHealthBar(screen, myship, gameinfo)
+            drawMyShields(screen, myship, gameinfo)
 
         # Draw text:
 
@@ -363,13 +384,56 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shi
             if animation.type == "laser":
                 # draw red line for duration
                 if time.time() >= animation.endtime:
+                    if animation.firer == "enemyship":
+                        angle = 360 - (animation.angle) + 90 + myship.rotation
+                        if angle < 0: angle += 360
+                        if angle >= 360: angle -= 360
+                        shieldnum = int(((angle + 45)/ 360) * 4)
+                        if angle <= 45: shieldnum = 0
+                        if angle >= 315: shieldnum = 0
+                        if shieldnum >= 4: shieldnum = 3
+                        shieldcharge = myship.shields[shieldnum].charge
+                        if shieldcharge <= 0:
+                            myship.hull -= 10
+                            if myship.hull <= 0:
+                                myship.alive = False
+                                gameinfo.alive = False
+                                gameinfo.lastdied = time.time()
+                                myship.vel = 0
+                                myship.rotaccel = 0
+                                myship.accel = 0
+                                myship.explode(animations)
+                        else:
+                            myship.shields[shieldnum].charge -= 20
                     animations.pop(i)
                     break
-                enemydrawX = centre[0] + animation.target.x - myship.x
-                enemydrawY = centre[1] - animation.target.y + myship.y
-                pygame.draw.line(screen, animation.colour, (centre[0], centre[1]), (
-                enemydrawX - enemyships[0].width / 2 + 30,
-                enemydrawY - enemyships[0].width / 2 + 30), 4)
+                if animation.firer == "myship":
+
+                    enemydrawX = centre[0] + animation.target.x - myship.x
+                    enemydrawY = centre[1] - animation.target.y + myship.y
+                    pygame.draw.line(screen, animation.colour, (centre[0], centre[1]), (
+                    enemydrawX - enemyships[0].width / 2 + 30,
+                    enemydrawY - enemyships[0].width / 2 + 30), 4)
+                elif animation.firer == "enemyship":
+                    enemydrawX = centre[0] + animation.target.x - myship.x
+                    enemydrawY = centre[1] - animation.target.y + myship.y
+                    angle_deg = animation.angle - 180
+                    angle_rads = angle_deg * math.pi / 180
+                    lineendX = centre[0] + math.cos(angle_rads) * (myship.width / 2 + 10)
+                    lineendY = centre[1] + math.sin(angle_rads) * (myship.width / 2 + 10)
+                    angle = 360 - (animation.angle) + 90 + myship.rotation
+
+                    if angle < 0: angle += 360
+                    if angle >= 360: angle -= 360
+                    shieldnum = int(((angle + 45) / 360) * 4)
+                    if shieldnum >= 4: shieldnum = 3
+                    if myship.shields[shieldnum].charge <= 0:
+                        lineendX = centre[0]
+                        lineendY = centre[1]
+                    pygame.draw.line(screen, animation.colour, (lineendX, lineendY), (
+                    enemydrawX - enemyships[0].width / 2 + 30,
+                    enemydrawY - enemyships[0].width / 2 + 30), 4)
+
             if animation.type == "explosion":
                 time_elapsed = time.time() - animation.starttime
                 if time.time() >= animation.endtime:
@@ -389,15 +453,27 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shi
                         if targetedship.hull <= 0:
                             targetedship.explode(animations)
                     elif animation.firer == "enemyship":
-                        myship.hull -= 20
-                        if myship.hull <= 0:
-                            myship.alive = False
-                            gameinfo.alive = False
-                            gameinfo.lastdied = time.time()
-                            myship.vel = 0
-                            myship.rotaccel = 0
-                            myship.accel = 0
-                            myship.explode(animations)
+                        angle = 360 - (animation.angle) + 90 + myship.rotation
+                        if angle < 0: angle += 360
+                        if angle >= 360: angle -= 360
+                        shieldnum = int(((angle + 45)/ 360) * 4)
+                        if shieldnum >= 4: shieldnum = 3
+                        if angle <= 45: shieldnum = 0
+                        if angle >= 315: shieldnum = 0
+                        print(shieldnum)
+                        shieldcharge = myship.shields[shieldnum].charge
+                        if shieldcharge <= 0:
+                            myship.hull -= 20
+                            if myship.hull <= 0:
+                                myship.alive = False
+                                gameinfo.alive = False
+                                gameinfo.lastdied = time.time()
+                                myship.vel = 0
+                                myship.rotaccel = 0
+                                myship.accel = 0
+                                myship.explode(animations)
+                        else:
+                            myship.shields[shieldnum].charge -= 20
                     animations.pop(i)
                     break
                 if animation.firer == "myship":

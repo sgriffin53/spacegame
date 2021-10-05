@@ -17,7 +17,7 @@ import station
 import enemies
 from station import SpaceStation
 from myship import MyShip
-from classes import Animation, Music, Sound, Weapon, GameInfo, Point, FrameInfo
+from classes import Animation, Music, Sound, Weapon, GameInfo, Point, FrameInfo, Shield
 from enemies import EnemyShip
 from datetime import datetime
 
@@ -109,6 +109,12 @@ myship.weapons[1].duration = 0.2
 myship.weapons[1].chargetime = 1
 myship.weapons[1].lastfired = 0
 myship.weapons[1].range = 600
+
+myship.shields.append(Shield())
+myship.shields.append(Shield())
+myship.shields.append(Shield())
+myship.shields.append(Shield())
+
 
 myship.respawn(spacestations[7])
 

@@ -142,19 +142,15 @@ class EnemyShip():
                 pygame.mixer.Sound.play(sounds[0].mixer)
                 # fired weapon on target
 
-                myship.hull -= 10
-                if myship.hull <= 0:
-                    myship.alive = False
-                    gameinfo.alive = False
-                    gameinfo.lastdied = time.time()
-                    myship.vel = 0
-                    myship.rotaccel = 0
-                    myship.accel = 0
-                    myship.explode(animations)
                 myship.lastattacker = self.index
                 # add animation
-
+                targetx = myship.x
+                targety = myship.y
+                dy = targety - self.y
+                dx = targetx - self.x
+                angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi
                 animation = Animation()
+                animation.angle = angle_deg
                 animation.type = weapon.type
                 animation.colour = (0, 255, 0)
                 animation.starttime = time.time()
@@ -176,18 +172,20 @@ def spawnEnemyShips(enemyships, spacestations):
         for i in range(100):
             k+=1
             enemyships.append(EnemyShip())
+            '''
             enemyships[k].weapons.append(Weapon())
             enemyships[k].weapons[0].type = "torpedo"
             enemyships[k].weapons[0].duration = 0.5
             enemyships[k].weapons[0].chargetime = 3
             enemyships[k].weapons[0].lastfired = 0
             enemyships[k].weapons[0].range = 600
+            '''
             enemyships[k].weapons.append(Weapon())
-            enemyships[k].weapons[1].type = "laser"
-            enemyships[k].weapons[1].duration = 0.2
-            enemyships[k].weapons[1].chargetime = 1
-            enemyships[k].weapons[1].lastfired = 0
-            enemyships[k].weapons[1].range = 600
+            enemyships[k].weapons[0].type = "laser"
+            enemyships[k].weapons[0].duration = 0.2
+            enemyships[k].weapons[0].chargetime = 1
+            enemyships[k].weapons[0].lastfired = 0
+            enemyships[k].weapons[0].range = 600
             enemyships[k].index = k
             enemyships[k].state = "patrol"
             enemyships[k].shipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()

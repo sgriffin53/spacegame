@@ -16,8 +16,15 @@ def objectCollisionDetection(object1, object2):
     return False
 
 def collisionDetection(myship, enemyships, spacestations):
+    allowedSectors = myship.allowedsectors
     for enemyship in enemyships:
+        enemyshipsector = enemyship.gridsector
+        if enemyshipsector not in allowedSectors:
+            continue
         for spacestation in spacestations:
+            spacestationsector = spacestation.gridsector
+            if spacestationsector not in allowedSectors:
+                continue
             if objectCollisionDetection(enemyship, spacestation):
                 enemyship.vel = 0
                 enemyship.accel = 0
@@ -28,6 +35,9 @@ def collisionDetection(myship, enemyships, spacestations):
                 enemyship.startLeaveStation_rot()
     if not myship.warping:
         for spacestation in spacestations:
+            spacestationsector = spacestation.gridsector
+            if spacestationsector not in allowedSectors:
+                continue
             if objectCollisionDetection(myship, spacestation):
                 myship.vel = 0
                 myship.accel = 0

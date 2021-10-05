@@ -36,6 +36,7 @@ class MyShip():
         self.warpstart = [0,0]
         self.gridsector = 0
         self.allowedsectors = []
+        self.shields = []
     def respawn(self, spacestation):
         dist = spacestation.width / 2 + 75
         angle = random.randint(0, 360)

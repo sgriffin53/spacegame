@@ -4,7 +4,7 @@ import functions
 def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinfo):
     if gameinfo.screen == "game":
         sector = myship.gridsector
-        allowedSectors = functions.allowedSectors(sector)
+        allowedSectors = myship.allowedsectors
 
         timefactor = gameinfo.timefactor
         # Calculate new position
@@ -18,12 +18,15 @@ def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinf
             if myship.vel <= 0: myship.vel = 0
         myship.lastx = myship.x
         myship.lasty = myship.y
+        lastsector = myship.gridsector
         myship.x += (myship.vel) * math.sin(rotation_rads) * time_since_phys_tick * timefactor
         myship.y += (myship.vel) * math.cos(rotation_rads) * time_since_phys_tick * timefactor
         myship.gridsector = functions.gridSector(myship)
+        if myship.gridsector != lastsector or myship.allowedsectors == []: myship.allowedsectors = functions.allowedSectors(myship.gridsector)
         # enemy ships
 
         for enemyship in enemyships:
+            enemyship.gridsector = functions.gridSector(enemyship)
             enemysector = enemyship.gridsector
             if enemysector not in allowedSectors: continue
             enemyship.rotation += enemyship.rotaccel * time_since_phys_tick * timefactor
@@ -36,7 +39,6 @@ def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinf
             if enemyship.vel <= 0: enemyship.vel = 0
             enemyship.lastx = enemyship.x
             enemyship.lasty = enemyship.y
-            enemyship.gridsector = functions.gridSector(enemyship)
             enemyship.x += (enemyship.vel) * math.sin(rotation_rads) * time_since_phys_tick * timefactor
             enemyship.y += (enemyship.vel) * math.cos(rotation_rads) * time_since_phys_tick * timefactor
 

@@ -14,6 +14,7 @@ class Animation():
         self.targetship = None
         self.firer = None
         self.target = None
+        self.angle = 0
 
 
 class Music():
@@ -25,6 +26,10 @@ class Sound():
         self.file = None
         self.mixer = None
 
+class Shield():
+    def __init__(self):
+        self.maxcharge = 100
+        self.charge = 100
 
 class Weapon():
     def __init__(self):
