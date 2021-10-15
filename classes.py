@@ -1,5 +1,45 @@
 
 import pygame
+import os
+import sys
+import functions
+
+class Button():
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.width = 0
+        self.height = 0
+        self.textx = 0
+        self.texty = 0
+        self.text = ""
+        self.textcol = (0, 0, 0)
+        self.font = pygame.font.SysFont('Calibri', 34 )
+        self.image = pygame.image.load(os.path.join('images','GUI','Button1.png'))
+        self.screen = ""
+        self.onclick = ""
+    def render(self, screen, gameinfo):
+        self.image = pygame.transform.scale(self.image, (self.width, self.height))
+        screen.blit(self.image, (self.x, self.y))
+        buttonText = self.font.render(self.text, False,
+                                     self.textcol)
+        screen.blit(buttonText, (self.x + self.textx, self.y + self.texty))
+    def onClick(self, gameinfo, myship, enemyships, spacestations, music):
+        if self.onclick == "startgame":
+            functions.startGame(gameinfo, myship, enemyships, spacestations, music)
+        if self.onclick == "exit":
+            sys.exit()
+        if self.onclick == "warpclick":
+            if gameinfo.selectedstation == None: return
+            myship.autostate = "warp_rot"
+            myship.warping = True
+            myship.startWarpRot(spacestations[gameinfo.selectedstation])
+            gameinfo.screen = "game"
+        if self.onclick == "creditsclick":
+            gameinfo.screen = "credits"
+        if self.onclick == "creditsbackclick":
+            gameinfo.screen = "mainmenu"
+
 
 class Animation():
     def __init__(self):
@@ -51,6 +91,7 @@ class GameInfo():
         self.screen = "game"
         self.mapstars = []
         self.selectedstation = None
+        self.buttons = []
 
 class Point():
     def __init__(self):

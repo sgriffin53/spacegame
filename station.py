@@ -12,6 +12,7 @@ class SpaceStation():
         self.type = "Space Station"
         self.radius = 922 / 2
         self.image = None
+        self.index = -1
         self.gridsector = 0
 
 def spawnSpaceStations(spacestations):
@@ -31,47 +32,54 @@ def spawnSpaceStations(spacestations):
     spacestations[i].x = 480000
     spacestations[i].y = 220000
     spacestations[i].image = stationIMG
+    spacestations[i].index = i
     spacestations[i].gridsector = functions.gridSector(spacestations[i])
     i = 1
     spacestations.append(SpaceStation())
     spacestations[i].x = 280000
     spacestations[i].y = 660000
     spacestations[i].image = stationIMG
+    spacestations[i].index = i
     spacestations[i].gridsector = functions.gridSector(spacestations[i])
     i = 2
     spacestations.append(SpaceStation())
     spacestations[i].x = 280000
     spacestations[i].y = 1200000
     spacestations[i].image = stationIMG
+    spacestations[i].index = i
     spacestations[i].gridsector = functions.gridSector(spacestations[i])
     i = 3
     spacestations.append(SpaceStation())
     spacestations[i].x = 480000
     spacestations[i].y = 1700000
     spacestations[i].image = stationIMG
+    spacestations[i].index = i
     spacestations[i].gridsector = functions.gridSector(spacestations[i])
     i = 4
     spacestations.append(SpaceStation())
     spacestations[i].x = 1200000
     spacestations[i].y = 220000
     spacestations[i].image = stationIMG
+    spacestations[i].index = i
     spacestations[i].gridsector = functions.gridSector(spacestations[i])
     i = 5
     spacestations.append(SpaceStation())
     spacestations[i].x = 1500000
     spacestations[i].y = 660000
     spacestations[i].image = stationIMG
+    spacestations[i].index = i
     spacestations[i].gridsector = functions.gridSector(spacestations[i])
     i = 6
     spacestations.append(SpaceStation())
     spacestations[i].x = 1500000
     spacestations[i].y = 1200000
     spacestations[i].image = stationIMG
+    spacestations[i].index = i
     spacestations[i].gridsector = functions.gridSector(spacestations[i])
     i = 7
     spacestations.append(SpaceStation())
     spacestations[i].x = 1200000
     spacestations[i].y = 1700000
     spacestations[i].image = stationIMG
+    spacestations[i].index = i
     spacestations[i].gridsector = functions.gridSector(spacestations[i])
-    pass

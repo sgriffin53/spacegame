@@ -18,7 +18,7 @@ import station
 import enemies
 from station import SpaceStation
 from myship import MyShip
-from classes import Animation, Music, Sound, Weapon, GameInfo, Point, FrameInfo, Shield
+from classes import Animation, Music, Sound, Weapon, GameInfo, Point, FrameInfo, Shield, Button
 from enemies import EnemyShip
 from datetime import datetime
 
@@ -73,12 +73,6 @@ sounds.append(Sound())
 i = len(sounds) - 1
 sounds[i].file = os.path.join('sounds', 'Laser-Shot-1.mp3')
 sounds[i].mixer = pygame.mixer.Sound(sounds[i].file)
-
-
-music_track = random.randint(0,len(music) - 1)
-music_playing = music[music_track]
-pygame.mixer.music.load(music_playing.file)
-pygame.mixer.music.play(-100000)
 
 # spawn space stations
 
@@ -162,16 +156,121 @@ enter_pressed = False
 last_phys_tick = time.time()
 last_keys_poll = time.time()
 
+gameinfo.screen = "mainmenu"
+
+images = []
+images.append(pygame.image.load(os.path.join('images','GUI','bg.png')))
+images.append(pygame.image.load(os.path.join('images','GUI','Window.png')))
+
+startButton = Button()
+startButton.x = 500
+startButton.y = 200
+startButton.width = 300
+startButton.height = 50
+startButton.textx = 80
+startButton.texty = 8
+startButton.textcol = (255, 255, 255)
+startButton.text = "Start Game"
+startButton.screen = "mainmenu"
+startButton.onclick = "startgame"
+startButton.render(screen, gameinfo)
+gameinfo.buttons.append(startButton)
+
+tutorialButton = Button()
+tutorialButton.x = 500
+tutorialButton.y = 280
+tutorialButton.width = 300
+tutorialButton.height = 50
+tutorialButton.textx = 100
+tutorialButton.texty = 8
+tutorialButton.textcol = (255, 255, 255)
+tutorialButton.text = "Tutorial"
+tutorialButton.screen = "mainmenu"
+tutorialButton.onclick = None
+tutorialButton.render(screen, gameinfo)
+gameinfo.buttons.append(tutorialButton)
+
+creditsButton = Button()
+creditsButton.x = 500
+creditsButton.y = 360
+creditsButton.width = 300
+creditsButton.height = 50
+creditsButton.textx = 105
+creditsButton.texty = 8
+creditsButton.textcol = (255, 255, 255)
+creditsButton.text = "Credits"
+creditsButton.screen = "mainmenu"
+creditsButton.onclick = "creditsclick"
+creditsButton.render(screen, gameinfo)
+gameinfo.buttons.append(creditsButton)
+
+exitButton = Button()
+exitButton.x = 500
+exitButton.y = 440
+exitButton.width = 300
+exitButton.height = 50
+exitButton.textx = 125
+exitButton.texty = 8
+exitButton.textcol = (255, 255, 255)
+exitButton.text = "Exit"
+exitButton.screen = "mainmenu"
+exitButton.onclick = "exit"
+exitButton.render(screen, gameinfo)
+gameinfo.buttons.append(exitButton)
+
+warpButton = Button()
+warpButton.x = 830
+warpButton.y = 120
+warpButton.width = 200
+warpButton.height = 50
+warpButton.textx = 25
+warpButton.texty = 8
+warpButton.textcol = (255, 255, 255)
+warpButton.text = "Warp Here"
+warpButton.screen = "map"
+warpButton.onclick = "warpclick"
+warpButton.render(screen, gameinfo)
+gameinfo.buttons.append(warpButton)
+
+creditsbackButton = Button()
+creditsbackButton.x = 520
+creditsbackButton.y = 520
+creditsbackButton.width = 300
+creditsbackButton.height = 50
+creditsbackButton.textx = 55
+creditsbackButton.texty = 8
+creditsbackButton.textcol = (255, 255, 255)
+creditsbackButton.text = "Back to Menu"
+creditsbackButton.screen = "credits"
+creditsbackButton.onclick = "creditsbackclick"
+creditsbackButton.render(screen, gameinfo)
+gameinfo.buttons.append(creditsbackButton)
+
+repairButton = Button()
+repairButton.x = 90
+repairButton.y = 180
+repairButton.width = 200
+repairButton.height = 50
+repairButton.textx = 55
+repairButton.texty = 8
+repairButton.textcol = (255, 255, 255)
+repairButton.text = "Repair"
+repairButton.screen = "stationmenu"
+repairButton.onclick = "repairclick"
+repairButton.render(screen, gameinfo)
+gameinfo.buttons.append(repairButton)
+
 # main game loop
 
 while running:
     i+= 1
     if not gameinfo.alive:
+        # respawn if we're dead and 5 seconds have passed
         time_since_died = time.time() - gameinfo.lastdied
         if time_since_died >= 5:
             gameinfo.alive = True
             myship.alive = True
-            myship.respawn(spacestations[0])
+            myship.respawn(myship.closestStation(spacestations))
     time_since_key_poll = time.time() - last_keys_poll
 
     # Full screen (alt+enter)
@@ -195,7 +294,7 @@ while running:
     if not keys[pygame.K_RETURN]:
         enter_pressed = False
 
-    keypresses.detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animations, sounds, spacestations)
+    keypresses.detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animations, sounds, spacestations, music)
     cur_time = time.time()
     time_since_phys_tick = cur_time - last_phys_tick
     physics.physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinfo)
@@ -204,7 +303,7 @@ while running:
     for enemyship in enemyships:
         AI.enemyAITick(myship,enemyship, spacestations, animations, sounds, gameinfo)
     myship.autoTick(gameinfo, spacestations)
-    render.renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shipIMG, enemyshipIMG, spacestationIMG, gameinfo, animations)
+    render.renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, images, shipIMG, enemyshipIMG, spacestationIMG, gameinfo, animations)
     gameinfo.clock.tick(165000)
 
     # Flip the display

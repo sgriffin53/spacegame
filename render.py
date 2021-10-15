@@ -3,7 +3,7 @@ import functions
 import pygame
 import math
 import random
-from classes import Point
+from classes import Point, Button
 
 def drawStars(screen, stars, myship, gameinfo):
     for i in range(0,len(stars)):
@@ -263,7 +263,58 @@ def drawEnemyShields(screen, enemyship, myship, gameinfo):
         enemyship.width + margin * 2), start_ang_rads, end_ang_rads, 2)
 
 
-def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shipIMG, enemyshipIMG, spacestationIMG, gameinfo, animations):
+def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, images, shipIMG, enemyshipIMG, spacestationIMG, gameinfo, animations):
+    if gameinfo.screen == "stationmenu":
+        screen.fill((0, 0, 0))
+        bg = images[1]
+        bg = pygame.transform.scale(bg, (gameinfo.width, gameinfo.height))
+        screen.blit(bg, (0, 0))
+        titlefont = pygame.font.SysFont('Calibri', 60, 1)
+        titleText = titlefont.render("Space station " + str(myship.closestStation(spacestations).index), False,
+                                     (255, 255, 255))
+        screen.blit(titleText, (460, 30))
+        menulabelfont = pygame.font.SysFont('Calibri', 30)
+        repaircost = (myship.maxhull - myship.hull) * 0.5
+        repaircost += (myship.shields[0].maxcharge - myship.shields[0].charge) * 0.2
+        repaircost += (myship.shields[1].maxcharge - myship.shields[1].charge) * 0.2
+        repaircost += (myship.shields[2].maxcharge - myship.shields[2].charge) * 0.2
+        repaircost += (myship.shields[3].maxcharge - myship.shields[3].charge) * 0.2
+        repaircost = int(repaircost)
+        repairText = menulabelfont.render("Repair Ship (Cost " + str(repaircost) + ")", False, (255, 255, 255))
+        screen.blit(repairText, (50, 130))
+    if gameinfo.screen == "mainmenu":
+        screen.fill((0, 0, 0))
+        bg = images[0]
+        bg = pygame.transform.scale(bg, (gameinfo.width, gameinfo.height))
+        screen.blit(bg, (0, 0))
+        titlefont = pygame.font.SysFont('Calibri Bold', 70 )
+        titleText = titlefont.render("Space Shooter Game", False,
+                                 (255, 255, 255))
+        screen.blit(titleText, (gameinfo.width / 2 - 230, 30))
+    if gameinfo.screen == "credits":
+        screen.fill((0, 0, 0))
+        bg = images[0]
+        bg = pygame.transform.scale(bg, (gameinfo.width, gameinfo.height))
+        screen.blit(bg, (0, 0))
+        titlefont = pygame.font.SysFont('Calibri', 70, 1)
+        titleText = titlefont.render("Credits", False,
+                                     (255, 255, 255))
+        screen.blit(titleText, (560, 30))
+        creditsfont = pygame.font.SysFont('Calibri', 25, 1)
+        createdByText = creditsfont.render("Created by: Steve Griffin", False, (255, 255, 255))
+        screen.blit(createdByText, (525, 150))
+        musicByText = creditsfont.render("Music and sound effects by: Eric Matyas (www.soundimage.com)", False, (255, 255, 255))
+        screen.blit(musicByText, (350, 220))
+        artByText = creditsfont.render("Art by:", False, (255, 255, 255))
+        screen.blit(artByText, (420, 290))
+        millionthVectorText = creditsfont.render("MillionthVector (http://millionthvector.blogspot.de)", False, (255, 255, 255))
+        screen.blit(millionthVectorText, (495, 290))
+        eikesterText = creditsfont.render("Eikester", False, (255, 255, 255))
+        screen.blit(eikesterText, (495, 330))
+        craftpixText = creditsfont.render("CraftPix.net 2D Game Assets", False, (255, 255, 255))
+        screen.blit(craftpixText, (495, 370))
+        attributionText = creditsfont.render("See attribution.txt for full attribution information.", False, (255, 255, 255))
+        screen.blit(attributionText, (440, 440))
     if gameinfo.screen == "map":
         screen.fill((0, 0, 0))
 
@@ -277,7 +328,7 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shi
         for (x, y) in gameinfo.mapstars:
             screen.set_at((x, y), (255, 255, 255))
         i = -1
-        # draw each spaces station
+        # draw each space station
         for spacestation in spacestations:
             i += 1
             x = spacestation.x
@@ -299,10 +350,35 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shi
         drawX = 200 + (x / 2000000) * 600
         drawY = 630 - (y / 2000000) * 600
         pygame.draw.circle(screen, (255, 0, 0), (drawX, drawY), 5)
+        dist = 0
+        if gameinfo.selectedstation != None:
+            dist = functions.distance(spacestations[gameinfo.selectedstation], myship)
+        else:
+            dist = 0
+        thisfont = pygame.font.SysFont('Calibri', 24 )
+        noStationText = stationInfoText = thisfont.render("No Station Selected", False,
+                                 (255, 255, 255))
+        stationInfoText = thisfont.render("Space Station " + str(gameinfo.selectedstation), False,
+                                 (255, 255, 255))
+        dispdist = int(dist)
+        if (dist >= 1000000): dispdist = str(round(dist / 1000000,2)) + "M"
+        elif (dist >= 1000): dispdist = str(round(dist / 1000,2)) + "K"
+        distanceText = thisfont.render("Distance: " + str(dispdist) + " km", False, (255, 255, 255))
+        warptime = dist / 200000
+        disptime = warptime
+        if disptime < 1:
+            disptime = round(disptime, 5)
+        else:
+            disptime = int(disptime)
+        timeText = thisfont.render("Warp Time: " + str(disptime) + " seconds", False, (255, 255, 255))
+        if gameinfo.selectedstation != None:
+            screen.blit(stationInfoText, (830, 30))
+            screen.blit(distanceText, (830, 60))
+            screen.blit(timeText, (830, 90))
+        else:
+            screen.blit(noStationText, (830, 30))
 
-        pygame.draw.rect(screen, (255, 255, 255), (820, 30, 200, 50), 1)
-        warpButtonText = gameinfo.map_title_font.render("Warp Here", False, (255, 255, 255))
-        screen.blit(warpButtonText, (842, 40))
+
     if gameinfo.screen == "game":
         # Fill the background with white
         screen.fill((0, 0, 0))
@@ -369,6 +445,8 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shi
                 (img, spacestationcentre) = rot_center(img, spacestation.rotation, spacestationX, spacestationY)
                 screen.blit(img, spacestationcentre)
                 spacestation.centre = spacestationcentre
+            if dist < 3000:
+                pygame.draw.circle(screen, (0, 0, 255), (spacestationX, spacestationY), spacestation.radius + 400, 1)
             elif dist < 5000: # not on screen and within short range sensor range
                 drawTargetLine(screen, myship, spacestation, spacestations, gameinfo)
 
@@ -595,6 +673,8 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, shi
                     drawX = enemydrawX + math.sin(angle_rads) * dist * completed
                     drawY = enemydrawY - math.cos(angle_rads) * dist * completed
                     pygame.draw.circle(screen, (255, 0, 0), (drawX, drawY), 3)
-
+    for button in gameinfo.buttons:
+        if button.screen == gameinfo.screen:
+            button.render(screen, gameinfo)
 
 

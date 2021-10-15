@@ -109,6 +109,17 @@ class EnemyShip():
         #elif r == 2:
             #self.patroldist -= random.randint(20, 50)
         self.patrolspeed = random.randint(120, 300)
+    def closestStation(self, spacestations):
+        closestdist = math.inf
+        closeststation = None
+        i = -1
+        for station in spacestations:
+            i += 1
+            dist = functions.distance(station, self)
+            if dist < closestdist:
+                closestdist = dist
+                closeststation = station
+        return closeststation
     def startRetreat(self, myship):
         self.patrolspeed = self.maxspeed
         self.patrolstart = [self.x, self.y]
@@ -132,11 +143,13 @@ class EnemyShip():
         animation.width = self.width
         animations.append(animation)
 
-    def fireNextWeapon(self, myship, animations, sounds, gameinfo):
+    def fireNextWeapon(self, myship, animations, sounds, gameinfo, spacestations):
         dist = functions.distance(self, myship)
         for weapon in self.weapons:
             if dist > weapon.range: continue
-            charged = False
+            closeststation = self.closestStation(spacestations)
+            if functions.distance(self, closeststation) <= closeststation.width / 2 + 400: continue
+            if functions.distance(myship, closeststation) <= closeststation.width / 2 + 400: continue
             if time.time() - weapon.lastfired >= weapon.chargetime:
                 # weapon is charged
 

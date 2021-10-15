@@ -22,7 +22,7 @@ def enemyAITick(myship, enemyship, spacestations, animations, sounds, gameinfo):
         if not myship.alive:
             enemyship.state = "patrol"
             return
-        enemyship.fireNextWeapon(myship, animations, sounds, gameinfo)
+        enemyship.fireNextWeapon(myship, animations, sounds, gameinfo, spacestations)
         if enemyship.rotation != enemyship.patrolangle:
             enemyship.rotaccel = 120
         if abs(enemyship.patrolangle - enemyship.rotation) < 10:
@@ -80,7 +80,7 @@ def enemyAITick(myship, enemyship, spacestations, animations, sounds, gameinfo):
         if not myship.alive:
             enemyship.state = "patrol"
             return
-        enemyship.fireNextWeapon(myship, animations, sounds, gameinfo)
+        enemyship.fireNextWeapon(myship, animations, sounds, gameinfo, spacestations)
         #if enemyship.vel == 0 and enemyship.accel == 0:
         #    enemyship.startPatrol()
         if abs(enemyship.patrolangle - enemyship.rotation) < 10:
@@ -94,8 +94,8 @@ def enemyAITick(myship, enemyship, spacestations, animations, sounds, gameinfo):
         elif enemyship.accel < 0 and enemyship.vel <= enemyship.patrolspeed:
             enemyship.vel = enemyship.patrolspeed
             enemyship.accel = 0
-        targetx = myship.x + random.randint(-10, +10)
-        targety = myship.y + random.randint(-10, +10)
+        targetx = myship.x + random.randint(-50, +50)
+        targety = myship.y + random.randint(-50, +50)
         dy = targety - enemyship.y
         dx = targetx - enemyship.x
         angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi - 90 - 180
@@ -144,7 +144,7 @@ def enemyAITick(myship, enemyship, spacestations, animations, sounds, gameinfo):
             enemyship.accel = 0
             if random.randint(0,3) == 0:
                 enemyship.state = "gotostation"
-                enemyship.startGoToStation(spacestations[random.randint(0,len(spacestations) - 1)])
+                enemyship.startGoToStation(enemyship.closestStation(spacestations))
     elif enemyship.state == "leavestation_rot":
         if abs(enemyship.patrolangle - enemyship.rotation) < 10:
             enemyship.rotation = enemyship.patrolangle

@@ -89,11 +89,14 @@ class MyShip():
         self.targeted = closestship
     def attackerTarget(self):
         self.targeted = self.lastattacker
-    def fireNextWeapon(self, enemyships, animations, sounds):
+    def fireNextWeapon(self, enemyships, animations, sounds, spacestations):
         dist = functions.distance(self, enemyships[self.targeted])
         for weapon in self.weapons:
             if dist > weapon.range: continue
-            charged = False
+            if self.targeted == None: continue
+            closeststation = self.closestStation(spacestations)
+            if functions.distance(self, closeststation) <= closeststation.width / 2 + 400: continue
+            if functions.distance(enemyships[self.targeted], closeststation) <= closeststation.width / 2 + 400: continue
             if time.time() - weapon.lastfired >= weapon.chargetime:
                 # weapon is charged
 
@@ -160,6 +163,17 @@ class MyShip():
                 self.autostate = None
                 self.warping = False
                 self.vel = 0
+    def closestStation(self, spacestations):
+        closestdist = math.inf
+        closeststation = None
+        i = -1
+        for station in spacestations:
+            i += 1
+            dist = functions.distance(station, self)
+            if dist < closestdist:
+                closestdist = dist
+                closeststation = station
+        return closeststation
     def startWarpRot(self, spacestation):
         self.autostate = "warp_rot"
         self.vel = 0
