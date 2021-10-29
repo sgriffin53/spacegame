@@ -12,6 +12,9 @@ def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinf
         if myship.rotation > 360: myship.rotation -= 360
         if myship.rotation < 0: myship.rotation += 360
         rotation_rads = myship.rotation * math.pi / 180
+        myship.turretrot += myship.turretrotaccel * time_since_phys_tick * timefactor
+        if myship.turretrot > 360: myship.turretrot -= 360
+        if myship.turretrot < 0: myship.turretrot += 360
         myship.vel = myship.vel + myship.accel * time_since_phys_tick * timefactor
         if not myship.warping:
             if myship.vel >= 500: myship.vel = 500

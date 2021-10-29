@@ -39,7 +39,24 @@ class Button():
             gameinfo.screen = "credits"
         if self.onclick == "creditsbackclick":
             gameinfo.screen = "mainmenu"
+        if self.onclick == "repairclick":
+            myship.repair(gameinfo)
+        if self.onclick == "stationbackclick":
+            gameinfo.messages[0].visible = False
+            gameinfo.screen = "game"
+        if self.onclick == "upgradeclick":
+            gameinfo.screen = "upgrademenu"
+        if self.onclick == "upgradebackclick":
+            gameinfo.screen = "stationmenu"
 
+class Message():
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.message = ""
+        self.visible = True
+        self.screen = ""
+        self.font = None
 
 class Animation():
     def __init__(self):
@@ -48,13 +65,16 @@ class Animation():
         self.endtime = 0
         self.duration = 0
         self.startpos = 0
-        self.endpos = 0
+        self.endpos = [0, 0]
         self.colour = (255, 0, 0)
         self.targettype = None
         self.targetship = None
         self.firer = None
         self.target = None
         self.angle = 0
+        self.damage = 0
+        self.classnum = 0
+        self.range = 0
 
 
 class Music():
@@ -66,18 +86,72 @@ class Sound():
         self.file = None
         self.mixer = None
 
-class Shield():
+class ShipShield():
     def __init__(self):
         self.maxcharge = 100
         self.charge = 100
 
+class Shield():
+    def __init__(self, type):
+        if type == "shield-c1":
+            self.maxcharge = 100
+            self.charge = 100
+            self.classnum = 1
+            self.fullname = "Shield (Class 1)"
+        elif type == "shield-c2":
+            self.maxcharge = 200
+            self.charge = 200
+            self.classnum = 2
+            self.fullname = "Shield (Class 2)"
+
 class Weapon():
+    def __init__(self, type):
+        if type == "torpedo-c1":
+            self.damage = 20
+            self.type = "torpedo"
+            self.classnum = 1
+            self.fullname = "Torpedo (Class 1)"
+            self.duration = 0.5
+            self.chargetime = 3
+            self.lastfired = 0
+            self.range = 600
+        elif type == "torpedo-c2":
+            self.damage = 35
+            self.type = "torpedo"
+            self.classnum = 2
+            self.fullname = "Torpedo (Class 2)"
+            self.duration = 0.5
+            self.chargetime = 3
+            self.lastfired = 0
+            self.range = 600
+        elif type == "laser-c1":
+            self.damage = 10
+            self.type = "laser"
+            self.classnum = 1
+            self.fullname = "Laser (Class 1)"
+            self.duration = 0.2
+            self.chargetime = 1
+            self.lastfired = 0
+            self.range = 600
+        elif type == "laser-c2":
+            self.damage = 20
+            self.type = "laser"
+            self.classnum = 2
+            self.fullname = "Laser (Class 2)"
+            self.duration = 0.3
+            self.chargetime = 1.2
+            self.lastfired = 0
+            self.range = 600
+
+class ShipWeapon():
     def __init__(self):
         self.type = None
         self.duration = None
         self.chargetime = 0
         self.lastfired = 0
         self.range = 0
+        self.damage = 0
+        self.fullname = ""
 
 class GameInfo():
     def __init__(self):
@@ -88,10 +162,15 @@ class GameInfo():
         self.myfont = pygame.font.SysFont('Fixedsys', 22)
         self.dir_label_font = pygame.font.SysFont('Courier', 12)
         self.map_title_font = pygame.font.SysFont('Calibri', 34 )
+        self.gamemessage_font = pygame.font.SysFont('Calibri', 34)
         self.screen = "game"
         self.mapstars = []
         self.selectedstation = None
         self.buttons = []
+        self.messages = []
+        self.credits = 0
+        self.gamemessage = ""
+        self.gamemessagedisplayed = 0
 
 class Point():
     def __init__(self):

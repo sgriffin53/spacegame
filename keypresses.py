@@ -90,22 +90,29 @@ def detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animat
                     gameinfo.screen = newscreen
                 if event.key == pygame.K_RETURN:
                     dist = functions.distance(myship.closestStation(spacestations), myship)
-                    if dist <= spacestations[0].width / 2 + 400:
+                    if dist <= spacestations[0].width / 2 + 400 and (gameinfo.screen == "game" or gameinfo.screen == "stationmenu"):
                         newscreen = "game"
                         if gameinfo.screen == "game": newscreen = "stationmenu"
                         gameinfo.screen = newscreen
+                        gameinfo.messages[0].visible = False
 
     keys = pygame.key.get_pressed()  # checking pressed keys
 
     # unset alt and enter flags if they're not pressed
 
     if gameinfo.alive and not myship.warping and gameinfo.screen == "game":
-        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            myship.rotaccel = -120
-        elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            myship.rotaccel = 120
+        if keys[pygame.K_LEFT]:
+            myship.rotaccel = -160
+        elif keys[pygame.K_RIGHT]:
+            myship.rotaccel = 160
         elif not myship.warping:
             myship.rotaccel = 0
+        if keys[pygame.K_a]:
+            myship.turretrotaccel = -120
+        elif keys[pygame.K_d]:
+            myship.turretrotaccel = 120
+        else:
+            myship.turretrotaccel = 0
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             myship.accel = 250
         elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
@@ -114,8 +121,8 @@ def detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animat
             myship.accel = 0
         if keys[pygame.K_SPACE]:
             dist = functions.distance(myship.closestStation(spacestations), myship)
-            if myship.targeted != None and dist > 900:
-                myship.fireNextWeapon(enemyships, animations, sounds, spacestations)
+            #if myship.targeted != None and dist > 900:
+            myship.fireNextWeapon(enemyships, animations, sounds, spacestations)
     if keys[pygame.K_ESCAPE]:
         sys.exit()
     if keys[pygame.K_SPACE]:

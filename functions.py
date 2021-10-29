@@ -61,13 +61,15 @@ def startGame(gameinfo, myship, enemyships, spacestations, music):
     # create my ship object
 
     myship = MyShip()
-    myship.weapons.append(Weapon())
+    myship.weapons.append(Weapon("laser"))
+    myship.weapons.append(Weapon("torpedo"))
     '''
     myship.weapons[0].type = "laser"
     myship.weapons[0].duration = 0.02
     myship.weapons[0].chargetime = 0.5
     myship.weapons[0].lastfired = 0
     myship.weapons[0].range = 600
+    '''
     '''
     myship.weapons[0].type = "torpedo"
     myship.weapons[0].duration = 0.5
@@ -81,11 +83,11 @@ def startGame(gameinfo, myship, enemyships, spacestations, music):
     myship.weapons[1].chargetime = 1
     myship.weapons[1].lastfired = 0
     myship.weapons[1].range = 600
-
-    myship.shields.append(Shield())
-    myship.shields.append(Shield())
-    myship.shields.append(Shield())
-    myship.shields.append(Shield())
+    '''
+    myship.shields.append(ShipShield())
+    myship.shields.append(ShipShield())
+    myship.shields.append(ShipShield())
+    myship.shields.append(ShipShield())
     for shield in myship.shields:
         shield.charge = 250
         shield.maxcharge = 250

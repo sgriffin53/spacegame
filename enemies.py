@@ -6,7 +6,7 @@ import functions
 import pygame
 import os
 import copy
-from classes import Animation, Point, Weapon, Shield
+from classes import Animation, Point, ShipWeapon, Weapon, ShipShield
 
 class EnemyShip():
     def __init__(self):
@@ -167,11 +167,13 @@ class EnemyShip():
                 animation = Animation()
                 animation.angle = angle_deg
                 animation.type = weapon.type
-                animation.colour = (0, 255, 0)
+                animation.colour = (255, 0, 0)
                 animation.starttime = time.time()
                 animation.endtime = time.time() + weapon.duration
                 animation.startpos = (self.x, self.y)
                 animation.duration = weapon.duration
+                animation.damage = weapon.damage
+                animation.classnum = weapon.classnum
                 animation.target = self
                 if weapon.type == "laser": animation.endpos = (self.x, self.y)
                 else: animation.endpos = (myship.x, myship.y)
@@ -195,19 +197,15 @@ def spawnEnemyShips(enemyships, spacestations):
             enemyships[k].weapons[0].lastfired = 0
             enemyships[k].weapons[0].range = 600
             '''
-            enemyships[k].weapons.append(Weapon())
-            enemyships[k].weapons[0].type = "laser"
-            enemyships[k].weapons[0].duration = 0.2
-            enemyships[k].weapons[0].chargetime = 1
-            enemyships[k].weapons[0].lastfired = 0
-            enemyships[k].weapons[0].range = 600
+            enemyships[k].weapons.append(Weapon("laser-c1"))
+            enemyships[k].weapons.append(Weapon("torpedo-c1"))
             enemyships[k].index = k
             enemyships[k].state = "patrol"
             enemyships[k].shipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
-            enemyships[k].shields.append(copy.deepcopy(Shield()))
-            enemyships[k].shields.append(copy.deepcopy(Shield()))
-            enemyships[k].shields.append(copy.deepcopy(Shield()))
-            enemyships[k].shields.append(copy.deepcopy(Shield()))
+            enemyships[k].shields.append(ShipShield())
+            enemyships[k].shields.append(ShipShield())
+            enemyships[k].shields.append(ShipShield())
+            enemyships[k].shields.append(ShipShield())
 
             while True:
                 enemyships[k].x = random.randint(spacestation.x - 5000, spacestation.x + 5000)

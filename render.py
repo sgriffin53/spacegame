@@ -237,9 +237,21 @@ def drawMyShields(screen, myship, gameinfo):
         centre[0] - myship.width / 2 - margin, centre[1] - myship.width / 2 - margin, myship.width + margin * 2,
         myship.width + margin * 2), start_ang_rads, end_ang_rads, 2)
 
+def drawMyTurret(screen, myship, gameinfo):
+    centre = (gameinfo.width / 2, gameinfo.height / 2)
+    myship_rot_rads = myship.rotation * math.pi / 180
+    ang_rads = myship.turretrot * math.pi / 180
+    tot_rads = ang_rads + myship_rot_rads
+    margin = 5
+    dist = myship.width / 2 + margin * 2
+    drawX = centre[0] + dist * math.cos(ang_rads)
+    drawY = centre[1] + dist * math.sin(ang_rads)
+    pygame.draw.circle(screen, (255, 0, 0), (drawX, drawY), 6, 3)
+    myship.turrentpos = (drawX, drawY)
+
 def drawEnemyShields(screen, enemyship, myship, gameinfo):
     enemyship_rotation_rads = (360 - enemyship.rotation) * math.pi / 180
-    centre = (gameinfo. width / 2, gameinfo.height / 2)
+    centre = (gameinfo.width / 2, gameinfo.height / 2)
     margin = 10
     n = -1
     for i in range(45, 403, 90):
@@ -264,6 +276,41 @@ def drawEnemyShields(screen, enemyship, myship, gameinfo):
 
 
 def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, images, shipIMG, enemyshipIMG, spacestationIMG, gameinfo, animations):
+    if gameinfo.screen == "upgrademenu":
+        screen.fill((0, 0, 0))
+
+        bg = images[1]
+        bg = pygame.transform.scale(bg, (gameinfo.width, gameinfo.height))
+        screen.blit(bg, (0, 0))
+        titlefont = pygame.font.SysFont('Calibri', 60, 1)
+        titleText = titlefont.render("Upgrade Ship", False,
+                                     (255, 255, 255))
+        screen.blit(titleText, (460, 30))
+        menulabelfont = pygame.font.SysFont('Calibri', 30)
+        baseshipText = menulabelfont.render("Base Ship", False, (255, 255, 255))
+        screen.blit(baseshipText, (100, 120))
+        screen.blit(myship.image, (130, 160))
+        warpenginesText = menulabelfont.render("Warp Engines: Class 3", False, (255, 255, 255))
+        screen.blit(warpenginesText, (381, 120))
+        combatenginesText = menulabelfont.render("Combat Engines: Class 1", False, (255, 255, 255))
+        screen.blit(combatenginesText, (350, 160))
+        shield = myship.shields[0]
+        shieldsText = None
+        if shield == None:
+            shieldsText = menulabelfont.render("Shields: None", False, (255, 255, 255))
+        else:
+            shieldsText = menulabelfont.render("Shields: Class " + str(myship.shields[0].classnum), False, (255, 255, 255))
+        screen.blit(shieldsText, (461, 200))
+        weaponText = []
+        for i in range(4):
+            rendertext = "Weapon " + str(i+1) + ": "
+            if myship.weapons[i] == None:
+                rendertext += "None"
+            else:
+                rendertext += myship.weapons[i].fullname
+            weaponText.append(menulabelfont.render(rendertext, False, (255, 255, 255)))
+            screen.blit(weaponText[i], (424, 240 + (i * 40)))
+
     if gameinfo.screen == "stationmenu":
         screen.fill((0, 0, 0))
         bg = images[1]
@@ -274,6 +321,8 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, ima
                                      (255, 255, 255))
         screen.blit(titleText, (460, 30))
         menulabelfont = pygame.font.SysFont('Calibri', 30)
+        creditsText = menulabelfont.render("Credits: " + str(gameinfo.credits), False, (255, 255, 255))
+        screen.blit(creditsText, (50, 130))
         repaircost = (myship.maxhull - myship.hull) * 0.5
         repaircost += (myship.shields[0].maxcharge - myship.shields[0].charge) * 0.2
         repaircost += (myship.shields[1].maxcharge - myship.shields[1].charge) * 0.2
@@ -281,16 +330,18 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, ima
         repaircost += (myship.shields[3].maxcharge - myship.shields[3].charge) * 0.2
         repaircost = int(repaircost)
         repairText = menulabelfont.render("Repair Ship (Cost " + str(repaircost) + ")", False, (255, 255, 255))
-        screen.blit(repairText, (50, 130))
+        screen.blit(repairText, (50, 180))
+        upgradeText = menulabelfont.render("Upgrade Ship", False, (255, 255, 255))
+        screen.blit(upgradeText, (400, 180))
     if gameinfo.screen == "mainmenu":
         screen.fill((0, 0, 0))
         bg = images[0]
         bg = pygame.transform.scale(bg, (gameinfo.width, gameinfo.height))
         screen.blit(bg, (0, 0))
         titlefont = pygame.font.SysFont('Calibri Bold', 70 )
-        titleText = titlefont.render("Space Shooter Game", False,
+        titleText = titlefont.render("Stardawg 3000", False,
                                  (255, 255, 255))
-        screen.blit(titleText, (gameinfo.width / 2 - 230, 30))
+        screen.blit(titleText, (gameinfo.width / 2 - 170, 30))
     if gameinfo.screen == "credits":
         screen.fill((0, 0, 0))
         bg = images[0]
@@ -457,6 +508,7 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, ima
             screen.blit(shipIMG, newcentre) # draw ship
             drawMyHealthBar(screen, myship, gameinfo)
             drawMyShields(screen, myship, gameinfo)
+            drawMyTurret(screen, myship, gameinfo)
 
         # Draw text:
 
@@ -467,10 +519,10 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, ima
         shipXText = myfont.render('X: ' + str(round(myship.x,0)), False, (255, 255, 255))
         shipYText = myfont.render('Y: ' + str(round(myship.y,0)), False, (255, 255, 255))
         sectorText = myfont.render('Sector: ' + str(myship.gridsector), False, (255, 255, 255))
-        screen.blit(shipXText, (2, 540))
-        screen.blit(shipYText, (2, 560))
-        screen.blit(velText, (2, 580))
-        screen.blit(sectorText, (2, 600))
+       # screen.blit(shipXText, (2, 540))
+       # screen.blit(shipYText, (2, 560))
+       # screen.blit(velText, (2, 580))
+       # screen.blit(sectorText, (2, 600))
         curfps = get_fps(gameinfo)
         fps_text = myfont.render(str(curfps) + " FPS", 1, pygame.Color("coral"))
         screen.blit(fps_text, (10, 5))
@@ -504,7 +556,7 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, ima
                         if shieldnum >= 4: shieldnum = 3
                         shieldcharge = myship.shields[shieldnum].charge
                         if shieldcharge <= 0:
-                            myship.hull -= 10
+                            myship.hull -= animation.damage
                             if myship.hull <= 0:
                                 myship.alive = False
                                 gameinfo.alive = False
@@ -514,9 +566,82 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, ima
                                 myship.accel = 0
                                 myship.explode(animations)
                         else:
-                            myship.shields[shieldnum].charge -= 20
+                            myship.shields[shieldnum].charge -= animation.damage
                     if animation.firer == "myship":
-                        enemyship = animation.target
+                        for enemyship in enemyships:
+                            endpos = animation.endpos
+                            r = enemyship.width / 2
+                            # x ^ 2 + b x + c
+                            x5 = enemyship.x
+                            y5 = enemyship.y
+                            x3 = endpos[0]
+                            y3 = endpos[1]
+                            x4 = myship.x
+                            y4 = myship.y
+                            # none of the commented code below works
+                            '''
+                            x1_radicand = ((-x3+x4)*(-(x3-x4)**2*y5**2+2*((x3-x5)*y4-y3*(x4-x5))*(x3-x4)*y5+(r+x3-x5)*(r-x3+x5)*y4**2-2*y3*(r**2-(x4-x5)*(x3-x5))*y4+(r+x4-x5)*(r-x4+x5)*y3**2+r**2*(x3-x4)**2))
+                            y1_radicand = (r**2-(x4-x5)*(x3-x5))*y4+(r+x4-x5)*(r-x4+x5)*y3**2+r**2*(x3-x4)**2
+
+
+                            # x1_radicand = (r**2-(x4-x5)*(x3-x5))*y4+(r+x4-x5)*(r-x4+x5)*y3**2+r**2*(x3-x4)**2
+                            #y1_radicand = (r**2-(x4-x5)*(x3-x5))*y4+(r+x4-x5)*(r-x4+x5)*y3**2+r**2*(x3-x4)**2
+                            #x2_radicand = (r**2-(x4-x5)*(x3-x5))*y4+(r+x4-x5)*(r-x4+x5)*y3**2+r**2*(x3-x4)**2
+                            #y2_radicand = (r**2-(x4-x5)*(x3-x5))*y4+(r+x4-x5)*(r-x4+x5)*y3**2+r**2*(x3-x4)**2
+                            if x1_radicand >= 0 and y1_radicand:
+                                x1 = ((-x3+x4)*(-(x3-x4)**2*y5**2+2*((x3-x5)*y4-y3*(x4-x5))*(x3-x4)*y5+(r+x3-x5)*(r-x3+x5)*y4**2-2*y3*(r**2-(x4-x5)*(x3-x5))*y4+(r+x4-x5)*(r-x4+x5)*y3**2+r**2*(x3-x4)**2)**(1/2)+x3**2*x5+(-2*x4*x5-(y4-y5)*(-y4+y3))*x3+(x4*x5+(y3-y5)*(-y4+y3))*x4)/(x3**2-2*x3*x4+x4**2+(-y4+y3)**2)
+                                y1 = ((-y4+y3)*(x3-x4)*x5+x3**2*y4-x4*(y3+y4)*x3+x4**2*y3-(-y4+y3)*(-y3*y5+y4*y5+(-(x3-x4)**2*y5**2+2*((x3-x5)*y4-y3*(x4-x5))*(x3-x4)*y5+(r+x3-x5)*(r-x3+x5)*y4**2-2*y3*(r**2-(x4-x5)*(x3-x5))*y4+(r+x4-x5)*(r-x4+x5)*y3**2+r**2*(x3-x4)**2)**(1/2)))/(x3**2-2*x3*x4+x4**2+(-y4+y3)**2)
+                                x2 = ((x3-x4)*(-(x3-x4)**2*y5**2+2*((x3-x5)*y4-y3*(x4-x5))*(x3-x4)*y5+(r+x3-x5)*(r-x3+x5)*y4**2-2*y3*(r**2-(x4-x5)*(x3-x5))*y4+(r+x4-x5)*(r-x4+x5)*y3**2+r**2*(x3-x4)**2)**(1/2)+x3**2*x5+(-2*x4*x5-(y4-y5)*(-y4+y3))*x3+(x4*x5+(y3-y5)*(-y4+y3))*x4)/(x3**2-2*x3*x4+x4**2+(-y4+y3)**2)
+                                y2 = ((-y4+y3)*(x3-x4)*x5+x3**2*y4-x4*(y3+y4)*x3+x4**2*y3+(-y4+y3)*(y3*y5-y4*y5+(-(x3-x4)**2*y5**2+2*((x3-x5)*y4-y3*(x4-x5))*(x3-x4)*y5+(r+x3-x5)*(r-x3+x5)*y4**2-2*y3*(r**2-(x4-x5)*(x3-x5))*y4+(r+x4-x5)*(r-x4+x5)*y3**2+r**2*(x3-x4)**2)**(1/2)))/(x3**2-2*x3*x4+x4**2+(-y4+y3)**2)
+                                print(x1, y1, x2, y2)
+                            '''
+                            '''
+                            m = (y3 - y4) / (x3 - x4)
+                            c = -(m * x5 - y5)
+                            k = - x5 * - x5 + c * c + c * -y5 - y5 * c - y5 * - y5 - r * r
+                            b = -x5 - x5 + + m + m * c * y5 + c * m - y5 * m
+                            a = (1 + m * m)
+
+                            underroot = b * b - 4 * a * k
+                            print(underroot)
+                            x1 = (-b + math.sqrt(b * b - 4 * a * k)) / (2 * a)
+                            x2 = (-b - math.sqrt(b * b - 4 * a * k)) / (2 * a)
+                            #print(str(b * b - 4 * a * k))
+                            y1 = y3 + m * (x1 - x3)
+                            y2 = y3 + m * (x2 - x3)
+                            '''
+                            '''
+                            k = x5 * x5 + c * c - y5 * c - y5 * c - y5 * - y5 - r * r
+                            #b = - 2 * x5 * x + 2 * m * x * c - 2 * y5 * m * x + m * x * c
+                            b = (-2 * x5) + m + m * c + (m * -y5) + m - (y5 * m)
+                            a = 1
+                            underroot = b * b - 4 * a * k
+                            print(underroot)
+                            x1 = (-b + math.sqrt(b * b - 4 * a * k)) / (2 * a)
+                            x2 = (-b - math.sqrt(b * b - 4 * a * k)) / (2 * a)
+                            print(str(b * b - 4 * a * k))
+                            y1 = y3 + m * (x1 - x3)
+                            y2 = y3 + m * (x2 - x3)
+                            '''
+                            '''
+                            x5 = enemyship.x
+                            y5 = enemyship.y
+                            x3 = endpos[0]
+                            y3 = endpos[1]
+                            x4 = myship.x
+                            y4 = myship.y
+                            m = (y3 - y4) / (x3 - x4)
+                            c = x5 * x5 + y3 * y3 + m * x3 * y3 - y3 * y5 - m * x3 * y3 - x3 * x3 - m * -1 * x3 * - 1 * y5 - y5 * y3 - m * x3 - y5 * y5 - r * r
+                            b = 2 * x5 + m  + 2 * x3 - y5 * m
+                            a = 1+m
+                            x1 = (-b + math.sqrt(b * b - 4 * a * c)) / (2 * a)
+                            x2 = (-b - math.sqrt(b * b - 4 * a * c)) / (2 * a)
+                            print(str(b * b - 4 * a * c))
+                            y1 = y3 + m * (x1 - x3)
+                            y2 = y3 + m * (x2 - x3)
+                            '''
+                            #print((x1, y1), (x2, y2))
+                        '''
                         angle = 360 - (animation.angle) + 90 + enemyship.rotation
                         if angle < 0: angle += 360
                         if angle >= 360: angle -= 360
@@ -534,15 +659,19 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, ima
                                 enemyship.explode(animations)
                         else:
                             enemyship.shields[shieldnum].charge -= 20
+                        '''
                     animations.pop(i)
                     break
-                if animation.firer == "myship" and myship.targeted != None:
-                    enemyship = enemyships[myship.targeted]
-                    angle_deg = animation.angle - 180
+                if animation.firer == "myship":
+                    #enemyship = enemyships[myship.targeted]
+                    angle_deg = myship.turretrot - 180
                     angle_rads = angle_deg * math.pi / 180
 
-                    enemydrawX = centre[0] + animation.target.x - myship.x + math.cos(angle_rads) * (enemyship.width / 2 + 10)
-                    enemydrawY = centre[1] - animation.target.y + myship.y + math.sin(angle_rads) * (enemyship.width / 2 + 10)
+                    #enemydrawX = centre[0] + animation.target.x - myship.x + math.cos(angle_rads) * (enemyship.width / 2 + 10)
+                    #enemydrawY = centre[1] - animation.target.y + myship.y + math.sin(angle_rads) * (enemyship.width / 2 + 10)
+                    enemydrawX = centre[0] + animation.endpos[0] - myship.x
+                    enemydrawY = centre[1] - animation.endpos[1] + myship.y
+                    '''
                     angle = 360 - (animation.angle) + 90 + enemyship.rotation
                     if angle < 0: angle += 360
                     if angle >= 360: angle -= 360
@@ -554,11 +683,13 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, ima
                     if shieldcharge <= 0:
                         enemydrawX = centre[0] + animation.target.x - myship.x
                         enemydrawY = centre[1] - animation.target.y + myship.y
-                    lineendX = centre[0]
-                    lineendY = centre[1]
+                    '''
+                    lineendX = myship.turrentpos[0]
+                    lineendY = myship.turrentpos[1]
+                    linewidth = 2
+                    if animation.classnum == 2: linewidth = 6
                     pygame.draw.line(screen, animation.colour, (lineendX, lineendY), (
-                    enemydrawX - enemyships[0].width / 2 + 30,
-                    enemydrawY - enemyships[0].width / 2 + 30), 4)
+                    enemydrawX, enemydrawY), linewidth)
                 elif animation.firer == "enemyship":
                     enemydrawX = centre[0] + animation.target.x - myship.x
                     enemydrawY = centre[1] - animation.target.y + myship.y
@@ -575,14 +706,21 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, ima
                     if myship.shields[shieldnum].charge <= 0:
                         lineendX = centre[0]
                         lineendY = centre[1]
+                    linewidth = 2
+                    if animation.classnum == 2: linewidth = 6
                     pygame.draw.line(screen, animation.colour, (lineendX, lineendY), (
                     enemydrawX - enemyships[0].width / 2 + 30,
-                    enemydrawY - enemyships[0].width / 2 + 30), 4)
+                    enemydrawY - enemyships[0].width / 2 + 30), linewidth)
 
             if animation.type == "explosion":
                 time_elapsed = time.time() - animation.starttime
                 if time.time() >= animation.endtime:
-                    if animation.targettype != "myship" and myship.targeted != None: enemyships.pop(enemyships[myship.targeted].index)
+                    if animation.targettype != "myship" and myship.targeted != None:
+                        enemyships.pop(enemyships[myship.targeted].index)
+                        loot = random.randint(500, 1500)
+                        gameinfo.credits += loot
+                        gameinfo.gamemessage = "Looted " + str(loot) + " credits"
+                        gameinfo.gamemessagedisplayed = time.time()
                     animations.pop(i)
                     functions.reIndexEnemies(enemyships)
                     myship.targeted = None
@@ -625,17 +763,18 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, ima
                         if angle >= 315: shieldnum = 0
                         shieldcharge = enemyship.shields[shieldnum].charge
                         if shieldcharge <= 0:
-                            enemyship.hull -= 10
+                            enemyship.hull -= animation.damage
                             if enemyship.hull <= 50 and enemyship.state != "retreat":
                                 enemyship.state = "retreat"
                                 enemyship.startRetreat(enemyship)
                             if enemyship.hull <= 0:
                                 enemyship.explode(animations)
                         else:
-                            enemyship.shields[shieldnum].charge -= 20
+                            enemyship.shields[shieldnum].charge -= animation.damage
                     animations.pop(i)
                     break
                 if animation.firer == "myship":
+                    if myship.targeted == None: return
                     targetx = myship.x
                     targety = myship.y
                     dy = targety - animation.targetship.y
@@ -652,7 +791,9 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, ima
                     dist = functions.distance(myship, animation.targetship)
                     drawX = centre[0] + math.sin(angle_rads) * dist * completed
                     drawY = centre[1] - math.cos(angle_rads) * dist * completed
-                    pygame.draw.circle(screen, (255, 0, 0), (drawX, drawY), 3)
+                    drawradius = 3
+                    if animation.classnum == 2: drawradius = 6
+                    pygame.draw.circle(screen, animation.colour, (drawX, drawY), drawradius)
                 elif animation.firer == "enemyship":
                     targetx = myship.x
                     targety = myship.y
@@ -672,9 +813,17 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, frameinfo, ima
                     enemydrawY = centre[1] - startpoint.y + myship.y
                     drawX = enemydrawX + math.sin(angle_rads) * dist * completed
                     drawY = enemydrawY - math.cos(angle_rads) * dist * completed
-                    pygame.draw.circle(screen, (255, 0, 0), (drawX, drawY), 3)
+                    drawradius = 3
+                    if animation.classnum == 2: drawradius = 6
+                    pygame.draw.circle(screen, animation.colour, (drawX, drawY), drawradius)
+        if time.time() - gameinfo.gamemessagedisplayed < 5:
+            #pygame.draw.rect(screen, (0, 0, 0), (150, 100, 500, 50))
+            messageText = gameinfo.gamemessage_font.render(gameinfo.gamemessage, False, (255, 255, 255))
+            screen.blit(messageText, ((170, 110)))
     for button in gameinfo.buttons:
         if button.screen == gameinfo.screen:
             button.render(screen, gameinfo)
-
-
+    for message in gameinfo.messages:
+        if message.screen == gameinfo.screen and message.visible == True:
+            messageText = message.font.render(message.message, False, (255, 255, 255))
+            screen.blit(messageText, (message.x, message.y))

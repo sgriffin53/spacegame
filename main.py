@@ -18,15 +18,19 @@ import station
 import enemies
 from station import SpaceStation
 from myship import MyShip
-from classes import Animation, Music, Sound, Weapon, GameInfo, Point, FrameInfo, Shield, Button
+from classes import Animation, Music, Sound, ShipWeapon, Weapon, GameInfo, Point, FrameInfo, ShipShield, Shield, Button, Message
 from enemies import EnemyShip
 from datetime import datetime
 
 pygame.init()
 
+pygame.display.set_caption('Stardawg 3000')
+
 # create game info
 
 gameinfo = GameInfo()
+
+gameinfo.credits = 1000
 
 # draw stars
 
@@ -84,7 +88,7 @@ station.spawnSpaceStations(spacestations)
 # create my ship object
 
 myship = MyShip()
-myship.weapons.append(Weapon())
+myship.image = pygame.image.load(os.path.join('images','ship.png')).convert_alpha()
 '''
 myship.weapons[0].type = "laser"
 myship.weapons[0].duration = 0.02
@@ -92,23 +96,28 @@ myship.weapons[0].chargetime = 0.5
 myship.weapons[0].lastfired = 0
 myship.weapons[0].range = 600
 '''
+'''
 myship.weapons[0].type = "torpedo"
 myship.weapons[0].duration = 0.5
 myship.weapons[0].chargetime = 3
 myship.weapons[0].lastfired = 0
 myship.weapons[0].range = 600
 
-myship.weapons.append(Weapon())
+myship.weapons.append(ShipWeapon())
 myship.weapons[1].type = "laser"
 myship.weapons[1].duration = 0.2
 myship.weapons[1].chargetime = 1
 myship.weapons[1].lastfired = 0
 myship.weapons[1].range = 600
-
-myship.shields.append(copy.deepcopy(Shield()))
-myship.shields.append(copy.deepcopy(Shield()))
-myship.shields.append(copy.deepcopy(Shield()))
-myship.shields.append(copy.deepcopy(Shield()))
+'''
+myship.weapons.append(Weapon("laser-c1"))
+myship.weapons.append(Weapon("torpedo-c1"))
+myship.weapons.append(None)
+myship.weapons.append(None)
+myship.shields.append(Shield("shield-c2"))
+myship.shields.append(Shield("shield-c2"))
+myship.shields.append(Shield("shield-c2"))
+myship.shields.append(Shield("shield-c2"))
 for shield in myship.shields:
     shield.charge = 250
     shield.maxcharge = 250
@@ -247,8 +256,8 @@ creditsbackButton.render(screen, gameinfo)
 gameinfo.buttons.append(creditsbackButton)
 
 repairButton = Button()
-repairButton.x = 90
-repairButton.y = 180
+repairButton.x = 50
+repairButton.y = 230
 repairButton.width = 200
 repairButton.height = 50
 repairButton.textx = 55
@@ -259,6 +268,119 @@ repairButton.screen = "stationmenu"
 repairButton.onclick = "repairclick"
 repairButton.render(screen, gameinfo)
 gameinfo.buttons.append(repairButton)
+
+upgradeButton = Button()
+upgradeButton.x = 400
+upgradeButton.y = 230
+upgradeButton.width = 200
+upgradeButton.height = 50
+upgradeButton.textx = 39
+upgradeButton.texty = 8
+upgradeButton.textcol = (255, 255, 255)
+upgradeButton.text = "Upgrade"
+upgradeButton.screen = "stationmenu"
+upgradeButton.onclick = "upgradeclick"
+upgradeButton.render(screen, gameinfo)
+gameinfo.buttons.append(upgradeButton)
+
+stationbackButton = Button()
+stationbackButton.x = 1000
+stationbackButton.y = 640
+stationbackButton.width = 250
+stationbackButton.height = 50
+stationbackButton.textx = 30
+stationbackButton.texty = 8
+stationbackButton.textcol = (255, 255, 255)
+stationbackButton.text = "Back to Game"
+stationbackButton.screen = "stationmenu"
+stationbackButton.onclick = "stationbackclick"
+stationbackButton.render(screen, gameinfo)
+gameinfo.buttons.append(stationbackButton)
+
+baseshipupgradeButton = Button()
+baseshipupgradeButton.x = 90
+baseshipupgradeButton.y = 230
+baseshipupgradeButton.width = 150
+baseshipupgradeButton.height = 50
+baseshipupgradeButton.textx = 13
+baseshipupgradeButton.texty = 8
+baseshipupgradeButton.textcol = (255, 255, 255)
+baseshipupgradeButton.text = "Upgrade"
+baseshipupgradeButton.screen = "upgrademenu"
+baseshipupgradeButton.onclick = "baseshipupgradeclick"
+baseshipupgradeButton.render(screen, gameinfo)
+gameinfo.buttons.append(baseshipupgradeButton)
+
+upgradebackButton = Button()
+upgradebackButton.x = 1000
+upgradebackButton.y = 640
+upgradebackButton.width = 250
+upgradebackButton.height = 50
+upgradebackButton.textx = 30
+upgradebackButton.texty = 8
+upgradebackButton.textcol = (255, 255, 255)
+upgradebackButton.text = "Back to Menu"
+upgradebackButton.screen = "upgrademenu"
+upgradebackButton.onclick = "upgradebackclick"
+upgradebackButton.render(screen, gameinfo)
+gameinfo.buttons.append(upgradebackButton)
+
+upgradewarpenginesButton = Button()
+upgradewarpenginesButton.x = 660
+upgradewarpenginesButton.y = 115
+upgradewarpenginesButton.width = 150
+upgradewarpenginesButton.height = 35
+upgradewarpenginesButton.textx = 35
+upgradewarpenginesButton.texty = 8
+upgradewarpenginesButton.font = pygame.font.SysFont('Calibri', 22)
+upgradewarpenginesButton.textcol = (255, 255, 255)
+upgradewarpenginesButton.text = "Upgrade"
+upgradewarpenginesButton.screen = "upgrademenu"
+upgradewarpenginesButton.onclick = "upgradewarpenginesclick"
+upgradewarpenginesButton.render(screen, gameinfo)
+gameinfo.buttons.append(upgradewarpenginesButton)
+
+upgradecombatenginesButton = Button()
+upgradecombatenginesButton.x = 660
+upgradecombatenginesButton.y = 155
+upgradecombatenginesButton.width = 150
+upgradecombatenginesButton.height = 35
+upgradecombatenginesButton.textx = 35
+upgradecombatenginesButton.texty = 8
+upgradecombatenginesButton.font = pygame.font.SysFont('Calibri', 22)
+upgradecombatenginesButton.textcol = (255, 255, 255)
+upgradecombatenginesButton.text = "Upgrade"
+upgradecombatenginesButton.screen = "upgrademenu"
+upgradecombatenginesButton.onclick = "upgradewarpenginesclick"
+upgradecombatenginesButton.render(screen, gameinfo)
+gameinfo.buttons.append(upgradecombatenginesButton)
+
+
+upgradeshieldsButton = Button()
+upgradeshieldsButton.x = 660
+upgradeshieldsButton.y = 195
+upgradeshieldsButton.width = 150
+upgradeshieldsButton.height = 35
+upgradeshieldsButton.textx = 35
+upgradeshieldsButton.texty = 8
+upgradeshieldsButton.font = pygame.font.SysFont('Calibri', 22)
+upgradeshieldsButton.textcol = (255, 255, 255)
+upgradeshieldsButton.text = "Upgrade"
+upgradeshieldsButton.screen = "upgrademenu"
+upgradeshieldsButton.onclick = "upgradeshieldsclick"
+upgradeshieldsButton.render(screen, gameinfo)
+gameinfo.buttons.append(upgradeshieldsButton)
+
+
+# Add messages
+
+gameinfo.messages.append(Message())
+gameinfo.messages[0].x = 50
+gameinfo.messages[0].y = 290
+gameinfo.messages[0].screen = "stationmenu"
+gameinfo.messages[0].message = "No Repair Needed"
+gameinfo.messages[0].visible = False
+gameinfo.messages[0].font = pygame.font.SysFont('Calibri', 30)
 
 # main game loop
 
