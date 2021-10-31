@@ -1,12 +1,10 @@
 import random
 import time
 import math
-import render
 import functions
 import pygame
 import os
-import copy
-from classes import Animation, Point, ShipWeapon, Weapon, ShipShield
+from classes import Animation, Point, Weapon, ShipShield
 
 class EnemyShip():
     def __init__(self):
@@ -52,11 +50,9 @@ class EnemyShip():
             self.rotaccel = -120
         self.patrolstart = [self.x, self.y]
         self.patrolangle = random.randint(-360, 360)
-        #self.patrolangle = self.rotation + self.patrolangle
         self.origangle = self.patrolangle
         self.patroltotrotations = abs(self.patrolangle - self.rotation)
-        if self.patrolangle < 0: self.patrolangle += 360
-        if self.patrolangle > 360: self.patrolangle -= 360
+        self.patrolangle = functions.clampAngle(self.patrolangle)
         self.patroldist = random.randint(500, 2000)
         patrolanglerads = self.patrolangle * math.pi / 180
         a = patrolanglerads
@@ -73,8 +69,7 @@ class EnemyShip():
         self.rotaccel = 120
         self.patrolangle = self.rotation - 180
         self.origangle = self.patrolangle
-        if self.patrolangle > 360: self.patrolangle -= 360
-        elif self.patrolangle < 0: self.patrolangle += 360
+        self.patrolangle = functions.clampAngle(self.patrolangle)
         self.patroltotrotations = 180
     def startLeaveStation_fly(self):
         self.totrotations = 0
@@ -90,24 +85,16 @@ class EnemyShip():
         self.patrolstart = [self.x, self.y]
         self.accel = 250
         self.rotaccel = 120
-        dy = self.y - spacestation.y
-        dx = self.x - spacestation.x
-        angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi - 90
+        angle_deg = functions.angleBetween(self, spacestation) - 90
         self.patrolangle = angle_deg
         self.origangle = self.patrolangle
         self.patroltotrotations = abs(self.patrolangle - self.rotation)
-        if self.patrolangle < 0: self.patrolangle += 360
-        if self.patrolangle > 360: self.patrolangle -= 360
+        self.patrolangle = functions.clampAngle(self.patrolangle)
         mypoint = Point()
         mypoint.x = spacestation.x
         mypoint.y = spacestation.y
         dist = int(functions.distance(self, mypoint))
         self.patroldist = dist - spacestation.radius - random.randint(30,150)
-        #r = random.randint(1,2)
-        #if r == 1:
-         #   self.patroldist += random.randint(20, 50)
-        #elif r == 2:
-            #self.patroldist -= random.randint(20, 50)
         self.patrolspeed = random.randint(120, 300)
     def closestStation(self, spacestations):
         closestdist = math.inf
@@ -125,9 +112,7 @@ class EnemyShip():
         self.patrolstart = [self.x, self.y]
         self.patroldist = 5000
         self.accel = 250
-        dy = self.y - myship.y
-        dx = self.x - myship.x
-        angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi - 90 - 180
+        angle_deg = functions.angleBetween(self, myship) - 90 - 180
         self.patrolangle = angle_deg
         self.rotaccel = 120
         if angle_deg >= 180:
@@ -141,6 +126,7 @@ class EnemyShip():
         animation.startpos = (self.x, self.y)
         animation.targettype = "enemyship"
         animation.width = self.width
+        animation.hitship = self
         animations.append(animation)
 
     def fireNextWeapon(self, myship, animations, sounds, gameinfo, spacestations):
@@ -159,12 +145,15 @@ class EnemyShip():
 
                 myship.lastattacker = self.index
                 # add animation
-                targetx = myship.x
-                targety = myship.y
-                dy = targety - self.y
-                dx = targetx - self.x
-                angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi
+                angle_deg = functions.angleBetween(myship, self)
                 animation = Animation()
+                if random.randint(1,100) <= 25:
+                    rand = random.randint(0,1)
+                    if rand == 0:
+                        angle_deg += random.randint(15, 30)
+                    elif rand == 1:
+                        angle_deg -= random.randint(15, 30)
+                angle_rads = angle_deg * math.pi / 180
                 animation.angle = angle_deg
                 animation.type = weapon.type
                 animation.colour = (255, 0, 0)
@@ -174,11 +163,42 @@ class EnemyShip():
                 animation.duration = weapon.duration
                 animation.damage = weapon.damage
                 animation.classnum = weapon.classnum
-                animation.target = self
-                if weapon.type == "laser": animation.endpos = (self.x, self.y)
-                else: animation.endpos = (myship.x, myship.y)
+                animation.endpos[0] = self.x + math.cos(angle_rads) * weapon.range
+                animation.endpos[1] = self.y - math.sin(angle_rads) * weapon.range
                 animation.targetship = self
+                animation.target = self
                 animation.firer = "enemyship"
+
+                r = myship.width / 2 + 10
+                x5 = myship.x
+                y5 = myship.y
+                x3 = animation.endpos[0] - x5
+                y3 = animation.endpos[1] - y5
+                x4 = self.x - x5
+                y4 = self.y - y5
+                dx = x4 - x3
+                dy = y4 - y3
+                dr = math.sqrt(dx ** 2 + dy ** 2)
+                D = x3 * y4 - x4 * y3
+                discriminant = r ** 2 * dr ** 2 - D ** 2
+                animation.missed = True
+                if discriminant >= 0:
+                    animation.missed = False
+                    # laser line intersects shield circle
+                    sgn = -1
+                    if dy > 0: sgn = 1
+                    x1 = (D * dy + sgn * dx * math.sqrt(discriminant)) / dr ** 2
+                    x2 = (D * dy - sgn * dx * math.sqrt(discriminant)) / dr ** 2
+                    y1 = (-D * dx + abs(dy) * math.sqrt(discriminant)) / dr ** 2
+                    y2 = (-D * dx - abs(dy) * math.sqrt(discriminant)) / dr ** 2
+                    x1 += x5
+                    y1 += y5
+                    x2 += x5
+                    y2 += y5
+                    x3 += x5
+                    y3 += y5
+                    x4 += x5
+                    y4 += y5
                 animations.append(animation)
                 break
 
@@ -189,25 +209,14 @@ def spawnEnemyShips(enemyships, spacestations):
         for i in range(100):
             k+=1
             enemyships.append(EnemyShip())
-            '''
-            enemyships[k].weapons.append(Weapon())
-            enemyships[k].weapons[0].type = "torpedo"
-            enemyships[k].weapons[0].duration = 0.5
-            enemyships[k].weapons[0].chargetime = 3
-            enemyships[k].weapons[0].lastfired = 0
-            enemyships[k].weapons[0].range = 600
-            '''
             enemyships[k].weapons.append(Weapon("laser-c1"))
             enemyships[k].weapons.append(Weapon("torpedo-c1"))
             enemyships[k].index = k
             enemyships[k].state = "patrol"
             enemyships[k].shipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
-            enemyships[k].shields.append(ShipShield())
-            enemyships[k].shields.append(ShipShield())
-            enemyships[k].shields.append(ShipShield())
-            enemyships[k].shields.append(ShipShield())
+            for i in range(4): enemyships[k].shields.append(ShipShield())
 
-            while True:
+            while True: # choose random locations until one is outside a space station
                 enemyships[k].x = random.randint(spacestation.x - 5000, spacestation.x + 5000)
                 enemyships[k].y = random.randint(spacestation.y - 5000, spacestation.y + 5000)
                 dist = functions.distance(spacestation, enemyships[k])

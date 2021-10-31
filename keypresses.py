@@ -10,18 +10,6 @@ def handleMouseButtonUp(gameinfo, myship, mousepos, enemyships, spacestations, m
             onmap = False
         else:
             onmap = True
-        onWarpButton = False
-        '''
-        if mousepos[0] < 842 or mousepos[1] < 30 or mousepos[0] > 1042 or mousepos[1] > 80:
-            onWarpButton = False
-        else:
-            onWarpButton = True
-        if onWarpButton and gameinfo.selectedstation != None:
-            myship.autostate = "warp_rot"
-            myship.warping = True
-            myship.startWarpRot(spacestations[gameinfo.selectedstation])
-            gameinfo.screen = "game"
-        '''
         if onmap:
             i = -1
             for spacestation in spacestations:
@@ -98,8 +86,6 @@ def detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animat
 
     keys = pygame.key.get_pressed()  # checking pressed keys
 
-    # unset alt and enter flags if they're not pressed
-
     if gameinfo.alive and not myship.warping and gameinfo.screen == "game":
         if keys[pygame.K_LEFT]:
             myship.rotaccel = -160
@@ -108,9 +94,9 @@ def detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animat
         elif not myship.warping:
             myship.rotaccel = 0
         if keys[pygame.K_a]:
-            myship.turretrotaccel = -120
+            myship.turretrotaccel = -180
         elif keys[pygame.K_d]:
-            myship.turretrotaccel = 120
+            myship.turretrotaccel = 180
         else:
             myship.turretrotaccel = 0
         if keys[pygame.K_UP] or keys[pygame.K_w]:
@@ -120,13 +106,8 @@ def detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animat
         else:
             myship.accel = 0
         if keys[pygame.K_SPACE]:
-            dist = functions.distance(myship.closestStation(spacestations), myship)
-            #if myship.targeted != None and dist > 900:
             myship.fireNextWeapon(enemyships, animations, sounds, spacestations)
     if keys[pygame.K_ESCAPE]:
         sys.exit()
     if keys[pygame.K_SPACE]:
         pass
-        #if myship.targeted != None:
-         #   frameinfo.firingphasers = True
-          #  frameinfo.phaserstart = time.time()

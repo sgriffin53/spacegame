@@ -11,13 +11,16 @@ class Point():
         self.width = 0
 
 def enemyAITick(myship, enemyship, spacestations, animations, sounds, gameinfo):
+    freeze_enemies = False
+    if freeze_enemies:
+        enemyship.accel = 0
+        enemyship.vel = 0
+        enemyship.rotaccel = 0
+        return
     if gameinfo.screen != "game": return
     allowedSectors = myship.allowedsectors
     if enemyship.gridsector not in allowedSectors: return
     origstate = enemyship.state
-   # enemyship.rotaccel = 0
-   # enemyship.vel = 0
-   # return
     if enemyship.state == "retreat":
         if not myship.alive:
             enemyship.state = "patrol"
@@ -81,8 +84,6 @@ def enemyAITick(myship, enemyship, spacestations, animations, sounds, gameinfo):
             enemyship.state = "patrol"
             return
         enemyship.fireNextWeapon(myship, animations, sounds, gameinfo, spacestations)
-        #if enemyship.vel == 0 and enemyship.accel == 0:
-        #    enemyship.startPatrol()
         if abs(enemyship.patrolangle - enemyship.rotation) < 10:
             enemyship.rotation = enemyship.patrolangle
             enemyship.rotaccel = 0
@@ -120,18 +121,12 @@ def enemyAITick(myship, enemyship, spacestations, animations, sounds, gameinfo):
             enemyship.accel = -250
         if dist >= enemyship.patroldist:
             pass
-            #enemyship.state = "attack_delay"
-            #if time.time() - enemyship.lastattacked >= 60.0:
-             #   enemyship.state = "patrol"
-              #  enemyship.startPatrol()
     if enemyship.state == "patrol":
         if enemyship.vel == 0 and enemyship.accel == 0:
             enemyship.startPatrol()
         if abs(enemyship.patrolangle - enemyship.rotation) < 10:
             enemyship.rotation = enemyship.patrolangle
             enemyship.rotaccel = 0
-        #if enemyship.rotation != enemyship.patrolangle:
-            #enemyship.rotaccel = 120
         if enemyship.vel >= enemyship.patrolspeed:
             enemyship.vel = enemyship.patrolspeed
             enemyship.accel = 0

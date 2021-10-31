@@ -1,6 +1,5 @@
 import random
 import time
-import math
 import render
 import functions
 import pygame
@@ -44,7 +43,6 @@ class MyShip():
     def respawn(self, spacestation):
         dist = spacestation.width / 2 + 75
         angle = random.randint(0, 360)
-        #angle = 90
         angle_rads = (angle) * math.pi / 180
         newx = spacestation.x + math.sin(angle_rads) * dist
         newy = spacestation.y + math.cos(angle_rads) * dist
@@ -97,37 +95,20 @@ class MyShip():
        # dist = functions.distance(self, enemyships[self.targeted])
         for weapon in self.weapons:
             if weapon == None: continue
-            #if dist > weapon.range: continue
-            #if self.targeted == None: continue
-            closeststation = self.closestStation(spacestations)
-            #if functions.distance(self, closeststation) <= closeststation.width / 2 + 400: continue
-            #if functions.distance(enemyships[self.targeted], closeststation) <= closeststation.width / 2 + 400: continue
+            for animation in animations:
+                if animation.firer == "myship":
+                    break
             if time.time() - weapon.lastfired >= weapon.chargetime:
-                # weapon is charged
 
+                # weapon is charged
                 weapon.lastfired = time.time()
 
-                # fired weapon on target
-
                 # use this code for when we hit a ship with a weapon
-
-                #if enemyships[self.targeted].state != "attack_delay": enemyships[self.targeted].attackstart = time.time()
-                #enemyships[self.targeted].state = "attack_delay"
-
-#                if weapon.type == "laser": enemyships[self.targeted].hull -= 10
                 pygame.mixer.Sound.play(sounds[0].mixer)
- #               if enemyships[self.targeted].hull <= 0:
-  #                  enemyships[self.targeted].explode(animations)
-                #enemyships[self.targeted].lastattacked = time.time()
+
                 # add animation
 
                 animation = Animation()
-                #targetx = enemyships[self.targeted].x
-                #targety = enemyships[self.targeted].y
-                #dy = targety - self.y
-                #dx = targetx - self.x
-                #angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi
-                #animation.angle = angle_deg
                 animation.type = weapon.type
                 animation.colour = (0, 255, 0)
                 animation.starttime = time.time()
@@ -141,13 +122,98 @@ class MyShip():
                 endpos[0] = self.x + math.cos(turret_ang_rads) * weapon.range
                 endpos[1] = self.y - math.sin(turret_ang_rads) * weapon.range
                 animation.endpos = endpos
-                #animation.endpos = [enemyships[self.targeted].x, enemyships[self.targeted].y]
-               #animation.targetship = enemyships[self.targeted]
                 animation.firer = "myship"
                 animation.damage = weapon.damage
                 animation.classnum = weapon.classnum
-                #animation.target = enemyships[self.targeted]
                 animations.append(animation)
+                closesthit = None
+                closesthit_dist = 99999999999999
+                for enemyship in enemyships:
+                    dist = functions.distance(self, enemyship)
+                    if dist > 2000: continue
+                    endpos = animation.endpos
+                    r = enemyship.width / 2 + 10
+                    # x ^ 2 + b x + c
+                    x5 = enemyship.x
+                    y5 = enemyship.y
+                    x3 = endpos[0] - x5
+                    y3 = endpos[1] - y5
+                    x4 = self.x - x5
+                    y4 = self.y - y5
+                    dx = x4 - x3
+                    dy = y4 - y3
+                    dr = math.sqrt(dx ** 2 + dy ** 2)
+                    D = x3 * y4 - x4 * y3
+                    discriminant = r ** 2 * dr ** 2 - D ** 2
+                    if discriminant >= 0:
+                        # laser line intersects shield circle
+                        mypoint = Point()
+                        sgn = -1
+                        if dy > 0: sgn = 1
+                        x1 = (D * dy + sgn * dx * math.sqrt(discriminant)) / dr ** 2
+                        x2 = (D * dy - sgn * dx * math.sqrt(discriminant)) / dr ** 2
+                        y1 = (-D * dx + abs(dy) * math.sqrt(discriminant)) / dr ** 2
+                        y2 = (-D * dx - abs(dy) * math.sqrt(discriminant)) / dr ** 2
+                        x1 += x5
+                        y1 += y5
+                        x2 += x5
+                        y2 += y5
+                        x3 += x5
+                        y3 += y5
+                        x4 += x5
+                        y4 += y5
+                        mypoint.x = x1
+                        mypoint.y = y1
+                        dist1 = functions.distance(mypoint, self)
+                        mypoint2 = Point()
+                        mypoint2.x = x2
+                        mypoint2.y = y2
+                        dist2 = functions.distance(mypoint2, self)
+                        pointA = Point()
+                        pointB = Point()
+                        pointC = Point()
+                        pointA.x = x3
+                        pointA.y = y3
+                        pointB.x = x4
+                        pointB.y = y4
+                        pointC.x = x1
+                        pointC.y = y1
+                        if not functions.isBetween(pointA, pointB, pointC):
+                            continue
+                        pointC.x = x2
+                        pointC.y = y2
+                        if not functions.isBetween(pointA, pointB, pointC):
+                            continue
+                        if dist1 < closesthit_dist:
+                            closesthit_dist = dist1
+                            closesthit = mypoint
+                            animation.hitship = enemyship
+                        if dist2 < closesthit_dist:
+                            closesthit_dist = dist2
+                            closesthit = mypoint2
+                            animation.hitship = enemyship
+                if closesthit != None:
+                    animation.hitpoint = [closesthit.x, closesthit.y]
+                    animation.angle = functions.angleBetween(closesthit, self)
+                    enemyship = animation.hitship
+                    angle = 360 - (animation.angle) + 90 + enemyship.rotation
+                    angle = functions.clampAngle(angle)
+                    shieldnum = int(((angle + 45) / 360) * 4)
+                    if angle <= 45: shieldnum = 0
+                    if angle >= 315: shieldnum = 0
+                    if shieldnum >= 4: shieldnum = 3
+                    shieldcharge = enemyship.shields[shieldnum].charge
+                    if enemyship.state != "attack" and enemyship.state != "attack_delay":
+                        enemyship.state = "attack_delay"
+                    if shieldcharge <= 0:
+                        enemyship.hull -= 10
+                        if enemyship.hull <= 50 and enemyship.state != "retreat":
+                            enemyship.state = "retreat"
+                            enemyship.startRetreat(enemyship)
+                        if enemyship.hull <= 0:
+                            enemyship.explode(animations)
+                    else:
+                        enemyship.shields[shieldnum].charge -= 20
                 break
     def explode(self, animations):
         self.vel = 0
@@ -195,26 +261,14 @@ class MyShip():
         self.autostate = "warp_rot"
         self.vel = 0
         self.rotaccel = 120
-        targetx = self.x
-        targety = self.y
-        dy = targety - spacestation.y
-        dx = targetx - spacestation.x
-        angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi - 90
-        if angle_deg > 360: angle_deg -= 360
-        if angle_deg < 0: angle_deg += 360
+        angle_deg = functions.angleBetween(self, spacestation) - 90
+        angle_deg = functions.clampAngle(angle_deg)
         if abs(angle_deg - self.rotation) >= 180:
             self.rotaccel = -120
-
         self.warpangle = angle_deg
-        if self.warpangle > 360: self.warpangle -= 360
-        if self.warpangle < 0: self.warpangle += 360
+        self.warpangle = functions.clampAngle(self.warpangle)
     def repair(self, gameinfo):
-        repaircost = (self.maxhull - self.hull) * 0.5
-        repaircost += (self.shields[0].maxcharge - self.shields[0].charge) * 0.2
-        repaircost += (self.shields[1].maxcharge - self.shields[1].charge) * 0.2
-        repaircost += (self.shields[2].maxcharge - self.shields[2].charge) * 0.2
-        repaircost += (self.shields[3].maxcharge - self.shields[3].charge) * 0.2
-        repaircost = int(repaircost)
+        repaircost = functions.repairCost(self)
         if repaircost == 0:
             gameinfo.messages[0].visible = True
             gameinfo.messages[0].message = "No Repairs Needed"
@@ -222,10 +276,7 @@ class MyShip():
             gameinfo.messages[0].visible = True
             gameinfo.messages[0].message = "Cannot Afford repairs"
         else:
-            self.shields[0].charge = self.shields[0].maxcharge
-            self.shields[1].charge = self.shields[1].maxcharge
-            self.shields[2].charge = self.shields[2].maxcharge
-            self.shields[3].charge = self.shields[3].maxcharge
+            for i in range(4): self.shields[i].charge = self.shields[i].maxcharge
             self.hull = self.maxhull
             gameinfo.messages[0].visible = True
             gameinfo.messages[0].message = "Ship repaired"

@@ -3,7 +3,6 @@ import functions
 
 def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinfo):
     if gameinfo.screen == "game":
-        sector = myship.gridsector
         allowedSectors = myship.allowedsectors
 
         timefactor = gameinfo.timefactor

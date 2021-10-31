@@ -5,19 +5,19 @@ import sys
 import functions
 
 class Button():
-    def __init__(self):
-        self.x = 0
-        self.y = 0
-        self.width = 0
-        self.height = 0
-        self.textx = 0
-        self.texty = 0
-        self.text = ""
-        self.textcol = (0, 0, 0)
-        self.font = pygame.font.SysFont('Calibri', 34 )
+    def __init__(self, x , y, width, height, textx, texty, text, textcol, screen, onclick, font):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.textx = textx
+        self.texty = texty
+        self.text = text
+        self.textcol = textcol
+        self.font = font
         self.image = pygame.image.load(os.path.join('images','GUI','Button1.png'))
-        self.screen = ""
-        self.onclick = ""
+        self.screen = screen
+        self.onclick = onclick
     def render(self, screen, gameinfo):
         self.image = pygame.transform.scale(self.image, (self.width, self.height))
         screen.blit(self.image, (self.x, self.y))
@@ -50,13 +50,13 @@ class Button():
             gameinfo.screen = "stationmenu"
 
 class Message():
-    def __init__(self):
-        self.x = 0
-        self.y = 0
-        self.message = ""
-        self.visible = True
-        self.screen = ""
-        self.font = None
+    def __init__(self, x, y, message, screen, font):
+        self.x = x
+        self.y = y
+        self.message = message
+        self.visible = False
+        self.screen = screen
+        self.font = font
 
 class Animation():
     def __init__(self):
@@ -75,7 +75,9 @@ class Animation():
         self.damage = 0
         self.classnum = 0
         self.range = 0
-
+        self.hitpoint = []
+        self.hitship = None
+        self.missed = False
 
 class Music():
     def __init__(self):

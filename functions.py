@@ -4,14 +4,42 @@ from myship import *
 import station
 import enemies
 
+def repairCost(myship):
+    repaircost = (myship.maxhull - myship.hull) * 0.5
+    repaircost += (myship.shields[0].maxcharge - myship.shields[0].charge) * 0.2
+    repaircost += (myship.shields[1].maxcharge - myship.shields[1].charge) * 0.2
+    repaircost += (myship.shields[2].maxcharge - myship.shields[2].charge) * 0.2
+    repaircost += (myship.shields[3].maxcharge - myship.shields[3].charge) * 0.2
+    return int(repaircost)
+
+def angleBetween(a, b):
+    dy = a.y - b.y
+    dx = a.x - b.x
+    angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi
+    return angle_deg
+
+def clampAngle(a):
+    if a < 0: return a + 360
+    if a > 360: return a - 360
+    return a
+
+def isBetween(a, b, c):
+    minx = a.x
+    maxx = b.x
+    if minx > maxx:
+        minx = b.x
+        maxx = a.x
+    miny = a.y
+    maxy = b.y
+    if miny > maxy:
+        miny = b.y
+        maxy = a.y
+    if c.x >= minx and c.x <= maxx and c.y >= miny and c.y <= maxy:
+        return True
+    return False
+
 def distance(ship1, ship2):
-    # c ^ 2 = a ^ 2 + b ^ 2
-    # c = sqrt(a ^ 2 + b ^ 2)
-    centrex1 = ship1.x
-    centrey1 = ship1.y
-    centrex2 = ship2.x
-    centrey2 = ship2.y
-    return math.sqrt((abs(centrex1 - centrex2) ** 2) + (abs(centrey1 - centrey2) ** 2))
+    return math.sqrt((abs(ship1.x - ship2.x) ** 2) + (abs(ship1.y - ship2.y) ** 2))
 
 def reIndexEnemies(enemyships):
     i = -1
@@ -63,31 +91,7 @@ def startGame(gameinfo, myship, enemyships, spacestations, music):
     myship = MyShip()
     myship.weapons.append(Weapon("laser"))
     myship.weapons.append(Weapon("torpedo"))
-    '''
-    myship.weapons[0].type = "laser"
-    myship.weapons[0].duration = 0.02
-    myship.weapons[0].chargetime = 0.5
-    myship.weapons[0].lastfired = 0
-    myship.weapons[0].range = 600
-    '''
-    '''
-    myship.weapons[0].type = "torpedo"
-    myship.weapons[0].duration = 0.5
-    myship.weapons[0].chargetime = 3
-    myship.weapons[0].lastfired = 0
-    myship.weapons[0].range = 600
-
-    myship.weapons.append(Weapon())
-    myship.weapons[1].type = "laser"
-    myship.weapons[1].duration = 0.2
-    myship.weapons[1].chargetime = 1
-    myship.weapons[1].lastfired = 0
-    myship.weapons[1].range = 600
-    '''
-    myship.shields.append(ShipShield())
-    myship.shields.append(ShipShield())
-    myship.shields.append(ShipShield())
-    myship.shields.append(ShipShield())
+    for i in range(4): myship.shields.append(ShipShield())
     for shield in myship.shields:
         shield.charge = 250
         shield.maxcharge = 250
