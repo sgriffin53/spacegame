@@ -66,7 +66,7 @@ class Animation():
         self.duration = 0
         self.startpos = 0
         self.endpos = [0, 0]
-        self.colour = (255, 0, 0)
+        self.colour = (0, 255, 0)
         self.targettype = None
         self.targetship = None
         self.firer = None
@@ -77,7 +77,12 @@ class Animation():
         self.range = 0
         self.hitpoint = []
         self.hitship = None
+        self.hit = False
+        self.shielddown = False
         self.missed = False
+        self.x = 0
+        self.y = 0
+        self.velocity = 0
 
 class Music():
     def __init__(self):
@@ -108,15 +113,17 @@ class Shield():
 
 class Weapon():
     def __init__(self, type):
+        self.velocity = 200
         if type == "torpedo-c1":
             self.damage = 20
             self.type = "torpedo"
             self.classnum = 1
             self.fullname = "Torpedo (Class 1)"
-            self.duration = 0.5
-            self.chargetime = 3
+            self.duration = 1
+            self.chargetime = 2
             self.lastfired = 0
             self.range = 600
+            self.velocity = 1500
         elif type == "torpedo-c2":
             self.damage = 35
             self.type = "torpedo"
@@ -126,6 +133,17 @@ class Weapon():
             self.chargetime = 3
             self.lastfired = 0
             self.range = 600
+            self.velocity = 500
+        elif type == "bullet-c1":
+            self.damage = 1
+            self.type = "bullet"
+            self.classnum = 1
+            self.fullname = "Bullet (Class 1)"
+            self.duration = 2
+            self.chargetime = 0.05
+            self.lastfired = 0
+            self.range = 600
+            self.velocity = 1500
         elif type == "laser-c1":
             self.damage = 10
             self.type = "laser"
@@ -173,6 +191,7 @@ class GameInfo():
         self.credits = 0
         self.gamemessage = ""
         self.gamemessagedisplayed = 0
+        self.checkships = []
 
 class Point():
     def __init__(self):

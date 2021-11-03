@@ -233,12 +233,15 @@ def drawMyShields(screen, myship, gameinfo):
 
 def drawMyTurret(screen, myship, gameinfo):
     centre = (gameinfo.width / 2, gameinfo.height / 2)
-    myship_rot_rads = myship.rotation * math.pi / 180
     ang_rads = myship.turretrot * math.pi / 180
     margin = 5
-    dist = myship.width / 2 + margin * 2
-    drawX = centre[0] + dist * math.cos(ang_rads)
-    drawY = centre[1] + dist * math.sin(ang_rads)
+    dist1 = myship.width / 2 + margin * 2
+    dist2 = myship.width / 2 + margin * 2 + 50
+    drawX = centre[0] + dist1 * math.cos(ang_rads)
+    drawY = centre[1] + dist1 * math.sin(ang_rads)
+    pygame.draw.circle(screen, (255, 0, 0), (drawX, drawY), 6, 3)
+    drawX = centre[0] + dist2 * math.cos(ang_rads)
+    drawY = centre[1] + dist2 * math.sin(ang_rads)
     pygame.draw.circle(screen, (255, 0, 0), (drawX, drawY), 6, 3)
     myship.turrentpos = (drawX, drawY)
 
@@ -431,7 +434,7 @@ def renderGame(screen, stars, myship, gameinfo, spacestations, enemyships, shipI
     # Calculate centre
 
     centre = (gameinfo.width / 2, gameinfo.height / 2)
-
+    del gameinfo.checkships[:]
     i = -1
     for enemyship in enemyships:
         i += 1
@@ -440,10 +443,11 @@ def renderGame(screen, stars, myship, gameinfo, spacestations, enemyships, shipI
         if not onScreen(enemyship, myship, gameinfo):
             drawTargetLine(screen, myship, enemyship, spacestations, gameinfo)
             continue
+        gameinfo.checkships.append(enemyship)
         # Draw enemy ship
-        enemydrawX = centre[0] + enemyship.x - myship.x
-        enemydrawY = centre[1] - enemyship.y + myship.y
         if enemyship.visible:
+            enemydrawX = centre[0] + enemyship.x - myship.x
+            enemydrawY = centre[1] - enemyship.y + myship.y
             es_centre = (enemydrawX, enemydrawY)
             (newIMG, es_centre) = rot_center(enemyship.shipIMG, enemyship.rotation, es_centre[0],
                                              es_centre[1])  # rotate ship appropriately
@@ -508,6 +512,8 @@ def renderGame(screen, stars, myship, gameinfo, spacestations, enemyships, shipI
 
 def renderAnimations(screen, animations, myship, gameinfo, enemyships):
     centre = (gameinfo.width / 2, gameinfo.height / 2)
+    x5 = 0
+    y5 = 0
     i = -1
     for animation in animations:
         i += 1
@@ -537,11 +543,8 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships):
                 if animation.firer == "myship":
                     pass
                 animations.pop(i)
-                break
             if animation.firer == "myship":
                 if animation.hitship != None:
-                    closesthit = Point()
-                    closesthit_dist = 99999999999
                     r = animation.hitship.width / 2 + 10
                     x5 = animation.hitship.x
                     y5 = animation.hitship.y
@@ -549,59 +552,20 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships):
                     y3 = animation.endpos[1] - y5
                     x4 = myship.x - x5
                     y4 = myship.y - y5
-                    dx = x4 - x3
-                    dy = y4 - y3
-                    dr = math.sqrt(dx ** 2 + dy ** 2)
-                    D = x3 * y4 - x4 * y3
-                    discriminant = r ** 2 * dr ** 2 - D ** 2
-                    if discriminant >= 0:
-                        mypoint = Point()
-                        sgn = -1
-                        if dy > 0: sgn = 1
-                        x1 = (D * dy + sgn * dx * math.sqrt(discriminant)) / dr ** 2
-                        x2 = (D * dy - sgn * dx * math.sqrt(discriminant)) / dr ** 2
-                        y1 = (-D * dx + abs(dy) * math.sqrt(discriminant)) / dr ** 2
-                        y2 = (-D * dx - abs(dy) * math.sqrt(discriminant)) / dr ** 2
-                        x1 += x5
-                        y1 += y5
-                        x2 += x5
-                        y2 += y5
-                        x3 += x5
-                        y3 += y5
-                        x4 += x5
-                        y4 += y5
-                        mypoint.x = x1
-                        mypoint.y = y1
-                        dist1 = functions.distance(mypoint, myship)
-                        mypoint2 = Point()
-                        mypoint2.x = x2
-                        mypoint2.y = y2
-                        dist2 = functions.distance(mypoint2, myship)
-                        pointA = Point()
-                        pointB = Point()
-                        pointC = Point()
-                        pointA.x = x3
-                        pointA.y = y3
-                        pointB.x = x4
-                        pointB.y = y4
-                        pointC.x = x1
-                        pointC.y = y1
-                        if not functions.isBetween(pointA, pointB, pointC):
-                            continue
-                        pointC.x = x2
-                        pointC.y = y2
-                        if not functions.isBetween(pointA, pointB, pointC):
-                            continue
-                        if dist1 < closesthit_dist:
-                            closesthit_dist = dist1
-                            closesthit = mypoint
-                        if dist2 < closesthit_dist:
-                            closesthit_dist = dist2
-                            closesthit = mypoint2
+                    intercept = functions.lineCircleIntercept(x3, y3, x4, y4, x5, y5, r)
+                    if intercept != None:
+                        closesthit = Point()
+                        closesthit.x, closesthit.y = intercept
                         animation.hitpoint = [closesthit.x, closesthit.y]
                 if len(animation.hitpoint) == 0:
                     enemydrawX = centre[0] + animation.endpos[0] - myship.x
                     enemydrawY = centre[1] - animation.endpos[1] + myship.y
+                elif animation.hit and animation.shielddown:
+                    midpoint = functions.midpoint(animation.hitpoint[0], animation.hitpoint[1], x5, y5)
+                    animation.hitpoint[0] = midpoint[0]
+                    animation.hitpoint[1] = midpoint[1]
+                    enemydrawX = centre[0] + animation.hitpoint[0] - myship.x
+                    enemydrawY = centre[1] - animation.hitpoint[1] + myship.y
                 else:
                     enemydrawX = centre[0] + animation.hitpoint[0] - myship.x
                     enemydrawY = centre[1] - animation.hitpoint[1] + myship.y
@@ -623,8 +587,10 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships):
                 angle = 360 - (animation.angle) + 90 + myship.rotation
                 angle = functions.clampAngle(angle)
                 shieldnum = int(((angle + 45) / 360) * 4)
+                if angle <= 45: shieldnum = 0
+                if angle >= 315: shieldnum = 0
                 if shieldnum >= 4: shieldnum = 3
-                if myship.shields[shieldnum].charge <= 0 and animation.missed != False:
+                if myship.shields[shieldnum].charge <= 0 and animation.missed == False:
                     lineendX = centre[0]
                     lineendY = centre[1]
                 elif animation.missed:
@@ -659,8 +625,20 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships):
             pygame.draw.circle(screen, (255, 50, 50), (drawX - animation.width / 2 + 30,
                                                        drawY - animation.width / 2 + 30),
                                circlesize)
-        elif animation.type == "torpedo" and False:
-            pass # torpedo code goes here
+        elif animation.type == "torpedo" or animation.type == "bullet":
+            if time.time() >= animation.endtime:
+                # collision code here
+                animations.pop(i)
+                i-=1
+            if animation.firer == "myship" or True:
+                drawX = centre[0] + animation.x - myship.x
+                drawY = centre[1] - animation.y + myship.y
+                width = 5
+                if animation.type == "bullet": width = 2
+                pygame.draw.circle(screen, animation.colour, (drawX,
+                                                           drawY),
+                                   width)
+
 
 def renderFrame(screen, stars, myship, enemyships, spacestations, images, shipIMG, enemyshipIMG, spacestationIMG, gameinfo, animations):
     if gameinfo.screen == "upgrademenu":

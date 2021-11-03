@@ -146,6 +146,7 @@ class EnemyShip():
                 myship.lastattacker = self.index
                 # add animation
                 angle_deg = functions.angleBetween(myship, self)
+                angle_deg += 90
                 animation = Animation()
                 if random.randint(1,100) <= 25:
                     rand = random.randint(0,1)
@@ -165,63 +166,53 @@ class EnemyShip():
                 animation.classnum = weapon.classnum
                 animation.endpos[0] = self.x + math.cos(angle_rads) * weapon.range
                 animation.endpos[1] = self.y - math.sin(angle_rads) * weapon.range
+                animation.x = self.x
+                animation.y = self.y
                 animation.targetship = self
                 animation.target = self
                 animation.firer = "enemyship"
+                animation.velocity = weapon.velocity
 
-                r = myship.width / 2 + 10
-                x5 = myship.x
-                y5 = myship.y
-                x3 = animation.endpos[0] - x5
-                y3 = animation.endpos[1] - y5
-                x4 = self.x - x5
-                y4 = self.y - y5
-                dx = x4 - x3
-                dy = y4 - y3
-                dr = math.sqrt(dx ** 2 + dy ** 2)
-                D = x3 * y4 - x4 * y3
-                discriminant = r ** 2 * dr ** 2 - D ** 2
-                animation.missed = True
-                if discriminant >= 0:
-                    animation.missed = False
-                    # laser line intersects shield circle
-                    sgn = -1
-                    if dy > 0: sgn = 1
-                    x1 = (D * dy + sgn * dx * math.sqrt(discriminant)) / dr ** 2
-                    x2 = (D * dy - sgn * dx * math.sqrt(discriminant)) / dr ** 2
-                    y1 = (-D * dx + abs(dy) * math.sqrt(discriminant)) / dr ** 2
-                    y2 = (-D * dx - abs(dy) * math.sqrt(discriminant)) / dr ** 2
-                    x1 += x5
-                    y1 += y5
-                    x2 += x5
-                    y2 += y5
-                    x3 += x5
-                    y3 += y5
-                    x4 += x5
-                    y4 += y5
+                if animation.type == "laser":
+                    r = myship.width / 2 + 10
+                    x5 = myship.x
+                    y5 = myship.y
+                    x3 = animation.endpos[0] - x5
+                    y3 = animation.endpos[1] - y5
+                    x4 = self.x - x5
+                    y4 = self.y - y5
+                    intercept = functions.lineCircleIntercept(x3, y3, x4, y4, x5, y5, r)
+                    animation.missed = True
+                    if intercept != None:
+                        animation.missed = False
                 animations.append(animation)
                 break
 
 def spawnEnemyShips(enemyships, spacestations):
     j = 0
     k = -1
+    enemyshipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
+    enemyships_new = []
+    retries = 0
     for spacestation in spacestations:
-        for i in range(100):
+        for i in range(200):
             k+=1
             enemyships.append(EnemyShip())
-            enemyships[k].weapons.append(Weapon("laser-c1"))
-            enemyships[k].weapons.append(Weapon("torpedo-c1"))
+            #enemyships[k].weapons.append(Weapon("laser-c1"))
+            enemyships[k].weapons.append(Weapon("bullet-c1"))
             enemyships[k].index = k
             enemyships[k].state = "patrol"
-            enemyships[k].shipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
+            enemyships[k].shipIMG = enemyshipIMG
             for i in range(4): enemyships[k].shields.append(ShipShield())
-
             while True: # choose random locations until one is outside a space station
-                enemyships[k].x = random.randint(spacestation.x - 5000, spacestation.x + 5000)
-                enemyships[k].y = random.randint(spacestation.y - 5000, spacestation.y + 5000)
+                enemyships[k].x = random.randint(spacestation.x - 15000, spacestation.x + 15000)
+                enemyships[k].y = random.randint(spacestation.y - 15000, spacestation.y + 15000)
                 dist = functions.distance(spacestation, enemyships[k])
                 if dist > spacestation.width / 2 + 50:
                    break
+                retries += 1
+            enemyships_new.append(enemyships[k])
 
             enemyships[k].startPatrol()
         j += 1
+    return enemyships_new # return new list instead of modifying original

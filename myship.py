@@ -92,7 +92,6 @@ class MyShip():
     def attackerTarget(self):
         self.targeted = self.lastattacker
     def fireNextWeapon(self, enemyships, animations, sounds, spacestations):
-       # dist = functions.distance(self, enemyships[self.targeted])
         for weapon in self.weapons:
             if weapon == None: continue
             for animation in animations:
@@ -110,7 +109,6 @@ class MyShip():
 
                 animation = Animation()
                 animation.type = weapon.type
-                animation.colour = (0, 255, 0)
                 animation.starttime = time.time()
                 animation.endtime = time.time() + weapon.duration
                 animation.duration = weapon.duration
@@ -125,95 +123,61 @@ class MyShip():
                 animation.firer = "myship"
                 animation.damage = weapon.damage
                 animation.classnum = weapon.classnum
+                animation.angle = self.turretrot + 90
+                animation.angle = functions.clampAngle(animation.angle)
+                animation.x = self.x
+                animation.y = self.y
+                animation.velocity = weapon.velocity + self.vel
+                animation.colour = (0, 255, 0)
+                if animation.type == "torpedo" or animation.type == "torpedo":
+                    animation.colour = (255, 0, 0)
+                if animation.type == "laser":
+                    closesthit = None
+                    closesthit_dist = 99999999999999
+                    for enemyship in enemyships:
+                        dist = functions.distance(self, enemyship)
+                        if dist > 2000: continue
+                        endpos = animation.endpos
+
+                        # line-circle intercept
+                        r = enemyship.width / 2 + 10
+                        # x ^ 2 + b x + c
+                        x5 = enemyship.x
+                        y5 = enemyship.y
+                        x3 = endpos[0] - x5
+                        y3 = endpos[1] - y5
+                        x4 = self.x - x5
+                        y4 = self.y - y5
+                        intercept = functions.lineCircleIntercept(x3, y3, x4, y4, x5, y5, r)
+                        if intercept != None:
+                            closesthit = Point()
+                            closesthit.x, closesthit.y = intercept
+                            animation.hitship = enemyship
+                    if closesthit != None:
+                        animation.hit = True
+                        animation.hitpoint = [closesthit.x, closesthit.y]
+                        animation.angle = functions.angleBetween(closesthit, self)
+                        enemyship = animation.hitship
+                        angle = 360 - (animation.angle) + 90 + animation.hitship.rotation
+                        angle = functions.clampAngle(angle)
+                        shieldnum = int(((angle + 45) / 360) * 4)
+                        if angle <= 45: shieldnum = 0
+                        if angle >= 315: shieldnum = 0
+                        if shieldnum >= 4: shieldnum = 3
+                        shieldcharge = enemyship.shields[shieldnum].charge
+                        if enemyship.state != "attack" and enemyship.state != "attack_delay":
+                            enemyship.state = "attack_delay"
+                        if shieldcharge <= 0:
+                            animation.shielddown = True
+                            enemyship.hull -= 10
+                            if enemyship.hull <= 50 and enemyship.state != "retreat":
+                                enemyship.state = "retreat"
+                                enemyship.startRetreat(enemyship)
+                            if enemyship.hull <= 0:
+                                enemyship.explode(animations)
+                        else:
+                            enemyship.shields[shieldnum].charge -= 20
                 animations.append(animation)
-                closesthit = None
-                closesthit_dist = 99999999999999
-                for enemyship in enemyships:
-                    dist = functions.distance(self, enemyship)
-                    if dist > 2000: continue
-                    endpos = animation.endpos
-                    r = enemyship.width / 2 + 10
-                    # x ^ 2 + b x + c
-                    x5 = enemyship.x
-                    y5 = enemyship.y
-                    x3 = endpos[0] - x5
-                    y3 = endpos[1] - y5
-                    x4 = self.x - x5
-                    y4 = self.y - y5
-                    dx = x4 - x3
-                    dy = y4 - y3
-                    dr = math.sqrt(dx ** 2 + dy ** 2)
-                    D = x3 * y4 - x4 * y3
-                    discriminant = r ** 2 * dr ** 2 - D ** 2
-                    if discriminant >= 0:
-                        # laser line intersects shield circle
-                        mypoint = Point()
-                        sgn = -1
-                        if dy > 0: sgn = 1
-                        x1 = (D * dy + sgn * dx * math.sqrt(discriminant)) / dr ** 2
-                        x2 = (D * dy - sgn * dx * math.sqrt(discriminant)) / dr ** 2
-                        y1 = (-D * dx + abs(dy) * math.sqrt(discriminant)) / dr ** 2
-                        y2 = (-D * dx - abs(dy) * math.sqrt(discriminant)) / dr ** 2
-                        x1 += x5
-                        y1 += y5
-                        x2 += x5
-                        y2 += y5
-                        x3 += x5
-                        y3 += y5
-                        x4 += x5
-                        y4 += y5
-                        mypoint.x = x1
-                        mypoint.y = y1
-                        dist1 = functions.distance(mypoint, self)
-                        mypoint2 = Point()
-                        mypoint2.x = x2
-                        mypoint2.y = y2
-                        dist2 = functions.distance(mypoint2, self)
-                        pointA = Point()
-                        pointB = Point()
-                        pointC = Point()
-                        pointA.x = x3
-                        pointA.y = y3
-                        pointB.x = x4
-                        pointB.y = y4
-                        pointC.x = x1
-                        pointC.y = y1
-                        if not functions.isBetween(pointA, pointB, pointC):
-                            continue
-                        pointC.x = x2
-                        pointC.y = y2
-                        if not functions.isBetween(pointA, pointB, pointC):
-                            continue
-                        if dist1 < closesthit_dist:
-                            closesthit_dist = dist1
-                            closesthit = mypoint
-                            animation.hitship = enemyship
-                        if dist2 < closesthit_dist:
-                            closesthit_dist = dist2
-                            closesthit = mypoint2
-                            animation.hitship = enemyship
-                if closesthit != None:
-                    animation.hitpoint = [closesthit.x, closesthit.y]
-                    animation.angle = functions.angleBetween(closesthit, self)
-                    enemyship = animation.hitship
-                    angle = 360 - (animation.angle) + 90 + enemyship.rotation
-                    angle = functions.clampAngle(angle)
-                    shieldnum = int(((angle + 45) / 360) * 4)
-                    if angle <= 45: shieldnum = 0
-                    if angle >= 315: shieldnum = 0
-                    if shieldnum >= 4: shieldnum = 3
-                    shieldcharge = enemyship.shields[shieldnum].charge
-                    if enemyship.state != "attack" and enemyship.state != "attack_delay":
-                        enemyship.state = "attack_delay"
-                    if shieldcharge <= 0:
-                        enemyship.hull -= 10
-                        if enemyship.hull <= 50 and enemyship.state != "retreat":
-                            enemyship.state = "retreat"
-                            enemyship.startRetreat(enemyship)
-                        if enemyship.hull <= 0:
-                            enemyship.explode(animations)
-                    else:
-                        enemyship.shields[shieldnum].charge -= 20
                 break
     def explode(self, animations):
         self.vel = 0

@@ -32,7 +32,9 @@ for i in range(0, 200):
 
 
 width = 1280
-height = 720
+height = 768
+#width = 800
+#height = 600
 gameinfo.width = width
 gameinfo.height = height
 gameinfo.clock = pygame.time.Clock()
@@ -49,7 +51,7 @@ fullscreen = False
 # generate stars
 
 stars = []
-for i in range(250):
+for i in range(1250):
   stars.append(dict({'x': 0, 'y': 0}))
   stars[i]['x'] = random.random()*width
   stars[i]['y'] = random.random()*height
@@ -100,8 +102,6 @@ myship.respawn(spacestations[7])
 # spawn enemies
 
 enemyships = []
-
-enemies.spawnEnemyShips(enemyships, spacestations)
 
 # Run until the user asks to quit
 running = True
@@ -178,7 +178,7 @@ while running:
     keypresses.detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animations, sounds, spacestations, music)
     cur_time = time.time()
     time_since_phys_tick = cur_time - last_phys_tick
-    physics.physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinfo)
+    physics.physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinfo, animations)
     last_phys_tick = cur_time
     collision.collisionDetection(myship, enemyships, spacestations)
     for enemyship in enemyships:

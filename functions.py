@@ -4,6 +4,80 @@ from myship import *
 import station
 import enemies
 
+def midpoint(x1, y1, x2, y2):
+    mid_x = (x2 + x1) / 2
+    mid_y = (y2 + y1) / 2
+    return [mid_x, mid_y]
+
+def lineCircleIntercept(x3, y3, x4, y4, x5, y5, r):
+    # returns x4, x5
+    # see notes diagram
+    # inputs:
+    # r = radius
+    # x5, y5 = circle centre
+    # x3, y3 = line start
+    # x4, y4 = line end
+    # outputs:
+    # x1, y1, x2, y2 = intercept points
+    # returns just x1, y1 (closest intercept to x4, y4
+    closesthit = None
+    dx = x4 - x3
+    dy = y4 - y3
+    dr = math.sqrt(dx ** 2 + dy ** 2)
+    D = x3 * y4 - x4 * y3
+    discriminant = r ** 2 * dr ** 2 - D ** 2
+    closesthit_dist = 999999999999
+    if discriminant >= 0:
+        # laser line intersects shield circle
+        mypoint = Point()
+        sgn = -1
+        if dy > 0: sgn = 1
+        x1 = (D * dy + sgn * dx * math.sqrt(discriminant)) / dr ** 2
+        x2 = (D * dy - sgn * dx * math.sqrt(discriminant)) / dr ** 2
+        y1 = (-D * dx + abs(dy) * math.sqrt(discriminant)) / dr ** 2
+        y2 = (-D * dx - abs(dy) * math.sqrt(discriminant)) / dr ** 2
+        x1 += x5
+        y1 += y5
+        x2 += x5
+        y2 += y5
+        x3 += x5
+        y3 += y5
+        x4 += x5
+        y4 += y5
+        mypoint.x = x1
+        mypoint.y = y1
+        point4 = Point()
+        point4.x = x4
+        point4.y = y5
+        dist1 = functions.distance(mypoint, point4)
+        mypoint2 = Point()
+        mypoint2.x = x2
+        mypoint2.y = y2
+        dist2 = functions.distance(mypoint2, point4)
+        pointA = Point()
+        pointB = Point()
+        pointC = Point()
+        pointA.x = x3
+        pointA.y = y3
+        pointB.x = x4
+        pointB.y = y4
+        pointC.x = x1
+        pointC.y = y1
+        if not functions.isBetween(pointA, pointB, pointC):
+            return
+        pointC.x = x2
+        pointC.y = y2
+        if not functions.isBetween(pointA, pointB, pointC):
+            return
+        if dist1 < closesthit_dist:
+            closesthit_dist = dist1
+            closesthit = mypoint
+        if dist2 < closesthit_dist:
+            closesthit_dist = dist2
+            closesthit = mypoint2
+    if closesthit == None: return None
+    return closesthit.x, closesthit.y
+
 def repairCost(myship):
     repaircost = (myship.maxhull - myship.hull) * 0.5
     repaircost += (myship.shields[0].maxcharge - myship.shields[0].charge) * 0.2
@@ -87,10 +161,12 @@ def startGame(gameinfo, myship, enemyships, spacestations, music):
     station.spawnSpaceStations(spacestations)
 
     # create my ship object
+    del myship.weapons[:]
 
-    myship = MyShip()
-    myship.weapons.append(Weapon("laser"))
-    myship.weapons.append(Weapon("torpedo"))
+    myship.weapons.append(Weapon("laser-c1"))
+    myship.weapons.append(Weapon("torpedo-c1"))
+    myship.weapons.append(Weapon("bullet-c1"))
+    myship.weapons.append(None)
     for i in range(4): myship.shields.append(ShipShield())
     for shield in myship.shields:
         shield.charge = 250
@@ -100,8 +176,6 @@ def startGame(gameinfo, myship, enemyships, spacestations, music):
 
     # spawn enemies
 
-    enemyships = []
-
-    enemies.spawnEnemyShips(enemyships, spacestations)
+    enemyships = enemies.spawnEnemyShips(enemyships, spacestations)
     functions.playMusic(music)
     gameinfo.screen = "game"
