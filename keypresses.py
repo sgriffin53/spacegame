@@ -1,7 +1,7 @@
 import pygame
 import sys
 import functions
-from classes import Point, Button
+from classes import Point, Weapon
 
 def handleMouseButtonUp(gameinfo, myship, mousepos, enemyships, spacestations, music):
     if gameinfo.screen == "map":
@@ -83,6 +83,22 @@ def detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animat
                         if gameinfo.screen == "game": newscreen = "stationmenu"
                         gameinfo.screen = newscreen
                         gameinfo.messages[0].visible = False
+                if event.key == pygame.K_F9 or event.key == pygame.K_F10 or event.key == pygame.K_F11 or event.key == pygame.K_F12:
+                    if gameinfo.screen == "upgrademenu":
+                        slotindex = -1
+                        if event.key == pygame.K_F9: slotindex = 0
+                        elif event.key == pygame.K_F10: slotindex = 1
+                        elif event.key == pygame.K_F11: slotindex = 2
+                        elif event.key == pygame.K_F12: slotindex = 3
+                        weaponlist = [None, "laser-c1", "laser-c2", "bullet-c1", "torpedo-c1", "torpedo-c2", "fluxray-c1", "fluxray-c2", "fluxray-c3"]
+                        index = -1
+                        for i in range(len(weaponlist)):
+                            if myship.weapons[slotindex].fulltype == weaponlist[i]: index = i
+                        if index >= 0:
+                            index += 1
+                            if index >= len(weaponlist) - 1:
+                                index = 0
+                            myship.weapons[slotindex] = Weapon(weaponlist[index])
 
     keys = pygame.key.get_pressed()  # checking pressed keys
 

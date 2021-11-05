@@ -83,6 +83,9 @@ class Animation():
         self.x = 0
         self.y = 0
         self.velocity = 0
+        self.points = [] # for flux ray
+        self.t = 0
+        self.offset = 0
 
 class Music():
     def __init__(self):
@@ -106,15 +109,55 @@ class Shield():
             self.classnum = 1
             self.fullname = "Shield (Class 1)"
         elif type == "shield-c2":
-            self.maxcharge = 200
-            self.charge = 200
+            self.maxcharge = 250
+            self.charge = 250
             self.classnum = 2
             self.fullname = "Shield (Class 2)"
 
 class Weapon():
-    def __init__(self, type):
+    def __init__(self, fulltype):
+        self.fulltype = fulltype
         self.velocity = 200
-        if type == "torpedo-c1":
+        self.damage = 0
+        self.type = None
+        self.classnum = 1
+        self.fullname = "None"
+        self.duration = 0
+        self.chargetime = 0
+        self.lastfired = 0
+        self.range = 0
+        self.velocity = 1500
+        if fulltype == "fluxray-c1":
+            self.damage = 20
+            self.type = "fluxray"
+            self.classnum = 1
+            self.fullname = "Flux Ray (Class 1)"
+            self.duration = 0.5
+            self.chargetime = 1.5
+            self.lastfired = 0
+            self.range = 600
+            self.velocity = 1500
+        if fulltype == "fluxray-c2":
+            self.damage = 60
+            self.type = "fluxray"
+            self.classnum = 2
+            self.fullname = "Flux Ray (Class 2)"
+            self.duration = 0.5
+            self.chargetime = 1.5
+            self.lastfired = 0
+            self.range = 600
+            self.velocity = 1500
+        if fulltype == "fluxray-c3":
+            self.damage = 6000
+            self.type = "fluxray"
+            self.classnum = 2
+            self.fullname = "Flux Ray (Class 3)"
+            self.duration = 0.5
+            self.chargetime = 1.5
+            self.lastfired = 0
+            self.range = 600
+            self.velocity = 1500
+        if fulltype == "torpedo-c1":
             self.damage = 20
             self.type = "torpedo"
             self.classnum = 1
@@ -124,7 +167,7 @@ class Weapon():
             self.lastfired = 0
             self.range = 600
             self.velocity = 1500
-        elif type == "torpedo-c2":
+        elif fulltype == "torpedo-c2":
             self.damage = 35
             self.type = "torpedo"
             self.classnum = 2
@@ -134,7 +177,7 @@ class Weapon():
             self.lastfired = 0
             self.range = 600
             self.velocity = 500
-        elif type == "bullet-c1":
+        elif fulltype == "bullet-c1":
             self.damage = 1
             self.type = "bullet"
             self.classnum = 1
@@ -144,7 +187,7 @@ class Weapon():
             self.lastfired = 0
             self.range = 600
             self.velocity = 1500
-        elif type == "laser-c1":
+        elif fulltype == "laser-c1":
             self.damage = 10
             self.type = "laser"
             self.classnum = 1
@@ -153,7 +196,7 @@ class Weapon():
             self.chargetime = 1
             self.lastfired = 0
             self.range = 600
-        elif type == "laser-c2":
+        elif fulltype == "laser-c2":
             self.damage = 20
             self.type = "laser"
             self.classnum = 2

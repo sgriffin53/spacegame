@@ -163,14 +163,11 @@ def startGame(gameinfo, myship, enemyships, spacestations, music):
     # create my ship object
     del myship.weapons[:]
 
-    myship.weapons.append(Weapon("laser-c1"))
-    myship.weapons.append(Weapon("torpedo-c1"))
+    myship.weapons.append(Weapon("fluxray-c1"))
     myship.weapons.append(Weapon("bullet-c1"))
-    myship.weapons.append(None)
-    for i in range(4): myship.shields.append(ShipShield())
-    for shield in myship.shields:
-        shield.charge = 250
-        shield.maxcharge = 250
+    myship.weapons.append(Weapon(None))
+    myship.weapons.append(Weapon(None))
+    for i in range(4): myship.shields.append(Shield("shield-c2"))
 
     myship.respawn(spacestations[7])
 

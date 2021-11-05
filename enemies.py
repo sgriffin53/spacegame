@@ -4,7 +4,7 @@ import math
 import functions
 import pygame
 import os
-from classes import Animation, Point, Weapon, ShipShield
+from classes import Animation, Point, Weapon, ShipShield, Shield
 
 class EnemyShip():
     def __init__(self):
@@ -147,8 +147,16 @@ class EnemyShip():
                 # add animation
                 angle_deg = functions.angleBetween(myship, self)
                 angle_deg += 90
+                if weapon.type == "laser":
+                    angle_deg = angle_deg - 90
                 animation = Animation()
-                if random.randint(1,100) <= 25:
+                chance_of_miss = 0
+                if weapon.type == "laser": chance_of_miss = 50
+                if weapon.type == "bullet": chance_of_miss = 75
+                if weapon.type == "torpedo": chance_of_miss = 50
+                if weapon.type == "fluxray": chance_of_miss = 25
+                if random.randint(1,100) <= chance_of_miss:
+                    if weapon.type == "bullet": continue
                     rand = random.randint(0,1)
                     if rand == 0:
                         angle_deg += random.randint(15, 30)
@@ -173,7 +181,7 @@ class EnemyShip():
                 animation.firer = "enemyship"
                 animation.velocity = weapon.velocity
 
-                if animation.type == "laser":
+                if animation.type == "laser" or animation.type == "fluxray":
                     r = myship.width / 2 + 10
                     x5 = myship.x
                     y5 = myship.y
@@ -185,6 +193,8 @@ class EnemyShip():
                     animation.missed = True
                     if intercept != None:
                         animation.missed = False
+                if animation.type == "fluxray":
+                    animation.angle -= 90
                 animations.append(animation)
                 break
 
@@ -198,12 +208,12 @@ def spawnEnemyShips(enemyships, spacestations):
         for i in range(200):
             k+=1
             enemyships.append(EnemyShip())
-            #enemyships[k].weapons.append(Weapon("laser-c1"))
+            enemyships[k].weapons.append(Weapon("laser-c1"))
             enemyships[k].weapons.append(Weapon("bullet-c1"))
             enemyships[k].index = k
             enemyships[k].state = "patrol"
             enemyships[k].shipIMG = enemyshipIMG
-            for i in range(4): enemyships[k].shields.append(ShipShield())
+            for i in range(4): enemyships[k].shields.append(Shield("shield-c1"))
             while True: # choose random locations until one is outside a space station
                 enemyships[k].x = random.randint(spacestation.x - 15000, spacestation.x + 15000)
                 enemyships[k].y = random.randint(spacestation.y - 15000, spacestation.y + 15000)

@@ -425,7 +425,7 @@ def renderMap(screen, gameinfo, myship, spacestations):
     else:
         screen.blit(noStationText, (830, 30))
 
-def renderGame(screen, stars, myship, gameinfo, spacestations, enemyships, shipIMG, animations):
+def renderGame(screen, stars, myship, gameinfo, spacestations, enemyships, shipIMG, animations, images):
     # Fill the background with white
     screen.fill((0, 0, 0))
 
@@ -517,10 +517,80 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships):
     i = -1
     for animation in animations:
         i += 1
+        if animation.type == "fluxray":
+            if time.time() >= animation.endtime:
+                if animation.firer == "enemyship" and animation.missed != False:
+                    angle = (animation.angle) + 90 + myship.rotation
+                    angle = functions.clampAngle(angle)
+                    shieldnum = int(((angle + 45) / 360) * 4)
+                    if angle <= 45: shieldnum = 0
+                    if angle >= 315: shieldnum = 0
+                    if shieldnum >= 4: shieldnum = 3
+                    shieldcharge = myship.shields[shieldnum].charge
+                    if shieldcharge <= 0:
+                        myship.hull -= animation.damage
+                        if myship.hull <= 0:
+                            myship.alive = False
+                            gameinfo.alive = False
+                            gameinfo.lastdied = time.time()
+                            myship.vel = 0
+                            myship.rotaccel = 0
+                            myship.accel = 0
+                            myship.explode(animations)
+                    else:
+                        myship.shields[shieldnum].charge -= animation.damage
+                animations.pop(i)
+            if animation.firer == "myship" or animation.firer == "enemyship":
+                del animation.points[:]
+                lastx = None
+                lasty = None
+                x1 = animation.endpos[0]
+                y1 = animation.endpos[1]
+                x2 = myship.x
+                y2 = myship.y
+                if animation.firer == "enemyship":
+                    x2 = animation.target.x
+                    y2 = animation.target.y
+                animation.offset = random.randint(1, 30)
+                offset = animation.offset
+               # offset = 1 # for sine
+                #offset2 = random.randint(1,6) # for sine
+                animation.t = 1000
+                tot = animation.t
+                for t in range(0, tot, 5):
+                    angle_rads = (360 - animation.angle) * math.pi / 180
+                    x3 = x2 + (t * offset) * math.cos(angle_rads) - math.sin(angle_rads) * math.sin((t * offset) / 20) * 20
+                    y3 = y2 + (t * offset) * math.sin(angle_rads) + math.cos(angle_rads) * math.sin((t * offset) / 20) * 20
+                    '''
+                    for sine waves:
+                    x3 = x2 + (t * offset) * math.cos(angle_rads) - math.sin(angle_rads) * math.sin((t * offset2 + offset) / 20) * 20
+                    y3 = y2 + (t * offset) * math.sin(angle_rads) + math.cos(angle_rads) * math.sin((t * offset2 + offset) / 20) * 20
+                    '''
+                    animation.points.append([x3, y3])
+
+                for point in animation.points:
+                    x = point[0]
+                    y = point[1]
+                    drawX = centre[0] + x - myship.x
+                    drawY = centre[1] - y + myship.y
+                    #pygame.draw.circle(screen, animation.colour, (drawX,
+                                   #                               drawY),
+                                  #     2)
+                    if lastx != None:
+                        drawXlast = centre[0] + lastx - myship.x
+                        drawYlast = centre[1] - lasty + myship.y
+                        width = 2
+                        if animation.classnum >= 2: width = 5
+                        pygame.draw.line(screen, animation.colour, (drawX, drawY), (
+                            drawXlast,
+                            drawYlast), width)
+                    lastx = x
+                    lasty = y
+
         if animation.type == "laser":
             # draw red line for duration
             if time.time() >= animation.endtime:
-                if animation.firer == "enemyship" and not animation.missed:
+                if animation.firer == "enemyship" and animation.missed != False:
                     angle = 360 - (animation.angle) + 90 + myship.rotation
                     angle = functions.clampAngle(angle)
                     shieldnum = int(((angle + 45) / 360) * 4)
@@ -541,6 +611,7 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships):
                     else:
                         myship.shields[shieldnum].charge -= animation.damage
                 if animation.firer == "myship":
+                    # already gets handled on myship.fireNextWeapon code
                     pass
                 animations.pop(i)
             if animation.firer == "myship":
@@ -653,7 +724,7 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, images, shipIM
         renderMap(screen, gameinfo, myship, spacestations)
 
     if gameinfo.screen == "game":
-        renderGame(screen, stars, myship, gameinfo, spacestations, enemyships, shipIMG, animations)
+        renderGame(screen, stars, myship, gameinfo, spacestations, enemyships, shipIMG, animations, images)
     for button in gameinfo.buttons:
         if button.screen == gameinfo.screen:
             button.render(screen, gameinfo)

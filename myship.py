@@ -93,7 +93,10 @@ class MyShip():
         self.targeted = self.lastattacker
     def fireNextWeapon(self, enemyships, animations, sounds, spacestations):
         for weapon in self.weapons:
+            closeststation = self.closestStation(spacestations)
+            if functions.distance(self, closeststation) <= closeststation.width / 2 + 400: continue
             if weapon == None: continue
+            if weapon.type == None: continue
             for animation in animations:
                 if animation.firer == "myship":
                     break
@@ -112,7 +115,7 @@ class MyShip():
                 animation.starttime = time.time()
                 animation.endtime = time.time() + weapon.duration
                 animation.duration = weapon.duration
-                animation.startpos = self.turrentpos
+                animation.startpos = [self.x, self.y]
                 animation.range = weapon.range
                 endpos = [0, 0]
                 turret_ang_rads = self.turretrot * math.pi / 180
@@ -129,9 +132,11 @@ class MyShip():
                 animation.y = self.y
                 animation.velocity = weapon.velocity + self.vel
                 animation.colour = (0, 255, 0)
-                if animation.type == "torpedo" or animation.type == "torpedo":
+                if animation.type == "torpedo" or animation.type == "bullet":
                     animation.colour = (255, 0, 0)
-                if animation.type == "laser":
+                if animation.type == "fluxray":
+                    animation.angle -= 90
+                if animation.type == "laser" or animation.type == "fluxray":
                     closesthit = None
                     closesthit_dist = 99999999999999
                     for enemyship in enemyships:
@@ -156,9 +161,11 @@ class MyShip():
                     if closesthit != None:
                         animation.hit = True
                         animation.hitpoint = [closesthit.x, closesthit.y]
-                        animation.angle = functions.angleBetween(closesthit, self)
+                       # animation.angle = functions.angleBetween(closesthit, self)
                         enemyship = animation.hitship
-                        angle = 360 - (animation.angle) + 90 + animation.hitship.rotation
+                        angle = 360 - (animation.angle) + 180 + animation.hitship.rotation
+                        if animation.type == "fluxray":
+                            angle = 360 - (animation.angle) + 90 + animation.hitship.rotation
                         angle = functions.clampAngle(angle)
                         shieldnum = int(((angle + 45) / 360) * 4)
                         if angle <= 45: shieldnum = 0
@@ -167,16 +174,17 @@ class MyShip():
                         shieldcharge = enemyship.shields[shieldnum].charge
                         if enemyship.state != "attack" and enemyship.state != "attack_delay":
                             enemyship.state = "attack_delay"
+                        residualdamage = animation.damage - shieldcharge
+                        if shieldcharge > 0: shieldcharge -= animation.damage
+                        enemyship.shields[shieldnum].charge = shieldcharge
                         if shieldcharge <= 0:
                             animation.shielddown = True
-                            enemyship.hull -= 10
+                            enemyship.hull -= residualdamage
                             if enemyship.hull <= 50 and enemyship.state != "retreat":
                                 enemyship.state = "retreat"
                                 enemyship.startRetreat(enemyship)
                             if enemyship.hull <= 0:
                                 enemyship.explode(animations)
-                        else:
-                            enemyship.shields[shieldnum].charge -= 20
                 animations.append(animation)
                 break
     def explode(self, animations):

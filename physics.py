@@ -59,6 +59,34 @@ def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinf
         i = -1
         for animation in animations:
             i += 1
+            if animation.type == "fluxray":
+                x1 = animation.endpos[0]
+                y1 = animation.endpos[1]
+                x2 = animation.startpos[0]
+                y2 = animation.startpos[1]
+                '''
+                print("y2", y2)
+                m = (y2 - y1) / (x2 - x1)
+                c = y1 - m * x1
+                # y = mx + c
+                # y - mx = c
+                t = time.time() - animation.starttime
+                # (x,y) = (0, c) + (m, 1)*t + (1, -m)*sin(t)
+                x3 = x2 + 0 + m * t + (1 * math.sin(t))
+                y3 = y2 + c + 1 * t + (-m * math.sin(t))
+                print(x1, y1, x2, y2, "c", c, "m", m)
+                animation.x = x3
+                animation.y = y3
+                animation.points.append([x3, y3])
+                '''
+                '''
+                animation.t += 500 * time_since_phys_tick * timefactor
+                t = animation.t
+                angle_rads = animation.angle * math.pi / 180
+                x3 = x2 + t * math.cos(angle_rads) - math.sin(angle_rads) * math.sin(t / 20) * 20
+                y3 = y2 + t * math.sin(angle_rads) + math.cos(angle_rads) * math.sin(t / 20) * 20
+                animation.points.append([x3, y3])
+                '''
             if animation.type == "torpedo" or animation.type == "bullet":
                 angle_rads = animation.angle * math.pi / 180
                 animation.x += (animation.velocity) * math.sin(angle_rads) * time_since_phys_tick * timefactor
@@ -108,6 +136,7 @@ def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinf
                             else:
                                 enemyship.shields[shieldnum].charge -= animation.damage
                             animations.pop(i)
+                            i -= 1
                 elif animation.firer == "enemyship":
                     enemyship = animation.target
                     r = myship.width / 2 + 10

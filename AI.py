@@ -11,6 +11,8 @@ class Point():
         self.width = 0
 
 def enemyAITick(myship, enemyship, spacestations, animations, sounds, gameinfo):
+    if enemyship.rotation == 0:
+        enemyship.rotation = 1
     if enemyship not in gameinfo.checkships: return
     freeze_enemies = False
     if freeze_enemies:
