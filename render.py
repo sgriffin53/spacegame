@@ -535,17 +535,17 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships):
         shieldpoints[i].x = myship.x + 30 * math.cos(((90 * i) - rot) * math.pi / 180)
         shieldpoints[i].y = myship.y + 30 * math.sin(((90 * i) - rot) * math.pi / 180)
 
-        drawX = centre[0] + shieldpoints[i].x - myship.x
-        drawY = centre[1] - shieldpoints[i].y + myship.y
-        col = (0, 0, 255)
-        if i == 0: col = (255, 0, 0)
-        elif i == 1: col = (0, 255, 0)
-        elif i == 2: col = (0, 0, 255)
-        elif i == 3: col = (0, 255, 255)
+       # drawX = centre[0] + shieldpoints[i].x - myship.x
+       # drawY = centre[1] - shieldpoints[i].y + myship.y
+       # col = (0, 0, 255)
+       # if i == 0: col = (255, 0, 0)
+       # elif i == 1: col = (0, 255, 0)
+       # elif i == 2: col = (0, 0, 255)
+       # elif i == 3: col = (0, 255, 255)
       #  print(i, col)
-        pygame.draw.circle(screen, col, (drawX,
-                                         drawY),
-                           4)
+        #pygame.draw.circle(screen, col, (drawX,
+        #                                 drawY),
+        #                   4)
 
     i = -1
     for animation in animations:

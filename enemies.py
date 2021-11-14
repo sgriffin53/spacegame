@@ -208,7 +208,7 @@ def spawnEnemyShips(enemyships, spacestations):
         for i in range(200):
             k+=1
             enemyships.append(EnemyShip())
-            enemyships[k].weapons.append(Weapon(None))
+            enemyships[k].weapons.append(Weapon("bullet-c1"))
             enemyships[k].weapons.append(Weapon(None))
             enemyships[k].index = k
             enemyships[k].state = "patrol"

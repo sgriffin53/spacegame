@@ -188,7 +188,7 @@ def startGame(gameinfo, myship, enemyships, spacestations, music):
     # create my ship object
     del myship.weapons[:]
 
-    myship.weapons.append(Weapon("torpedo-c2"))
+    myship.weapons.append(Weapon("torpedo-c1"))
     myship.weapons.append(Weapon(None))
     myship.weapons.append(Weapon(None))
     myship.weapons.append(Weapon(None))

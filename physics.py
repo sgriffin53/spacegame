@@ -99,8 +99,13 @@ def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinf
                         enemyship.gridsector = functions.gridSector(enemyship)
                         enemysector = enemyship.gridsector
                         if enemysector not in allowedSectors: continue
+                        mypoint = Point()
+                        mypoint.x = animation.x
+                        mypoint.y = animation.y
+                        dist = functions.distance(enemyship, mypoint)
                         # line-circle intercept
                         r = enemyship.width / 2 + 10
+                        if dist > r * 2: continue
                         # x ^ 2 + b x + c
                         x5 = enemyship.x
                         y5 = enemyship.y
@@ -139,7 +144,13 @@ def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinf
                             i -= 1
                 elif animation.firer == "enemyship":
                     enemyship = animation.target
+                    mypoint = Point()
+                    mypoint.x = animation.x
+                    mypoint.y = animation.y
+                    dist = functions.distance(myship, mypoint)
+                    # line-circle intercept
                     r = myship.width / 2 + 10
+                    if dist > r * 2: continue
                     # x ^ 2 + b x + c
                     x5 = myship.x
                     y5 = myship.y
