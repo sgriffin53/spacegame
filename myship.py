@@ -106,7 +106,7 @@ class MyShip():
                 weapon.lastfired = time.time()
 
                 # use this code for when we hit a ship with a weapon
-                pygame.mixer.Sound.play(sounds[0].mixer)
+                #pygame.mixer.Sound.play(sounds[0].mixer)
 
                 # add animation
 
@@ -134,9 +134,9 @@ class MyShip():
                 animation.colour = (0, 255, 0)
                 if animation.type == "torpedo" or animation.type == "bullet":
                     animation.colour = (255, 0, 0)
-                if animation.type == "fluxray":
+                if animation.type == "fluxray" or animation.type == "disruptor":
                     animation.angle -= 90
-                if animation.type == "laser" or animation.type == "fluxray":
+                if animation.type == "laser" or animation.type == "fluxray" or animation.type == "disruptor":
                     closesthit = None
                     closesthit_dist = 99999999999999
                     for enemyship in enemyships:
@@ -164,7 +164,7 @@ class MyShip():
                        # animation.angle = functions.angleBetween(closesthit, self)
                         enemyship = animation.hitship
                         angle = 360 - (animation.angle) + 180 + animation.hitship.rotation
-                        if animation.type == "fluxray":
+                        if animation.type == "fluxray" or animation.type == "disruptor":
                             angle = 360 - (animation.angle) + 90 + animation.hitship.rotation
                         angle = functions.clampAngle(angle)
                         shieldnum = int(((angle + 45) / 360) * 4)

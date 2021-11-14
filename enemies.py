@@ -140,7 +140,7 @@ class EnemyShip():
                 # weapon is charged
 
                 weapon.lastfired = time.time()
-                pygame.mixer.Sound.play(sounds[0].mixer)
+                #pygame.mixer.Sound.play(sounds[0].mixer)
                 # fired weapon on target
 
                 myship.lastattacker = self.index
@@ -151,10 +151,10 @@ class EnemyShip():
                     angle_deg = angle_deg - 90
                 animation = Animation()
                 chance_of_miss = 0
-                if weapon.type == "laser": chance_of_miss = 50
-                if weapon.type == "bullet": chance_of_miss = 75
-                if weapon.type == "torpedo": chance_of_miss = 50
-                if weapon.type == "fluxray": chance_of_miss = 25
+                if weapon.type == "laser": chance_of_miss = 0
+                if weapon.type == "bullet": chance_of_miss = 0
+                if weapon.type == "torpedo": chance_of_miss = 0
+                if weapon.type == "fluxray" or weapon.type == "disruptor": chance_of_miss = 0
                 if random.randint(1,100) <= chance_of_miss:
                     if weapon.type == "bullet": continue
                     rand = random.randint(0,1)
@@ -181,7 +181,7 @@ class EnemyShip():
                 animation.firer = "enemyship"
                 animation.velocity = weapon.velocity
 
-                if animation.type == "laser" or animation.type == "fluxray":
+                if animation.type == "laser" or animation.type == "fluxray" or animation.type == "disruptor":
                     r = myship.width / 2 + 10
                     x5 = myship.x
                     y5 = myship.y
@@ -193,7 +193,7 @@ class EnemyShip():
                     animation.missed = True
                     if intercept != None:
                         animation.missed = False
-                if animation.type == "fluxray":
+                if animation.type == "fluxray" or animation.type == "disruptor":
                     animation.angle -= 90
                 animations.append(animation)
                 break
@@ -208,8 +208,8 @@ def spawnEnemyShips(enemyships, spacestations):
         for i in range(200):
             k+=1
             enemyships.append(EnemyShip())
-            enemyships[k].weapons.append(Weapon("laser-c1"))
-            enemyships[k].weapons.append(Weapon("bullet-c1"))
+            enemyships[k].weapons.append(Weapon(None))
+            enemyships[k].weapons.append(Weapon(None))
             enemyships[k].index = k
             enemyships[k].state = "patrol"
             enemyships[k].shipIMG = enemyshipIMG

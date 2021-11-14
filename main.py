@@ -30,13 +30,24 @@ for i in range(0, 200):
     thisY = random.randint(30, 630)
     gameinfo.mapstars.append((thisX, thisY))
 
-
-width = 1280
-height = 768
+width = 800
+height = 600
+nativewidth = 1280
+nativeheight = 768
+res = 1
+if res == 1:
+    width = 1280
+    height = 768
+if res == 2:
+    width = 2560
+    height = 1440
 #width = 800
 #height = 600
 gameinfo.width = width
 gameinfo.height = height
+gameinfo.nativeheight = nativeheight
+gameinfo.nativewidth = nativewidth
+gameinfo.resindex = 0
 gameinfo.clock = pygame.time.Clock()
 
 # Set up the drawing window
@@ -169,13 +180,14 @@ while running:
         else:
             screen = pygame.display.set_mode([width, height])
         fullscreen = not fullscreen
+        gameinfo.fullscreen = fullscreen
     keys = pygame.key.get_pressed()
     if not keys[pygame.K_RALT] and not keys[pygame.K_LALT]:
         alt_pressed = False
     if not keys[pygame.K_RETURN]:
         enter_pressed = False
 
-    keypresses.detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animations, sounds, spacestations, music)
+    keypresses.detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animations, sounds, spacestations, music, screen, stars, images, spacestationIMG, shipIMG, enemyshipIMG)
     cur_time = time.time()
     time_since_phys_tick = cur_time - last_phys_tick
     physics.physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinfo, animations)

@@ -147,11 +147,36 @@ def allowedSectors(sector):
     allowed.append(sector + totsidegrids + 1) # southeast
     return allowed
 
+def scaleImages(screen, images, spacestationIMG, shipIMG, enemyshipIMG, gameinfo):
+   # pass
+   pygame.transform.scale(spacestationIMG, (screen.get_width() / 2560, screen.get_height() / 1440))
+   pygame.transform.scale(shipIMG, (screen.get_width() / 2560, screen.get_height() / 1440))
+
 def playMusic(music):
     music_track = random.randint(0, len(music) - 1)
     music_playing = music[music_track]
     pygame.mixer.music.load(music_playing.file)
     pygame.mixer.music.play(-100000)
+
+def setResolution(width, height, gameinfo, screen, stars, images, spacestationIMG, shipIMG, enemyshipIMG):
+    gameinfo.width = width
+    gameinfo.height = height
+    fullscreen = gameinfo.fullscreen
+    if fullscreen:
+        screen = pygame.display.set_mode([width, height], pygame.FULLSCREEN)
+    else:
+        screen = pygame.display.set_mode([width, height])
+    scaleImages(screen, images, spacestationIMG, shipIMG, enemyshipIMG, gameinfo)
+    del stars[:]
+    for i in range(1250):
+        stars.append(dict({'x': 0, 'y': 0}))
+        stars[i]['x'] = random.random() * width
+        stars[i]['y'] = random.random() * height
+
+def scaleToScreen(width, height, gameinfo):
+    newwidth = width * (gameinfo.width / gameinfo.nativewidth)
+    newheight = height * (gameinfo.height / gameinfo.nativeheight)
+    return newwidth, newheight
 
 def startGame(gameinfo, myship, enemyships, spacestations, music):
     # spawn space stations
@@ -163,8 +188,8 @@ def startGame(gameinfo, myship, enemyships, spacestations, music):
     # create my ship object
     del myship.weapons[:]
 
-    myship.weapons.append(Weapon("fluxray-c1"))
-    myship.weapons.append(Weapon("bullet-c1"))
+    myship.weapons.append(Weapon("torpedo-c2"))
+    myship.weapons.append(Weapon(None))
     myship.weapons.append(Weapon(None))
     myship.weapons.append(Weapon(None))
     for i in range(4): myship.shields.append(Shield("shield-c2"))
@@ -176,3 +201,9 @@ def startGame(gameinfo, myship, enemyships, spacestations, music):
     enemyships = enemies.spawnEnemyShips(enemyships, spacestations)
     functions.playMusic(music)
     gameinfo.screen = "game"
+    # should be -> actually is
+    # 0 -> 1
+    # 1 -> 2
+    # 2 -> 3
+    # 3 -> 0
+    #myship.shields[3].charge = 0

@@ -218,6 +218,16 @@ def drawMyShields(screen, myship, gameinfo):
     n = -1
     for i in range(45, 403, 90):
         n += 1
+        col = (0, 0, 255)
+        if n == 0:
+            col = (255, 0, 0)
+        elif n == 1:
+            col = (0, 255, 0)
+        elif n == 2:
+            col = (0, 0, 255)
+        elif n == 3:
+            col = (0, 255, 255)
+        #print(n, col)
         start_ang_rads = (i + 5) * math.pi / 180 + myship_rotation_rads
         end_ang_rads = (i + 85) * math.pi / 180 + myship_rotation_rads
         redcolour = 0
@@ -449,7 +459,9 @@ def renderGame(screen, stars, myship, gameinfo, spacestations, enemyships, shipI
             enemydrawX = centre[0] + enemyship.x - myship.x
             enemydrawY = centre[1] - enemyship.y + myship.y
             es_centre = (enemydrawX, enemydrawY)
-            (newIMG, es_centre) = rot_center(enemyship.shipIMG, enemyship.rotation, es_centre[0],
+            enemyshipIMG = enemyship.shipIMG
+         #   enemyshipIMG = pygame.transform.scale(enemyshipIMG, (functions.scaleToScreen(enemyship.width, enemyship.width, gameinfo)))
+            (newIMG, es_centre) = rot_center(enemyshipIMG, enemyship.rotation, es_centre[0],
                                              es_centre[1])  # rotate ship appropriately
             screen.blit(newIMG, es_centre)
             drawEnemyHealthBar(screen, enemyship, myship, gameinfo)
@@ -471,6 +483,8 @@ def renderGame(screen, stars, myship, gameinfo, spacestations, enemyships, shipI
         dist = functions.distance(myship, spacestation)
         img = spacestation.image
         if onScreen(spacestation, myship, gameinfo):  # on screen
+            #img = pygame.transform.scale(img,
+            #                                      (functions.scaleToScreen(spacestation.width, spacestation.width, gameinfo)))
             (img, spacestationcentre) = rot_center(img, spacestation.rotation, spacestationX, spacestationY)
             screen.blit(img, spacestationcentre)
             spacestation.centre = spacestationcentre
@@ -480,7 +494,7 @@ def renderGame(screen, stars, myship, gameinfo, spacestations, enemyships, shipI
             drawTargetLine(screen, myship, spacestation, spacestations, gameinfo)
 
     # Draw my ship
-
+    #shipIMG = pygame.transform.scale(shipIMG, (functions.scaleToScreen(myship.width, myship.width, gameinfo)))
     (shipIMG, newcentre) = rot_center(shipIMG, myship.rotation, centre[0], centre[1])  # rotate ship appropriately
     if myship.alive:
         screen.blit(shipIMG, newcentre)  # draw ship
@@ -514,18 +528,52 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships):
     centre = (gameinfo.width / 2, gameinfo.height / 2)
     x5 = 0
     y5 = 0
+    shieldpoints = []
+    for i in range(4):
+        shieldpoints.append(Point())
+        rot = myship.rotation
+        shieldpoints[i].x = myship.x + 30 * math.cos(((90 * i) - rot) * math.pi / 180)
+        shieldpoints[i].y = myship.y + 30 * math.sin(((90 * i) - rot) * math.pi / 180)
+
+        drawX = centre[0] + shieldpoints[i].x - myship.x
+        drawY = centre[1] - shieldpoints[i].y + myship.y
+        col = (0, 0, 255)
+        if i == 0: col = (255, 0, 0)
+        elif i == 1: col = (0, 255, 0)
+        elif i == 2: col = (0, 0, 255)
+        elif i == 3: col = (0, 255, 255)
+      #  print(i, col)
+        pygame.draw.circle(screen, col, (drawX,
+                                         drawY),
+                           4)
+
     i = -1
     for animation in animations:
         i += 1
-        if animation.type == "fluxray":
+        if animation.type == "fluxray" or animation.type == "disruptor":
             if time.time() >= animation.endtime:
                 if animation.firer == "enemyship" and animation.missed != False:
-                    angle = (animation.angle) + 90 + myship.rotation
+                    angle = (animation.angle) - 90 + myship.rotation
                     angle = functions.clampAngle(angle)
+                    '''
                     shieldnum = int(((angle + 45) / 360) * 4)
                     if angle <= 45: shieldnum = 0
                     if angle >= 315: shieldnum = 0
                     if shieldnum >= 4: shieldnum = 3
+                    '''
+                    shieldnum = 0
+                    closestdist = 999999999
+                    closestshield = 0
+                    for k in range(len(shieldpoints)):
+                        dist = functions.distance(shieldpoints[k], animation.target)
+                        if dist <= closestdist:
+                            closestdist = dist
+                            closestshield = k
+                    # map shield number to actual shield number
+                    if closestshield == 0:
+                        shieldnum = 3
+                    else:
+                        shieldnum = closestshield - 1
                     shieldcharge = myship.shields[shieldnum].charge
                     if shieldcharge <= 0:
                         myship.hull -= animation.damage
@@ -557,15 +605,17 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships):
                 #offset2 = random.randint(1,6) # for sine
                 animation.t = 1000
                 tot = animation.t
+                x3 = 0
+                y3 = 0
                 for t in range(0, tot, 5):
                     angle_rads = (360 - animation.angle) * math.pi / 180
-                    x3 = x2 + (t * offset) * math.cos(angle_rads) - math.sin(angle_rads) * math.sin((t * offset) / 20) * 20
-                    y3 = y2 + (t * offset) * math.sin(angle_rads) + math.cos(angle_rads) * math.sin((t * offset) / 20) * 20
-                    '''
-                    for sine waves:
-                    x3 = x2 + (t * offset) * math.cos(angle_rads) - math.sin(angle_rads) * math.sin((t * offset2 + offset) / 20) * 20
-                    y3 = y2 + (t * offset) * math.sin(angle_rads) + math.cos(angle_rads) * math.sin((t * offset2 + offset) / 20) * 20
-                    '''
+                    if animation.type == "fluxray":
+                        x3 = x2 + (t * offset) * math.cos(angle_rads) - math.sin(angle_rads) * math.sin((t * offset) / 20) * 20
+                        y3 = y2 + (t * offset) * math.sin(angle_rads) + math.cos(angle_rads) * math.sin((t * offset) / 20) * 20
+                    if animation.type == "disruptor":
+                        offset2 = random.randint(1, 6)
+                        x3 = x2 + (t * 1) * math.cos(angle_rads) - math.sin(angle_rads) * math.sin((t * offset2 + 1) / 20) * 20
+                        y3 = y2 + (t *1) * math.sin(angle_rads) + math.cos(angle_rads) * math.sin((t * offset2 + 1) / 20) * 20
                     animation.points.append([x3, y3])
 
                 for point in animation.points:
@@ -590,7 +640,7 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships):
         if animation.type == "laser":
             # draw red line for duration
             if time.time() >= animation.endtime:
-                if animation.firer == "enemyship" and animation.missed != False:
+                if animation.firer == "enemyship" and animation.missed == False:
                     angle = 360 - (animation.angle) + 90 + myship.rotation
                     angle = functions.clampAngle(angle)
                     shieldnum = int(((angle + 45) / 360) * 4)

@@ -42,7 +42,7 @@ def handleMouseOver(gameinfo):
         else:
             button.textcol = (255, 255, 255)
 
-def detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animations, sounds, spacestations, music):
+def detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animations, sounds, spacestations, music, screen, stars, images, spacestationIMG, shipIMG, enemyshipIMG):
     handleMouseOver(gameinfo)
     for event in event_get:
         if event.type == pygame.QUIT:
@@ -54,6 +54,7 @@ def detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animat
             else:
                 screen = pygame.display.set_mode([width, height])
             fullscreen = not fullscreen
+            game.fullscreen = fullscreen
         if event.type == pygame.MOUSEBUTTONUP:
             pos = pygame.mouse.get_pos()
             handleMouseButtonUp(gameinfo, myship, pos, enemyships, spacestations, music)
@@ -83,6 +84,23 @@ def detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animat
                         if gameinfo.screen == "game": newscreen = "stationmenu"
                         gameinfo.screen = newscreen
                         gameinfo.messages[0].visible = False
+                if event.key == pygame.K_F8:
+                    gameinfo.resindex += 1
+                    if gameinfo.resindex > 3: gameinfo.resindex = 0
+                    index = gameinfo.resindex
+                    if index == 1:
+                        width = 800
+                        height = 600
+                    elif index == 2:
+                        width = 1920
+                        height = 1080
+                    elif index == 3:
+                        width = 2560
+                        height = 1440
+                    else:
+                        width = 1280
+                        height = 768
+                    functions.setResolution(width, height, gameinfo, screen, stars, images, spacestationIMG, shipIMG, enemyshipIMG)
                 if event.key == pygame.K_F9 or event.key == pygame.K_F10 or event.key == pygame.K_F11 or event.key == pygame.K_F12:
                     if gameinfo.screen == "upgrademenu":
                         slotindex = -1
@@ -90,13 +108,13 @@ def detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animat
                         elif event.key == pygame.K_F10: slotindex = 1
                         elif event.key == pygame.K_F11: slotindex = 2
                         elif event.key == pygame.K_F12: slotindex = 3
-                        weaponlist = [None, "laser-c1", "laser-c2", "bullet-c1", "torpedo-c1", "torpedo-c2", "fluxray-c1", "fluxray-c2", "fluxray-c3"]
+                        weaponlist = [None, "laser-c1", "laser-c2", "bullet-c1", "torpedo-c1", "torpedo-c2", "fluxray-c1", "fluxray-c2", "fluxray-c3", "disruptor-c1"]
                         index = -1
                         for i in range(len(weaponlist)):
                             if myship.weapons[slotindex].fulltype == weaponlist[i]: index = i
                         if index >= 0:
                             index += 1
-                            if index >= len(weaponlist) - 1:
+                            if index >= len(weaponlist):
                                 index = 0
                             myship.weapons[slotindex] = Weapon(weaponlist[index])
 

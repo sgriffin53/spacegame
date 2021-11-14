@@ -19,11 +19,17 @@ class Button():
         self.screen = screen
         self.onclick = onclick
     def render(self, screen, gameinfo):
-        self.image = pygame.transform.scale(self.image, (self.width, self.height))
-        screen.blit(self.image, (self.x, self.y))
+        scaled_width = self.width * (gameinfo.width / gameinfo.nativewidth)
+        scaled_height = self.height * (gameinfo.height / gameinfo.nativeheight)
+        scaled_x = self.x * (gameinfo.width / gameinfo.nativewidth)
+        scaled_y = self.y * (gameinfo.height / gameinfo.nativeheight)
+        scaled_textx = self.textx * (gameinfo.width / gameinfo.nativewidth)
+        scaled_texty = self.texty * (gameinfo.height / gameinfo.nativeheight)
+        newimg = pygame.transform.scale(self.image, (scaled_width, scaled_height))
+        screen.blit(newimg, (scaled_x, scaled_y))
         buttonText = self.font.render(self.text, False,
                                      self.textcol)
-        screen.blit(buttonText, (self.x + self.textx, self.y + self.texty))
+        screen.blit(buttonText, (scaled_x + scaled_textx, scaled_y + scaled_texty))
     def onClick(self, gameinfo, myship, enemyships, spacestations, music):
         if self.onclick == "startgame":
             functions.startGame(gameinfo, myship, enemyships, spacestations, music)
@@ -127,6 +133,16 @@ class Weapon():
         self.lastfired = 0
         self.range = 0
         self.velocity = 1500
+        if fulltype == "disruptor-c1":
+            self.damage = 35
+            self.type = "disruptor"
+            self.classnum = 1
+            self.fullname = "Disruptor (Class 1)"
+            self.duration = 0.5
+            self.chargetime = 1.5
+            self.lastfired = 0
+            self.range = 600
+            self.velocity = 1500
         if fulltype == "fluxray-c1":
             self.damage = 20
             self.type = "fluxray"
@@ -162,7 +178,7 @@ class Weapon():
             self.type = "torpedo"
             self.classnum = 1
             self.fullname = "Torpedo (Class 1)"
-            self.duration = 1
+            self.duration = 5
             self.chargetime = 2
             self.lastfired = 0
             self.range = 600
@@ -172,7 +188,7 @@ class Weapon():
             self.type = "torpedo"
             self.classnum = 2
             self.fullname = "Torpedo (Class 2)"
-            self.duration = 0.5
+            self.duration = 5
             self.chargetime = 3
             self.lastfired = 0
             self.range = 600
@@ -235,6 +251,9 @@ class GameInfo():
         self.gamemessage = ""
         self.gamemessagedisplayed = 0
         self.checkships = []
+        self.nativeheight = 0
+        self.nativewidth = 0
+        self.fullscreen = False
 
 class Point():
     def __init__(self):
