@@ -195,8 +195,8 @@ def startGame(gameinfo, myship, enemyships, spacestations, music):
 
     myship.weapons.append(Weapon("bullet-c1"))
     myship.weapons.append(Weapon("torpedo-c1"))
-    myship.weapons.append(Weapon("fluxray-c1"))
     myship.weapons.append(Weapon("disruptor-c1"))
+    myship.weapons.append(Weapon("particlebeam-c1"))
     for i in range(4): myship.shields.append(Shield("shield-c2"))
 
     myship.respawn(spacestations[7])

@@ -205,11 +205,11 @@ def spawnEnemyShips(enemyships, spacestations):
     enemyships_new = []
     retries = 0
     for spacestation in spacestations:
-        for i in range(200):
+        for i in range(250):
             k+=1
             enemyships.append(EnemyShip())
             enemyships[k].weapons.append(Weapon("bullet-c1"))
-            enemyships[k].weapons.append(Weapon("fluxray-c1"))
+            enemyships[k].weapons.append(Weapon("particlebeam-c1"))
             enemyships[k].index = k
             enemyships[k].state = "patrol"
             enemyships[k].shipIMG = enemyshipIMG

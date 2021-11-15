@@ -569,6 +569,18 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships, images):
     i = -1
     for animation in animations:
         i += 1
+        if animation.type == "radialburst":
+            if time.time() >= animation.endtime:
+                animations.pop(i)
+            timerunning = time.time() - animation.starttime
+            radius = animation.velocity * timerunning
+            drawX = centre[0]
+            drawY = centre[1]
+            animation.colour = (255,random.randint(0,255),0)
+            circlewidth = random.randint(1,20)
+            pygame.draw.circle(screen, animation.colour, (drawX,
+                                           drawY),
+                 radius, width=circlewidth)
         if animation.type == "fluxray" or animation.type == "disruptor":
             if time.time() >= animation.endtime:
                 if animation.firer == "enemyship" and animation.missed != False:
@@ -656,16 +668,23 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships, images):
                     lastx = x
                     lasty = y
 
-        if animation.type == "laser":
+        if animation.type == "laser" or animation.type == "particlebeam":
             # draw red line for duration
             if time.time() >= animation.endtime:
                 if animation.firer == "enemyship" and animation.missed == False:
-                    angle = 360 - (animation.angle) + 90 + myship.rotation
-                    angle = functions.clampAngle(angle)
-                    shieldnum = int(((angle + 45) / 360) * 4)
-                    if angle <= 45: shieldnum = 0
-                    if angle >= 315: shieldnum = 0
-                    if shieldnum >= 4: shieldnum = 3
+                    shieldnum = 0
+                    closestdist = 999999999
+                    closestshield = 0
+                    for k in range(len(shieldpoints)):
+                        dist = functions.distance(shieldpoints[k], animation.target)
+                        if dist <= closestdist:
+                            closestdist = dist
+                            closestshield = k
+                    # map shield number to actual shield number
+                    if closestshield == 0:
+                        shieldnum = 3
+                    else:
+                        shieldnum = closestshield - 1
                     shieldcharge = myship.shields[shieldnum].charge
                     if shieldcharge <= 0:
                         myship.hull -= animation.damage
@@ -709,12 +728,34 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships, images):
                 else:
                     enemydrawX = centre[0] + animation.hitpoint[0] - myship.x
                     enemydrawY = centre[1] - animation.hitpoint[1] + myship.y
-                lineendX = centre[0]
-                lineendY = centre[1]
+                lineendX = int(centre[0])
+                lineendY = int(centre[1])
                 linewidth = 2
                 if animation.classnum == 2: linewidth = 6
-                pygame.draw.line(screen, animation.colour, (lineendX, lineendY), (
-                    enemydrawX, enemydrawY), linewidth)
+                linestartX = int(enemydrawX)
+                linestartY = int(enemydrawY)
+                linewidth = 2
+                if animation.classnum == 2: linewidth = 6
+                if animation.type == "particlebeam":
+                    if lineendX == linestartX: lineendX -= 1
+                    m = (lineendY - linestartY) / (lineendX - linestartX)
+                    c = linestartY - m * linestartX
+                    for j in range(250):
+                        if linestartX <= lineendX:
+                            particle_x = random.randint(linestartX, lineendX)
+                        else:
+                            particle_x = random.randint(lineendX, linestartX)
+                        particle_y = m * particle_x + c
+                        particle_y += random.randint(-12,12)
+                        particle_x += random.randint(-12,12)
+                        pygame.draw.circle(screen, animation.colour, (particle_x,particle_y), 1)
+                        #pygame.draw.line(screen, animation.colour, (lineendX, lineendY), (
+                        #    linestartX,
+                        #    linestartY), linewidth)
+                elif animation.type == "laser":
+                    pygame.draw.line(screen, animation.colour, (lineendX, lineendY), (
+                        linestartX,
+                        linestartY), linewidth)
             elif animation.firer == "enemyship":
                 enemydrawX = centre[0] + animation.target.x - myship.x
                 enemydrawY = centre[1] - animation.target.y + myship.y
@@ -738,9 +779,39 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships, images):
                     lineendY = endposdrawY
                 linewidth = 2
                 if animation.classnum == 2: linewidth = 6
-                pygame.draw.line(screen, animation.colour, (lineendX, lineendY), (
-                    enemydrawX - animation.target.width / 2 + 30,
-                    enemydrawY - animation.target.width / 2 + 30), linewidth)
+
+                lineendX = int(centre[0])
+                lineendY = int(centre[1])
+                linewidth = 2
+                if animation.classnum == 2: linewidth = 6
+                linestartX = int(enemydrawX - animation.target.width / 2 + 30)
+                linestartY = int(enemydrawY - animation.target.width / 2 + 30)
+                linewidth = 2
+                if animation.classnum == 2: linewidth = 6
+                if animation.type == "particlebeam":
+                    if lineendX == linestartX: lineendX -= 1
+                    m = (lineendY - linestartY) / (lineendX - linestartX)
+                    c = linestartY - m * linestartX
+                    for j in range(250):
+                        if linestartX <= lineendX:
+                            particle_x = random.randint(linestartX, lineendX)
+                        else:
+                            particle_x = random.randint(lineendX, linestartX)
+                        particle_y = m * particle_x + c
+                        particle_y += random.randint(-12,12)
+                        particle_x += random.randint(-12,12)
+                        pygame.draw.circle(screen, animation.colour, (particle_x,particle_y), 1)
+                        #pygame.draw.line(screen, animation.colour, (lineendX, lineendY), (
+                        #    linestartX,
+                        #    linestartY), linewidth)
+                elif animation.type == "laser":
+                    pygame.draw.line(screen, animation.colour, (lineendX, lineendY), (
+                        linestartX,
+                        linestartY), linewidth)
+
+                #pygame.draw.line(screen, animation.colour, (lineendX, lineendY), (
+                 #   enemydrawX - animation.target.width / 2 + 30,
+                  #  enemydrawY - animation.target.width / 2 + 30), linewidth)
 
         if animation.type == "explosion":
             time_elapsed = time.time() - animation.starttime

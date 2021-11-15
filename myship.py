@@ -135,9 +135,11 @@ class MyShip():
                 animation.imgrot = animation.angle
                 if animation.type == "torpedo" or animation.type == "bullet":
                     animation.colour = (255, 0, 0)
+                elif animation.type == "particlebeam":
+                    animation.colour = (255, 255, 255)
                 if animation.type == "fluxray" or animation.type == "disruptor":
                     animation.angle -= 90
-                if animation.type == "laser" or animation.type == "fluxray" or animation.type == "disruptor":
+                if animation.type == "laser" or animation.type == "fluxray" or animation.type == "disruptor" or animation.type == "particlebeam":
                     closesthit = None
                     closesthit_dist = 99999999999999
                     for enemyship in enemyships:

@@ -87,6 +87,40 @@ def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinf
                 y3 = y2 + t * math.sin(angle_rads) + math.cos(angle_rads) * math.sin(t / 20) * 20
                 animation.points.append([x3, y3])
                 '''
+
+            if animation.type == "radialburst":
+                for enemyship in gameinfo.checkships:
+                    enemyship.gridsector = functions.gridSector(enemyship)
+                    enemysector = enemyship.gridsector
+                    if enemysector not in allowedSectors: continue
+                    if enemyship in animation.hitships: continue
+                    timerunning = time.time() - animation.starttime
+                    radius = animation.velocity * timerunning
+                    dist = functions.distance(myship, enemyship)
+                    if dist <= radius:
+                        animation.hitships.append(enemyship)
+                        #animation.hashit = True
+                        allshieldsdown = True
+
+                        for j in range(4):
+                            shield = enemyship.shields[j]
+                            if shield.charge > 0: allshieldsdown = False
+                        if allshieldsdown:
+                            enemyship.hull -= animation.damage
+                        for j in range(4):
+                            shield = enemyship.shields[j]
+                            shield.charge -= animation.damage
+                            if shield.charge < 0: shield.charge = 0
+                        if enemyship.state != "attack" and enemyship.state != "attack_delay":
+                            enemyship.state = "attack_delay"
+                        if enemyship.hull <= 50 and enemyship.state != "retreat":
+                            enemyship.state = "retreat"
+                            enemyship.startRetreat(enemyship)
+                        if enemyship.hull <= 0:
+                            enemyship.visible = False
+                            animation.hitship = enemyship
+                            enemyship.explode(animations)
+
             if animation.type == "torpedo" or animation.type == "bullet":
                 angle_rads = animation.angle * math.pi / 180
                 animation.x += (animation.velocity) * math.sin(angle_rads) * time_since_phys_tick * timefactor

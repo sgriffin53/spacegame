@@ -77,7 +77,7 @@ def detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animat
                     if event.key == pygame.K_r:
                         gameinfo.redalert = not gameinfo.redalert
                         if gameinfo.redalert == True:
-                            gameinfo.timefactor = 0.05
+                            gameinfo.timefactor = 0.5
                         else:
                             gameinfo.timefactor = 1
                     if event.key == pygame.K_y:
@@ -122,7 +122,8 @@ def detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animat
                         elif event.key == pygame.K_F10: slotindex = 1
                         elif event.key == pygame.K_F11: slotindex = 2
                         elif event.key == pygame.K_F12: slotindex = 3
-                        weaponlist = [None, "laser-c1", "laser-c2", "bullet-c1", "torpedo-c1", "torpedo-c2", "fluxray-c1", "fluxray-c2", "fluxray-c3", "disruptor-c1"]
+                        weaponlist = [None, "laser-c1", "laser-c2", "bullet-c1", "torpedo-c1", "torpedo-c2", "fluxray-c1", "fluxray-c2", "fluxray-c3", "disruptor-c1",
+                                      "radialburst-c1", "particlebeam-c1"]
                         index = -1
                         for i in range(len(weaponlist)):
                             if myship.weapons[slotindex].fulltype == weaponlist[i]: index = i

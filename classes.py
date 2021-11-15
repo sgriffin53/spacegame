@@ -135,6 +135,8 @@ class Animation():
         self.t = 0
         self.offset = 0
         self.imgrot = 0
+        self.hashit = False
+        self.hitships = []
 
 class Music():
     def __init__(self):
@@ -176,6 +178,26 @@ class Weapon():
         self.lastfired = 0
         self.range = 0
         self.velocity = 1500
+        if fulltype == "particlebeam-c1":
+            self.damage = 40
+            self.type = "particlebeam"
+            self.classnum = 1
+            self.fullname = "Particle Beam (Class 1)"
+            self.duration = 0.5
+            self.chargetime = 1.5
+            self.lastfired = 0
+            self.range = 1600
+            self.velocity = 500
+        if fulltype == "radialburst-c1":
+            self.damage = 20
+            self.type = "radialburst"
+            self.classnum = 1
+            self.fullname = "Radial Burst (Class 1)"
+            self.duration = 0.5
+            self.chargetime = 1.5
+            self.lastfired = 0
+            self.range = 600
+            self.velocity = 500
         if fulltype == "disruptor-c1":
             self.damage = 35
             self.type = "disruptor"
