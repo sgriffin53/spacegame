@@ -4,7 +4,7 @@ import math
 import functions
 import pygame
 import os
-from classes import Animation, Point, Weapon, ShipShield, Shield
+from classes import Animation, Point, Weapon, Shield
 
 class EnemyShip():
     def __init__(self):
@@ -151,17 +151,17 @@ class EnemyShip():
                     angle_deg = angle_deg - 90
                 animation = Animation()
                 chance_of_miss = 0
-                if weapon.type == "laser": chance_of_miss = 0
-                if weapon.type == "bullet": chance_of_miss = 0
-                if weapon.type == "torpedo": chance_of_miss = 0
+                if weapon.type == "laser": chance_of_miss = 50
+                if weapon.type == "bullet": chance_of_miss = 50
+                if weapon.type == "torpedo": chance_of_miss = 50
                 if weapon.type == "fluxray" or weapon.type == "disruptor": chance_of_miss = 0
                 if random.randint(1,100) <= chance_of_miss:
                     if weapon.type == "bullet": continue
                     rand = random.randint(0,1)
                     if rand == 0:
-                        angle_deg += random.randint(15, 30)
+                        angle_deg += random.randint(15, 60)
                     elif rand == 1:
-                        angle_deg -= random.randint(15, 30)
+                        angle_deg -= random.randint(15, 60)
                 angle_rads = angle_deg * math.pi / 180
                 animation.angle = angle_deg
                 animation.type = weapon.type
@@ -180,7 +180,7 @@ class EnemyShip():
                 animation.target = self
                 animation.firer = "enemyship"
                 animation.velocity = weapon.velocity
-
+                animation.imgrot = animation.angle
                 if animation.type == "laser" or animation.type == "fluxray" or animation.type == "disruptor":
                     r = myship.width / 2 + 10
                     x5 = myship.x
@@ -209,7 +209,7 @@ def spawnEnemyShips(enemyships, spacestations):
             k+=1
             enemyships.append(EnemyShip())
             enemyships[k].weapons.append(Weapon("bullet-c1"))
-            enemyships[k].weapons.append(Weapon(None))
+            enemyships[k].weapons.append(Weapon("fluxray-c1"))
             enemyships[k].index = k
             enemyships[k].state = "patrol"
             enemyships[k].shipIMG = enemyshipIMG

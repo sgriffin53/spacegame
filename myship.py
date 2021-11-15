@@ -132,6 +132,7 @@ class MyShip():
                 animation.y = self.y
                 animation.velocity = weapon.velocity + self.vel
                 animation.colour = (0, 255, 0)
+                animation.imgrot = animation.angle
                 if animation.type == "torpedo" or animation.type == "bullet":
                     animation.colour = (255, 0, 0)
                 if animation.type == "fluxray" or animation.type == "disruptor":

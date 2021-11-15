@@ -172,6 +172,11 @@ def setResolution(width, height, gameinfo, screen, stars, images, spacestationIM
         stars.append(dict({'x': 0, 'y': 0}))
         stars[i]['x'] = random.random() * width
         stars[i]['y'] = random.random() * height
+    for button in gameinfo.buttons:
+        button.font = gameinfo.resolution.buttonfont
+        smallbuttons = ["upgradecombatenginesclick", "upgradeshieldsclick", "upgradewarpenginesclick"]
+        if button.onclick in smallbuttons:
+            button.font = gameinfo.resolution.smallbuttonfont
 
 def scaleToScreen(width, height, gameinfo):
     newwidth = width * (gameinfo.width / gameinfo.nativewidth)
@@ -188,10 +193,10 @@ def startGame(gameinfo, myship, enemyships, spacestations, music):
     # create my ship object
     del myship.weapons[:]
 
+    myship.weapons.append(Weapon("bullet-c1"))
     myship.weapons.append(Weapon("torpedo-c1"))
-    myship.weapons.append(Weapon(None))
-    myship.weapons.append(Weapon(None))
-    myship.weapons.append(Weapon(None))
+    myship.weapons.append(Weapon("fluxray-c1"))
+    myship.weapons.append(Weapon("disruptor-c1"))
     for i in range(4): myship.shields.append(Shield("shield-c2"))
 
     myship.respawn(spacestations[7])

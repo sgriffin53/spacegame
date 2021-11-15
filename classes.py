@@ -4,6 +4,48 @@ import os
 import sys
 import functions
 
+class Resolution():
+    def __init__(self, index):
+        self.width = 0
+        self.height = 0
+        self.index = index
+        if index == 0:
+            self.width = 800
+            self.height = 600
+            self.buttonfont = pygame.font.SysFont('Calibri', 24)
+            self.smallbuttonfont = pygame.font.SysFont('Calibri', 18)
+            self.headerfont = pygame.font.SysFont('Calibri', 36)
+            self.normalfont = pygame.font.SysFont('Calibri', 18)
+        elif index == 1:
+            self.width = 1280
+            self.height = 1024
+            self.buttonfont = pygame.font.SysFont('Calibri', 34)
+            self.smallbuttonfont = pygame.font.SysFont('Calibri', 26)
+            self.headerfont = pygame.font.SysFont('Calibri', 42)
+            self.normalfont = pygame.font.SysFont('Calibri', 28)
+        elif index == 2:
+            self.width = 1280
+            self.height = 720
+            self.buttonfont = pygame.font.SysFont('Calibri', 32)
+            self.smallbuttonfont = pygame.font.SysFont('Calibri', 20)
+            self.headerfont = pygame.font.SysFont('Calibri', 50)
+            self.normalfont = pygame.font.SysFont('Calibri', 28)
+        elif index == 3:
+            self.width = 1366
+            self.height = 768
+            self.buttonfont = pygame.font.SysFont('Calibri', 38)
+            self.smallbuttonfont = pygame.font.SysFont('Calibri', 24)
+            self.headerfont = pygame.font.SysFont('Calibri', 58)
+            self.normalfont = pygame.font.SysFont('Calibri', 30)
+        elif index == 4:
+            self.width = 2560
+            self.height = 1440
+            self.buttonfont = pygame.font.SysFont('Calibri', 55)
+            self.smallbuttonfont = pygame.font.SysFont('Calibri', 42)
+            self.headerfont = pygame.font.SysFont('Calibri', 66)
+            self.normalfont = pygame.font.SysFont('Calibri', 36)
+
+
 class Button():
     def __init__(self, x , y, width, height, textx, texty, text, textcol, screen, onclick, font):
         self.x = x
@@ -92,6 +134,7 @@ class Animation():
         self.points = [] # for flux ray
         self.t = 0
         self.offset = 0
+        self.imgrot = 0
 
 class Music():
     def __init__(self):
@@ -179,10 +222,10 @@ class Weapon():
             self.classnum = 1
             self.fullname = "Torpedo (Class 1)"
             self.duration = 5
-            self.chargetime = 2
+            self.chargetime = 1
             self.lastfired = 0
             self.range = 600
-            self.velocity = 1500
+            self.velocity = 800
         elif fulltype == "torpedo-c2":
             self.damage = 35
             self.type = "torpedo"
@@ -254,6 +297,9 @@ class GameInfo():
         self.nativeheight = 0
         self.nativewidth = 0
         self.fullscreen = False
+        self.resolutions = []
+        self.resolution = 0
+        self.resindex = 0
 
 class Point():
     def __init__(self):

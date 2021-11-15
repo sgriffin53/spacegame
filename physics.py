@@ -103,20 +103,12 @@ def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinf
                         mypoint.x = animation.x
                         mypoint.y = animation.y
                         dist = functions.distance(enemyship, mypoint)
-                        # line-circle intercept
                         r = enemyship.width / 2 + 10
-                        if dist > r * 2: continue
-                        # x ^ 2 + b x + c
-                        x5 = enemyship.x
-                        y5 = enemyship.y
-                        x3 = animation.x - x5
-                        y3 = animation.y - y5
-                        x4 = myship.x - x5
-                        y4 = myship.y - y5
-                        intercept = functions.lineCircleIntercept(x3, y3, x4, y4, x5, y5, r)
-                        if intercept != None and enemyship.visible:
+                        if dist > r: continue
+                        if dist <= r and enemyship.visible:
                             closesthit = Point()
-                            closesthit.x, closesthit.y = intercept
+                            closesthit.x = animation.x
+                            closesthit.y = animation.y
                             animation.hitship = enemyship
                             animation.angle = functions.angleBetween(closesthit, myship)
                             angle = 360 - (animation.angle) + 90 + enemyship.rotation
@@ -150,19 +142,11 @@ def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinf
                     dist = functions.distance(myship, mypoint)
                     # line-circle intercept
                     r = myship.width / 2 + 10
-                    if dist > r * 2: continue
-                    # x ^ 2 + b x + c
-                    x5 = myship.x
-                    y5 = myship.y
-                    x3 = animation.x - x5
-                    y3 = animation.y - y5
-                    x4 = enemyship.x - x5
-                    y4 = enemyship.y - y5
-
-                    intercept = functions.lineCircleIntercept(x3, y3, x4, y4, x5, y5, r)
-                    if intercept != None:
+                    if dist > r: continue
+                    if dist <= r:
                         closesthit = Point()
-                        closesthit.x, closesthit.y = intercept
+                        closesthit.x = animation.x
+                        closesthit.y = animation.y
                         animation.angle = functions.angleBetween(closesthit, enemyship)
                         angle = 360 - (animation.angle) + 90 + myship.rotation
                         angle = functions.clampAngle(angle)

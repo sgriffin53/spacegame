@@ -283,28 +283,35 @@ def drawEnemyShields(screen, enemyship, myship, gameinfo):
 def renderUpgradeMenu(screen, images, gameinfo, myship):
     screen.fill((0, 0, 0))
 
+    factorx = gameinfo.width / gameinfo.nativewidth
+    factory = gameinfo.height / gameinfo.nativeheight
     bg = images[1]
     bg = pygame.transform.scale(bg, (gameinfo.width, gameinfo.height))
     screen.blit(bg, (0, 0))
     titlefont = pygame.font.SysFont('Calibri', 60, 1)
+    titlefont = gameinfo.resolution.headerfont
     titleText = titlefont.render("Upgrade Ship", False,
                                  (255, 255, 255))
-    screen.blit(titleText, (460, 30))
+    screen.blit(titleText, (460 * factorx, 30 * factory))
     menulabelfont = pygame.font.SysFont('Calibri', 30)
+    menulabelfont = gameinfo.resolution.normalfont
     baseshipText = menulabelfont.render("Base Ship", False, (255, 255, 255))
-    screen.blit(baseshipText, (100, 120))
-    screen.blit(myship.image, (130, 160))
+    screen.blit(baseshipText, (100 * factorx, 120 * factory))
+    screen.blit(myship.image, (130 * factorx, 160 * factory))
     warpenginesText = menulabelfont.render("Warp Engines: Class 3", False, (255, 255, 255))
-    screen.blit(warpenginesText, (381, 120))
+    screen.blit(warpenginesText, (381 * factorx, 120 * factory))
     combatenginesText = menulabelfont.render("Combat Engines: Class 1", False, (255, 255, 255))
-    screen.blit(combatenginesText, (350, 160))
+    screen.blit(combatenginesText, (350 * factorx, 160 * factory))
     shield = myship.shields[0]
     shieldsText = None
     if shield == None:
         shieldsText = menulabelfont.render("Shields: None", False, (255, 255, 255))
     else:
         shieldsText = menulabelfont.render("Shields: Class " + str(myship.shields[0].classnum), False, (255, 255, 255))
-    screen.blit(shieldsText, (461, 200))
+    drawX = 461
+    if gameinfo.resolution.width == 2560:
+        drawX -= 40
+    screen.blit(shieldsText, (drawX * factorx, 200 * factory))
     weaponText = []
     for i in range(4):
         rendertext = "Weapon " + str(i + 1) + ": "
@@ -313,25 +320,29 @@ def renderUpgradeMenu(screen, images, gameinfo, myship):
         else:
             rendertext += myship.weapons[i].fullname
         weaponText.append(menulabelfont.render(rendertext, False, (255, 255, 255)))
-        screen.blit(weaponText[i], (424, 240 + (i * 40)))
+        screen.blit(weaponText[i], (424 * factorx, (240 + (i * 40)) * factory))
 
 def renderStationMenu(screen, images, gameinfo, myship, spacestations):
     screen.fill((0, 0, 0))
+    factorx = gameinfo.width / gameinfo.nativewidth
+    factory = gameinfo.height / gameinfo.nativeheight
     bg = images[1]
     bg = pygame.transform.scale(bg, (gameinfo.width, gameinfo.height))
     screen.blit(bg, (0, 0))
     titlefont = pygame.font.SysFont('Calibri', 60, 1)
+    titlefont = gameinfo.resolution.headerfont
     titleText = titlefont.render("Space station " + str(myship.closestStation(spacestations).index), False,
                                  (255, 255, 255))
-    screen.blit(titleText, (460, 30))
+    screen.blit(titleText, (460 * factorx, 30 * factory))
     menulabelfont = pygame.font.SysFont('Calibri', 30)
+    menulabelfont = gameinfo.resolution.normalfont
     creditsText = menulabelfont.render("Credits: " + str(gameinfo.credits), False, (255, 255, 255))
-    screen.blit(creditsText, (50, 130))
+    screen.blit(creditsText, (50 * factorx, 130 * factory))
     repaircost = functions.repairCost(myship)
     repairText = menulabelfont.render("Repair Ship (Cost " + str(repaircost) + ")", False, (255, 255, 255))
-    screen.blit(repairText, (50, 180))
+    screen.blit(repairText, (50 * factorx, 180 * factory))
     upgradeText = menulabelfont.render("Upgrade Ship", False, (255, 255, 255))
-    screen.blit(upgradeText, (400, 180))
+    screen.blit(upgradeText, (400 * factorx, 180 * factory))
 
 def renderMainMenu(screen, images, gameinfo):
     screen.fill((0, 0, 0))
@@ -347,41 +358,47 @@ def renderCredits(screen, images, gameinfo):
     screen.fill((0, 0, 0))
     bg = images[0]
     bg = pygame.transform.scale(bg, (gameinfo.width, gameinfo.height))
+    factorx = gameinfo.width / gameinfo.nativewidth
+    factory = gameinfo.height / gameinfo.nativeheight
     screen.blit(bg, (0, 0))
     titlefont = pygame.font.SysFont('Calibri', 70, 1)
+    titlefont = gameinfo.resolution.headerfont
     titleText = titlefont.render("Credits", False,
                                  (255, 255, 255))
-    screen.blit(titleText, (560, 30))
+    screen.blit(titleText, (560 * factorx, 30 * factory))
     creditsfont = pygame.font.SysFont('Calibri', 25, 1)
+    creditsfont = gameinfo.resolution.normalfont
     createdByText = creditsfont.render("Created by: Steve Griffin", False, (255, 255, 255))
-    screen.blit(createdByText, (525, 150))
+    screen.blit(createdByText, (525 * factorx, 150 * factory))
     musicByText = creditsfont.render("Music and sound effects by: Eric Matyas (www.soundimage.com)", False,
                                      (255, 255, 255))
-    screen.blit(musicByText, (350, 220))
+    screen.blit(musicByText, (350 * factorx, 220 * factory))
     artByText = creditsfont.render("Art by:", False, (255, 255, 255))
-    screen.blit(artByText, (420, 290))
+    screen.blit(artByText, (420 * factorx, 290 * factory))
     millionthVectorText = creditsfont.render("MillionthVector (http://millionthvector.blogspot.de)", False,
                                              (255, 255, 255))
-    screen.blit(millionthVectorText, (495, 290))
+    screen.blit(millionthVectorText, (495 * factorx, 290 * factory))
     eikesterText = creditsfont.render("Eikester", False, (255, 255, 255))
-    screen.blit(eikesterText, (495, 330))
+    screen.blit(eikesterText, (495 * factorx, 330 * factory))
     craftpixText = creditsfont.render("CraftPix.net 2D Game Assets", False, (255, 255, 255))
-    screen.blit(craftpixText, (495, 370))
+    screen.blit(craftpixText, (495 * factorx, 370 * factory))
     attributionText = creditsfont.render("See attribution.txt for full attribution information.", False,
                                          (255, 255, 255))
-    screen.blit(attributionText, (440, 440))
+    screen.blit(attributionText, (440 * factorx, 440 * factory))
 
 def renderMap(screen, gameinfo, myship, spacestations):
     screen.fill((0, 0, 0))
 
+    factorx = gameinfo.width / gameinfo.nativewidth
+    factory = gameinfo.height / gameinfo.nativeheight
     titlefont = gameinfo.map_title_font
     titleText = titlefont.render("Map:", False,
                                  (255, 255, 255))
-    screen.blit(titleText, (100, 30))
-    pygame.draw.rect(screen, (255, 255, 255), (200, 30, 600, 600), 1)
+    screen.blit(titleText, (100 * factorx, 30 * factory))
+    pygame.draw.rect(screen, (255, 255, 255), (200 * factorx, 30 * factory, 600 * factorx, 600 * factory), 1)
 
     for (x, y) in gameinfo.mapstars:
-        screen.set_at((x, y), (255, 255, 255))
+        screen.set_at((int(x * factorx), int(y * factory)), (255, 255, 255))
     i = -1
     # draw each space station
     for spacestation in spacestations:
@@ -390,6 +407,8 @@ def renderMap(screen, gameinfo, myship, spacestations):
         y = spacestation.y
         drawX = 200 + (x / 2000000) * 600
         drawY = 630 - (y / 2000000) * 600
+        drawX = drawX * factorx
+        drawY = drawY * factory
         img = spacestation.image
         img = pygame.transform.scale(img, (64, 64))
         (img, spacestationcentre) = rot_center(img, spacestation.rotation, drawX, drawY)
@@ -404,7 +423,7 @@ def renderMap(screen, gameinfo, myship, spacestations):
     y = myship.y
     drawX = 200 + (x / 2000000) * 600
     drawY = 630 - (y / 2000000) * 600
-    pygame.draw.circle(screen, (255, 0, 0), (drawX, drawY), 5)
+    pygame.draw.circle(screen, (255, 0, 0), (drawX * factorx, drawY * factory), 5)
     dist = 0
     if gameinfo.selectedstation != None:
         dist = functions.distance(spacestations[gameinfo.selectedstation], myship)
@@ -429,11 +448,11 @@ def renderMap(screen, gameinfo, myship, spacestations):
         disptime = int(disptime)
     timeText = thisfont.render("Warp Time: " + str(disptime) + " seconds", False, (255, 255, 255))
     if gameinfo.selectedstation != None:
-        screen.blit(stationInfoText, (830, 30))
-        screen.blit(distanceText, (830, 60))
-        screen.blit(timeText, (830, 90))
+        screen.blit(stationInfoText, (830 * factorx, 30 * factory))
+        screen.blit(distanceText, (830 * factorx, 60 * factory))
+        screen.blit(timeText, (830 * factorx, 90 * factory))
     else:
-        screen.blit(noStationText, (830, 30))
+        screen.blit(noStationText, (830 * factorx, 30 * factory))
 
 def renderGame(screen, stars, myship, gameinfo, spacestations, enemyships, shipIMG, animations, images):
     # Fill the background with white
@@ -519,12 +538,12 @@ def renderGame(screen, stars, myship, gameinfo, spacestations, enemyships, shipI
     if gameinfo.redalert:
         redalert_text = myfont.render("Red Alert", 1, (255, 0, 0))
         screen.blit(redalert_text, (80, 5))
-    renderAnimations(screen, animations, myship, gameinfo, enemyships)
+    renderAnimations(screen, animations, myship, gameinfo, enemyships, images)
     if time.time() - gameinfo.gamemessagedisplayed < 5:
         messageText = gameinfo.gamemessage_font.render(gameinfo.gamemessage, False, (255, 255, 255))
         screen.blit(messageText, ((170, 110)))
 
-def renderAnimations(screen, animations, myship, gameinfo, enemyships):
+def renderAnimations(screen, animations, myship, gameinfo, enemyships, images):
     centre = (gameinfo.width / 2, gameinfo.height / 2)
     x5 = 0
     y5 = 0
@@ -756,9 +775,26 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships):
                 drawY = centre[1] - animation.y + myship.y
                 width = 5
                 if animation.type == "bullet": width = 2
-                pygame.draw.circle(screen, animation.colour, (drawX,
-                                                           drawY),
-                                   width)
+                if animation.type == "torpedo":
+                   # pygame.draw.circle(screen, animation.colour, (drawX,
+                   #                                        drawY),
+                   #                width)
+                   torpedoIMG = images[3]
+                   #   enemyshipIMG = pygame.transform.scale(enemyshipIMG, (functions.scaleToScreen(enemyship.width, enemyship.width, gameinfo)))
+                   torpedoIMG = pygame.transform.scale(torpedoIMG, (123 / 4, 306 / 4))
+                   (newIMG, es_centre) = rot_center(torpedoIMG, animation.imgrot, drawX,
+                                                    drawY)  # rotate ship appropriately
+
+                   screen.blit(newIMG, es_centre)
+                elif animation.type == "bullet":
+                    torpedoIMG = images[2]
+                    #   enemyshipIMG = pygame.transform.scale(enemyshipIMG, (functions.scaleToScreen(enemyship.width, enemyship.width, gameinfo)))
+                    torpedoIMG = pygame.transform.scale(torpedoIMG, (98 / 6, 247 / 6))
+                    (newIMG, es_centre) = rot_center(torpedoIMG, animation.imgrot + 180, drawX,
+                                                     drawY)  # rotate ship appropriately
+
+                    screen.blit(newIMG, es_centre)
+
 
 
 def renderFrame(screen, stars, myship, enemyships, spacestations, images, shipIMG, enemyshipIMG, spacestationIMG, gameinfo, animations):
@@ -779,6 +815,10 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, images, shipIM
         if button.screen == gameinfo.screen:
             button.render(screen, gameinfo)
     for message in gameinfo.messages:
+
+        factorx = gameinfo.width / gameinfo.nativewidth
+        factory = gameinfo.height / gameinfo.nativeheight
         if message.screen == gameinfo.screen and message.visible == True:
+            message.font = gameinfo.resolution.normalfont
             messageText = message.font.render(message.message, False, (255, 255, 255))
-            screen.blit(messageText, (message.x, message.y))
+            screen.blit(messageText, (message.x * factorx, message.y * factory))

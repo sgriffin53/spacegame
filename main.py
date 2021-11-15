@@ -10,9 +10,10 @@ import collision
 import render
 import AI
 import station
+import functions
 import enemies
 from myship import MyShip
-from classes import Music, Sound, Weapon, GameInfo, FrameInfo, Shield, Button, Message
+from classes import Music, Sound, Weapon, GameInfo, FrameInfo, Shield, Button, Message, Resolution
 
 pygame.init()
 pygame.font.init()  # you have to call this at the start,
@@ -22,6 +23,8 @@ pygame.display.set_caption('Stardawg 3000')
 
 gameinfo = GameInfo()
 gameinfo.credits = 1000
+for i in range(5):
+    gameinfo.resolutions.append(Resolution(i))
 
 # generate warp map menu stars
 
@@ -43,8 +46,11 @@ if res == 2:
     height = 1440
 #width = 800
 #height = 600
-gameinfo.width = width
-gameinfo.height = height
+#gameinfo.width = width
+#gameinfo.height = height
+gameinfo.resolution = Resolution(3)
+gameinfo.width = gameinfo.resolution.width
+gameinfo.height = gameinfo.resolution.height
 gameinfo.nativeheight = nativeheight
 gameinfo.nativewidth = nativewidth
 gameinfo.resindex = 0
@@ -128,6 +134,8 @@ gameinfo.screen = "mainmenu"
 images = []
 images.append(pygame.image.load(os.path.join('images','GUI','bg.png')))
 images.append(pygame.image.load(os.path.join('images','GUI','Window.png')))
+images.append(pygame.image.load(os.path.join('images','plasmabullet.png')))
+images.append(pygame.image.load(os.path.join('images','plasmatorpedo.png')))
 
 # add buttons
 
@@ -152,6 +160,8 @@ gameinfo.buttons.append(Button(660, 195, 150, 35, 35, 8, "Upgrade", (255, 255, 2
 
 gameinfo.messages.append(Message(50, 290, "No Repair Needed", "stationmenu", pygame.font.SysFont('Calibri', 30)))
 
+functions.setResolution(width, height, gameinfo, screen, stars, images, spacestationIMG, shipIMG, enemyshipIMG)
+
 # main game loop
 
 while running:
@@ -175,12 +185,15 @@ while running:
             if event.key == pygame.K_RETURN:
                 enter_pressed = True
     if alt_pressed and enter_pressed: # full screen with alt+enter
+        width = gameinfo.resolution.width
+        height = gameinfo.resolution.height
         if not fullscreen:
             screen = pygame.display.set_mode([width, height], pygame.FULLSCREEN)
         else:
             screen = pygame.display.set_mode([width, height])
         fullscreen = not fullscreen
         gameinfo.fullscreen = fullscreen
+        functions.setResolution(width, height, gameinfo, screen, stars, images, spacestationIMG, shipIMG, enemyshipIMG)
     keys = pygame.key.get_pressed()
     if not keys[pygame.K_RALT] and not keys[pygame.K_LALT]:
         alt_pressed = False
