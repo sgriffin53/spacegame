@@ -11,6 +11,7 @@ import render
 import AI
 import station
 import functions
+import pygame_menu
 import enemies
 from myship import MyShip
 from classes import Music, Sound, Weapon, GameInfo, FrameInfo, Shield, Button, Message, Resolution
@@ -33,37 +34,33 @@ for i in range(0, 200):
     thisY = random.randint(30, 630)
     gameinfo.mapstars.append((thisX, thisY))
 
-width = 800
-height = 600
 nativewidth = 1280
 nativeheight = 768
-res = 1
-if res == 1:
-    width = 1280
-    height = 768
-if res == 2:
-    width = 2560
-    height = 1440
-#width = 800
-#height = 600
-#gameinfo.width = width
-#gameinfo.height = height
 gameinfo.resolution = Resolution(3)
 gameinfo.width = gameinfo.resolution.width
 gameinfo.height = gameinfo.resolution.height
 gameinfo.nativeheight = nativeheight
 gameinfo.nativewidth = nativewidth
-gameinfo.resindex = 0
+gameinfo.resindex = 3
+gameinfo.resolution = gameinfo.resolutions[gameinfo.resindex]
+width = gameinfo.resolution.width
+height = gameinfo.resolution.height
 gameinfo.clock = pygame.time.Clock()
+fullscreen = False
+gameinfo.fullscreen = fullscreen
+
+screen = pygame.display.set_mode([width, height]) # don't set full screen mode to start or it messes up switching resolutions
 
 # Set up the drawing window
-screen = pygame.display.set_mode([width, height])
+if not fullscreen:
+    pass
+#    screen = pygame.display.set_mode([width, height])
+else:
+    screen = pygame.display.set_mode([width, height], pygame.FULLSCREEN)
 
 spacestationIMG = pygame.image.load(os.path.join('images', 'station.png')).convert_alpha()
 shipIMG = pygame.image.load(os.path.join('images','ship.png')).convert_alpha()
 enemyshipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
-
-fullscreen = False
 
 # generate stars
 
@@ -136,31 +133,84 @@ images.append(pygame.image.load(os.path.join('images','GUI','bg.png')))
 images.append(pygame.image.load(os.path.join('images','GUI','Window.png')))
 images.append(pygame.image.load(os.path.join('images','plasmabullet.png')))
 images.append(pygame.image.load(os.path.join('images','plasmatorpedo.png')))
+images.append(pygame.image.load(os.path.join('images','GUI','Backward_BTN.png')))
+images.append(pygame.image.load(os.path.join('images','GUI','Backward_BTN_hover.png')))
+images.append(pygame.image.load(os.path.join('images','GUI','Forward_BTN.png')))
+images.append(pygame.image.load(os.path.join('images','GUI','Forward_BTN_hover.png')))
+
+# create list of shields
+
+for i in range(10):
+    shieldstring = "shield-c" + str(i+1)
+    gameinfo.allshields.append(Shield(shieldstring))
 
 # add buttons
 
 defaultfont = pygame.font.SysFont('Calibri', 34)
 smallfont = pygame.font.SysFont('Calibri', 22)
+
+# main menu buttons
+
 gameinfo.buttons.append(Button(500, 200, 300, 50, 80, 8, "Start Game", (255, 255, 255), "mainmenu", "startgame", defaultfont))
 gameinfo.buttons.append(Button(500, 280, 300, 50, 100, 8, "Tutorial", (255, 255, 255), "mainmenu", None, defaultfont))
 gameinfo.buttons.append(Button(500, 360, 300, 50, 105, 8, "Credits", (255, 255, 255), "mainmenu", "creditsclick", defaultfont))
 gameinfo.buttons.append(Button(500, 440, 300, 50, 125, 8, "Exit", (255, 255, 255), "mainmenu", "exit", defaultfont))
+
+# map buttons
+
 gameinfo.buttons.append(Button(830, 120, 200, 50, 25, 8, "Warp Here", (255, 255, 255), "map", "warpclick", defaultfont))
+
+# credits buttons
+
 gameinfo.buttons.append(Button(520, 520, 300, 50, 55, 8, "Back to Menu", (255, 255, 255), "credits", "creditsbackclick", defaultfont))
+
+# station menu buttons
+
 gameinfo.buttons.append(Button(50, 230, 200, 50, 55, 8, "Repair", (255, 255, 255), "stationmenu", "repairclick", defaultfont))
 gameinfo.buttons.append(Button(400, 230, 200, 50, 39, 8, "Upgrade", (255, 255, 255), "stationmenu", "upgradeclick", defaultfont))
 gameinfo.buttons.append(Button(1000, 640, 250, 50, 30, 8, "Back to Game", (255, 255, 255), "stationmenu", "stationbackclick", defaultfont))
+
+# upgrade menu buttons
+
 gameinfo.buttons.append(Button(90, 230, 150, 50, 13, 8, "Upgrade", (255, 255, 255), "upgrademenu", "baseshipupgradeclick", defaultfont))
 gameinfo.buttons.append(Button(1000, 640, 250, 50, 30, 8, "Back to Menu", (255, 255, 255), "upgrademenu", "upgradebackclick", defaultfont))
 gameinfo.buttons.append(Button(660, 115, 150, 35, 35, 8, "Upgrade", (255, 255, 255), "upgrademenu", "upgradewarpenginesclick", smallfont))
 gameinfo.buttons.append(Button(660, 155, 150, 35, 35, 8, "Upgrade", (255, 255, 255), "upgrademenu", "upgradecombatenginesclick", smallfont))
 gameinfo.buttons.append(Button(660, 195, 150, 35, 35, 8, "Upgrade", (255, 255, 255), "upgrademenu", "upgradeshieldsclick", smallfont))
 
+# shields upgrade menu buttons
+
+gameinfo.buttons.append(Button(1000, 640, 250, 50, 30, 8, "Back to Menu", (255, 255, 255), "shieldsupgrademenu", "shieldsupgradebackclick", defaultfont))
+
+leftbutton = Button(560, 180, 210, 210, 80, 8, "", (255, 255, 255), "shieldsupgrademenu", "shieldselectionleft",
+                    defaultfont)
+leftbutton.image = images[4]
+scalefactor = 6
+leftbutton.width = 210 / scalefactor
+leftbutton.height = 210 / scalefactor
+gameinfo.buttons.append(leftbutton)
+
+rightbutton = Button(720, 180, 210, 210, 80, 8, "", (255, 255, 255), "shieldsupgrademenu", "shieldselectionright",
+                    defaultfont)
+rightbutton.image = images[7]
+scalefactor = 6
+rightbutton.width = 210 / scalefactor
+rightbutton.height = 210 / scalefactor
+gameinfo.buttons.append(rightbutton)
+
+gameinfo.buttons.append(Button(1000, 640, 250, 50, 30, 8, "Back to Menu", (255, 255, 255), "shieldsupgrademenu", "shieldsupgradebackclick", defaultfont))
+
+gameinfo.buttons.append(Button(500, 410, 200, 50, 39, 8, "Upgrade", (255, 255, 255), "shieldsupgrademenu", "shieldsupgradeclick", defaultfont))
+
 # Add messages
 
 gameinfo.messages.append(Message(50, 290, "No Repair Needed", "stationmenu", pygame.font.SysFont('Calibri', 30)))
 
-functions.setResolution(width, height, gameinfo, screen, stars, images, spacestationIMG, shipIMG, enemyshipIMG)
+# shields upgrade screen message
+
+gameinfo.messages.append(Message(500, 480, "Shields upgraded", "shieldsupgrademenu", gameinfo.resolution.normalfont))
+
+#functions.setResolution(width, height, gameinfo, screen, stars, images, spacestationIMG, shipIMG, enemyshipIMG)
 
 # main game loop
 

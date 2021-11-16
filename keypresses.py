@@ -39,7 +39,7 @@ def handleMouseButtonUp(gameinfo, myship, mousepos, enemyships, spacestations, m
             if buttonRect.collidepoint(mousepos):
                 button.onClick(gameinfo, myship, enemyships, spacestations, music)
 
-def handleMouseOver(gameinfo):
+def handleMouseOver(gameinfo, images):
     mousepos = pygame.mouse.get_pos()
     for button in gameinfo.buttons:
         factorx = gameinfo.width / gameinfo.nativewidth
@@ -50,9 +50,19 @@ def handleMouseOver(gameinfo):
             button.textcol = (0, 255, 0)
         else:
             button.textcol = (255, 255, 255)
+        if button.onclick == "shieldselectionleft":
+            if buttonRect.collidepoint(mousepos):
+                button.image = images[5]
+            else:
+                button.image = images[4]
+        if button.onclick == "shieldselectionright":
+            if buttonRect.collidepoint(mousepos):
+                button.image = images[7]
+            else:
+                button.image = images[6]
 
 def detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animations, sounds, spacestations, music, screen, stars, images, spacestationIMG, shipIMG, enemyshipIMG):
-    handleMouseOver(gameinfo)
+    handleMouseOver(gameinfo, images)
     for event in event_get:
         if event.type == pygame.QUIT:
             running = False

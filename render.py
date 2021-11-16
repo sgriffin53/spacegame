@@ -3,6 +3,7 @@ import functions
 import pygame
 import math
 import random
+import pygame_menu
 from classes import Point, Button
 
 def drawStars(screen, stars, myship, gameinfo):
@@ -638,7 +639,8 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships, images):
                 tot = animation.t
                 x3 = 0
                 y3 = 0
-                for t in range(0, tot, 5):
+                allowedSectors = myship.allowedsectors
+                for t in range(0, tot, 10):
                     angle_rads = (360 - animation.angle) * math.pi / 180
                     if animation.type == "fluxray":
                         x3 = x2 + (t * offset) * math.cos(angle_rads) - math.sin(angle_rads) * math.sin((t * offset) / 20) * 20
@@ -648,6 +650,25 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships, images):
                         x3 = x2 + (t * 1) * math.cos(angle_rads) - math.sin(angle_rads) * math.sin((t * offset2 + 1) / 20) * 20
                         y3 = y2 + (t *1) * math.sin(angle_rads) + math.cos(angle_rads) * math.sin((t * offset2 + 1) / 20) * 20
                     animation.points.append([x3, y3])
+                    mypoint = Point()
+                    mypoint.x = x3
+                    mypoint.y = y3
+                    breakFree = False
+                    if animation.firer == "myship":
+                        for enemyship in gameinfo.checkships:
+                            enemyship.gridsector = functions.gridSector(enemyship)
+                            enemysector = enemyship.gridsector
+                            if enemysector not in allowedSectors: continue
+                            dist = functions.distance(mypoint, enemyship)
+                            r = myship.width / 2 + 30
+                            if dist < r: breakFree = True
+                    else:
+                        dist = functions.distance(animation.target, mypoint)
+                        r = animation.target.width / 2 + 30
+                        if dist < r: breakFree = True
+                    if breakFree: break
+
+                #print(animation.points)
 
                 for point in animation.points:
                     x = point[0]
@@ -866,7 +887,51 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships, images):
 
                     screen.blit(newIMG, es_centre)
 
+def set_difficulty(difficulty):
+    pass
 
+def renderShieldsUpgradeMenu(screen, gameinfo, images, myship):
+    screen.fill((0, 0, 0))
+    if gameinfo.shieldsel == None:
+        gameinfo.shieldsel = myship.shields[0].classnum
+    factorx = gameinfo.width / gameinfo.nativewidth
+    factory = gameinfo.height / gameinfo.nativeheight
+    bg = images[1]
+    bg = pygame.transform.scale(bg, (gameinfo.width, gameinfo.height))
+    screen.blit(bg, (0, 0))
+    titlefont = gameinfo.resolution.headerfont
+    normalfont = gameinfo.resolution.normalfont
+    currentvalue = myship.shields[0].cost
+    truecost = gameinfo.allshields[gameinfo.shieldsel - 1].cost - currentvalue
+    titleText = titlefont.render("Upgrade Shields", False,
+                                 (255, 255, 255))
+    screen.blit(titleText, (450 * factorx, 30 * factory))
+    currentText = normalfont.render("Current Shields: Class " + str(myship.shields[0].classnum), False, (255, 255, 255))
+    screen.blit(currentText, (481 * factorx, 120 * factory))
+    upgradeText = normalfont.render("Upgrade to:", False, (255, 255, 255))
+    screen.blit(upgradeText, (411 * factorx, 180 * factory))
+    selectedText = normalfont.render("Class " + str(gameinfo.shieldsel), False, (255, 255, 255))
+    screen.blit(selectedText, (605 * factorx, 180 * factory))
+    maxchargeText = normalfont.render("Max Charge: " + str(gameinfo.allshields[gameinfo.shieldsel - 1].maxcharge), False, (255, 255, 255))
+    screen.blit(maxchargeText, (505 * factorx, 230 * factory))
+    costText = normalfont.render("Cost: " + str(truecost), False, (255, 255, 255))
+    screen.blit(costText, (588 * factorx, 260 * factory))
+    availableText = normalfont.render("Available balance: " + str(gameinfo.credits), False, (255, 255, 255))
+    screen.blit(availableText, (442 * factorx, 290 * factory))
+    message = ""
+    ugdg = "Upgrade"
+    if truecost < 0: ugdg = "Downgrade"
+    gameinfo.buttons[18].visible = True
+    if truecost == 0:
+        message = "You already have these shields."
+        gameinfo.buttons[18].visible = False
+    elif truecost > gameinfo.credits:
+        message = "You cannot afford this."
+        gameinfo.buttons[18].visible = False
+    else:
+        message = ugdg + " to class " + str(gameinfo.shieldsel) + " shields?"
+    messageText = normalfont.render(message, False, (255, 255, 255))
+    screen.blit(messageText, (420 * factorx, 350 * factory))
 
 def renderFrame(screen, stars, myship, enemyships, spacestations, images, shipIMG, enemyshipIMG, spacestationIMG, gameinfo, animations):
     if gameinfo.screen == "upgrademenu":
@@ -879,11 +944,13 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, images, shipIM
         renderCredits(screen, images, gameinfo)
     if gameinfo.screen == "map":
         renderMap(screen, gameinfo, myship, spacestations)
+    if gameinfo.screen == "shieldsupgrademenu":
+        renderShieldsUpgradeMenu(screen, gameinfo, images, myship)
 
     if gameinfo.screen == "game":
         renderGame(screen, stars, myship, gameinfo, spacestations, enemyships, shipIMG, animations, images)
     for button in gameinfo.buttons:
-        if button.screen == gameinfo.screen:
+        if button.screen == gameinfo.screen and button.visible:
             button.render(screen, gameinfo)
     for message in gameinfo.messages:
 

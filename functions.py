@@ -159,8 +159,8 @@ def playMusic(music):
     pygame.mixer.music.play(-100000)
 
 def setResolution(width, height, gameinfo, screen, stars, images, spacestationIMG, shipIMG, enemyshipIMG):
-    gameinfo.width = width
-    gameinfo.height = height
+    gameinfo.width = gameinfo.resolution.width
+    gameinfo.height = gameinfo.resolution.height
     fullscreen = gameinfo.fullscreen
     if fullscreen:
         screen = pygame.display.set_mode([width, height], pygame.FULLSCREEN)
@@ -193,7 +193,8 @@ def startGame(gameinfo, myship, enemyships, spacestations, music):
     # create my ship object
     del myship.weapons[:]
 
-    myship.weapons.append(Weapon("bullet-c1"))
+    myship.weapons.append(Weapon("disruptor-c1"))
+    #myship.weapons.append(Weapon(None))
     myship.weapons.append(Weapon("torpedo-c1"))
     myship.weapons.append(Weapon("disruptor-c1"))
     myship.weapons.append(Weapon("particlebeam-c1"))

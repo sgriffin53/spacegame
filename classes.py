@@ -12,38 +12,38 @@ class Resolution():
         if index == 0:
             self.width = 800
             self.height = 600
-            self.buttonfont = pygame.font.SysFont('Calibri', 24)
-            self.smallbuttonfont = pygame.font.SysFont('Calibri', 18)
-            self.headerfont = pygame.font.SysFont('Calibri', 36)
+            self.buttonfont = pygame.font.SysFont('Calibri', 21)
+            self.smallbuttonfont = pygame.font.SysFont('Calibri', 16)
+            self.headerfont = pygame.font.SysFont('Calibri', 40)
             self.normalfont = pygame.font.SysFont('Calibri', 18)
         elif index == 1:
             self.width = 1280
             self.height = 1024
             self.buttonfont = pygame.font.SysFont('Calibri', 34)
             self.smallbuttonfont = pygame.font.SysFont('Calibri', 26)
-            self.headerfont = pygame.font.SysFont('Calibri', 42)
+            self.headerfont = pygame.font.SysFont('Calibri', 65)
             self.normalfont = pygame.font.SysFont('Calibri', 28)
         elif index == 2:
             self.width = 1280
             self.height = 720
-            self.buttonfont = pygame.font.SysFont('Calibri', 32)
-            self.smallbuttonfont = pygame.font.SysFont('Calibri', 20)
-            self.headerfont = pygame.font.SysFont('Calibri', 50)
-            self.normalfont = pygame.font.SysFont('Calibri', 28)
+            self.buttonfont = pygame.font.SysFont('Calibri', 34)
+            self.smallbuttonfont = pygame.font.SysFont('Calibri', 23)
+            self.headerfont = pygame.font.SysFont('Calibri', 62)
+            self.normalfont = pygame.font.SysFont('Calibri', 26)
         elif index == 3:
             self.width = 1366
             self.height = 768
-            self.buttonfont = pygame.font.SysFont('Calibri', 38)
-            self.smallbuttonfont = pygame.font.SysFont('Calibri', 24)
-            self.headerfont = pygame.font.SysFont('Calibri', 58)
+            self.buttonfont = pygame.font.SysFont('Calibri', 36)
+            self.smallbuttonfont = pygame.font.SysFont('Calibri', 23)
+            self.headerfont = pygame.font.SysFont('Calibri', 54)
             self.normalfont = pygame.font.SysFont('Calibri', 30)
         elif index == 4:
             self.width = 2560
             self.height = 1440
-            self.buttonfont = pygame.font.SysFont('Calibri', 55)
-            self.smallbuttonfont = pygame.font.SysFont('Calibri', 42)
-            self.headerfont = pygame.font.SysFont('Calibri', 66)
-            self.normalfont = pygame.font.SysFont('Calibri', 36)
+            self.buttonfont = pygame.font.SysFont('Calibri', 68)
+            self.smallbuttonfont = pygame.font.SysFont('Calibri', 46)
+            self.headerfont = pygame.font.SysFont('Calibri', 84)
+            self.normalfont = pygame.font.SysFont('Calibri', 56)
 
 
 class Button():
@@ -60,6 +60,7 @@ class Button():
         self.image = pygame.image.load(os.path.join('images','GUI','Button1.png'))
         self.screen = screen
         self.onclick = onclick
+        self.visible = True
     def render(self, screen, gameinfo):
         scaled_width = self.width * (gameinfo.width / gameinfo.nativewidth)
         scaled_height = self.height * (gameinfo.height / gameinfo.nativeheight)
@@ -96,6 +97,32 @@ class Button():
             gameinfo.screen = "upgrademenu"
         if self.onclick == "upgradebackclick":
             gameinfo.screen = "stationmenu"
+        if self.onclick == "upgradeshieldsclick":
+            gameinfo.shieldsel = myship.shields[0].classnum
+            gameinfo.screen = "shieldsupgrademenu"
+        if self.onclick == "shieldsupgradebackclick":
+            gameinfo.messages[1].visible = False
+            gameinfo.screen = "upgrademenu"
+        if self.onclick == "shieldselectionleft":
+            if gameinfo.shieldsel == None:
+                gameinfo.shieldsel = myship.shields[0].classnum
+            if gameinfo.shieldsel > 1:
+                gameinfo.shieldsel -= 1
+        if self.onclick == "shieldselectionright":
+            if gameinfo.shieldsel <= 9:
+                gameinfo.shieldsel += 1
+        if self.onclick == "shieldsupgradeclick":
+            gameinfo.messages[1].visible = True
+            gameinfo.messages[1].message = "Shields upgraded."
+            currentvalue = myship.shields[0].cost
+            truecost = gameinfo.allshields[gameinfo.shieldsel - 1].cost - currentvalue
+            currentshield = myship.shields[0].classnum
+            shieldstring = "shield-c" + str(gameinfo.shieldsel)
+            if currentshield > gameinfo.shieldsel:
+                gameinfo.messages[1].message = "Shields downgraded."
+            for i in range(4):
+                myship.shields[i] = Shield(shieldstring)
+            gameinfo.credits -= truecost
 
 class Message():
     def __init__(self, x, y, message, screen, font):
@@ -159,11 +186,62 @@ class Shield():
             self.charge = 100
             self.classnum = 1
             self.fullname = "Shield (Class 1)"
+            self.cost = 500
         elif type == "shield-c2":
             self.maxcharge = 250
             self.charge = 250
             self.classnum = 2
             self.fullname = "Shield (Class 2)"
+            self.cost = 1500
+        elif type == "shield-c3":
+            self.maxcharge = 350
+            self.charge = 350
+            self.classnum = 3
+            self.fullname = "Shield (Class 3)"
+            self.cost = 2500
+        elif type == "shield-c4":
+            self.maxcharge = 500
+            self.charge = 500
+            self.classnum = 4
+            self.fullname = "Shield (Class 4)"
+            self.cost = 5000
+        elif type == "shield-c5":
+            self.maxcharge = 650
+            self.charge = 650
+            self.classnum = 5
+            self.fullname = "Shield (Class 5)"
+            self.cost = 15000
+        elif type == "shield-c6":
+            self.maxcharge = 800
+            self.charge = 800
+            self.classnum = 2
+            self.fullname = "Shield (Class 6)"
+            self.cost = 30000
+        elif type == "shield-c7":
+            self.maxcharge = 1000
+            self.charge = 1000
+            self.classnum = 7
+            self.fullname = "Shield (Class 7)"
+            self.cost = 50000
+        elif type == "shield-c8":
+            self.maxcharge = 1200
+            self.charge = 1200
+            self.classnum = 8
+            self.fullname = "Shield (Class 8)"
+            self.cost = 65000
+        elif type == "shield-c9":
+            self.maxcharge = 1500
+            self.charge = 1500
+            self.classnum = 9
+            self.fullname = "Shield (Class 9)"
+            self.cost = 80000
+        elif type == "shield-c10":
+            self.maxcharge = 2000
+            self.charge = 2000
+            self.classnum = 10
+            self.fullname = "Shield (Class 10)"
+            self.cost = 125000
+
 
 class Weapon():
     def __init__(self, fulltype):
@@ -322,6 +400,8 @@ class GameInfo():
         self.resolutions = []
         self.resolution = 0
         self.resindex = 0
+        self.shieldsel = 1
+        self.allshields = []
 
 class Point():
     def __init__(self):
