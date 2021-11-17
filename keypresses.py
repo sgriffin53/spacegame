@@ -50,12 +50,12 @@ def handleMouseOver(gameinfo, images):
             button.textcol = (0, 255, 0)
         else:
             button.textcol = (255, 255, 255)
-        if button.onclick == "shieldselectionleft" or button.onclick == "weaponselectionleft" or button.onclick == "weaponclassselectionleft":
+        if button.onclick == "shieldselectionleft" or button.onclick == "weaponselectionleft" or button.onclick == "weaponclassselectionleft" or button.onclick == "computerselectionleft":
             if buttonRect.collidepoint(mousepos):
                 button.image = images[5]
             else:
                 button.image = images[4]
-        if button.onclick == "shieldselectionright" or button.onclick == "weaponselectionright" or button.onclick == "weaponclassselectionright":
+        if button.onclick == "shieldselectionright" or button.onclick == "weaponselectionright" or button.onclick == "weaponclassselectionright" or button.onclick == "computerselectionright":
             if buttonRect.collidepoint(mousepos):
                 button.image = images[7]
             else:

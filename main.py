@@ -14,7 +14,7 @@ import functions
 import pygame_menu
 import enemies
 from myship import MyShip
-from classes import Music, Sound, Weapon, GameInfo, FrameInfo, Shield, Button, Message, Resolution
+from classes import Music, Sound, Weapon, GameInfo, FrameInfo, Shield, Button, Message, Resolution, Computer
 
 pygame.init()
 pygame.font.init()  # you have to call this at the start,
@@ -23,7 +23,7 @@ pygame.display.set_caption('Stardawg 3000')
 # create game info
 
 gameinfo = GameInfo()
-gameinfo.credits = 1000
+gameinfo.credits = 1000000
 for i in range(5):
     gameinfo.resolutions.append(Resolution(i))
 
@@ -154,6 +154,9 @@ for weapon in weaponshortnames:
         id = weapon + "-c" + str(i+1)
         gameinfo.allweapons.append(Weapon(id))
 
+for i in range(1,5):
+    gameinfo.allcomputers.append(Computer(i))
+
 # add buttons
 
 defaultfont = pygame.font.SysFont('Calibri', 34)
@@ -184,7 +187,7 @@ gameinfo.buttons.append(Button(1000, 640, 250, 50, 30, 8, "Back to Game", (255, 
 
 gameinfo.buttons.append(Button(90, 230, 150, 50, 13, 8, "Upgrade", (255, 255, 255), "upgrademenu", "baseshipupgradeclick", defaultfont))
 gameinfo.buttons.append(Button(1000, 640, 250, 50, 30, 8, "Back to Menu", (255, 255, 255), "upgrademenu", "upgradebackclick", defaultfont))
-gameinfo.buttons.append(Button(660, 115, 150, 35, 35, 8, "Upgrade", (255, 255, 255), "upgrademenu", "upgradewarpenginesclick", smallfont))
+gameinfo.buttons.append(Button(660, 115, 150, 35, 35, 8, "Upgrade", (255, 255, 255), "upgrademenu", "upgradecomputerclick", smallfont))
 gameinfo.buttons.append(Button(660, 155, 150, 35, 35, 8, "Upgrade", (255, 255, 255), "upgrademenu", "upgradecombatenginesclick", smallfont))
 gameinfo.buttons.append(Button(660, 195, 150, 35, 35, 8, "Upgrade", (255, 255, 255), "upgrademenu", "upgradeshieldsclick", smallfont))
 gameinfo.buttons.append(Button(835, 235, 150, 35, 35, 8, "Upgrade", (255, 255, 255), "upgrademenu", "upgradeweapons1stclick", smallfont))
@@ -206,7 +209,7 @@ gameinfo.buttons.append(leftbutton)
 
 rightbutton = Button(720, 180, 210, 210, 80, 8, "", (255, 255, 255), "shieldsupgrademenu", "shieldselectionright",
                     defaultfont)
-rightbutton.image = images[7]
+rightbutton.image = images[6]
 scalefactor = 6
 rightbutton.width = 210 / scalefactor
 rightbutton.height = 210 / scalefactor
@@ -252,11 +255,37 @@ gameinfo.buttons.append(Button(500, 410, 200, 50, 39, 8, "Upgrade", (255, 255, 2
 
 # weapon upgrade button
 
-gameinfo.buttons.append(Button(500, 510, 200, 50, 39, 8, "Upgrade", (255, 255, 255), "weaponsupgrademenu", "weaponsupgradeclick", defaultfont))
+gameinfo.buttons.append(Button(500, 590, 200, 50, 39, 8, "Upgrade", (255, 255, 255), "weaponsupgrademenu", "weaponsupgradeclick", defaultfont))
 
 # back to menu button on weapons upgrade menu
 
 gameinfo.buttons.append(Button(1000, 640, 250, 50, 30, 8, "Back to Menu", (255, 255, 255), "weaponsupgrademenu", "weaponsupgradebackclick", defaultfont))
+
+# back to menu button on computer upgrade menu
+
+gameinfo.buttons.append(Button(1000, 640, 250, 50, 30, 8, "Back to Menu", (255, 255, 255), "computerupgrademenu", "computerupgradebackclick", defaultfont))
+
+# left and right buttons for computer upgrade menu
+
+leftbutton = Button(560, 180, 210, 210, 80, 8, "", (255, 255, 255), "computerupgrademenu", "computerselectionleft",
+                    defaultfont)
+leftbutton.image = images[4]
+scalefactor = 6
+leftbutton.width = 210 / scalefactor
+leftbutton.height = 210 / scalefactor
+gameinfo.buttons.append(leftbutton)
+
+rightbutton = Button(720, 180, 210, 210, 80, 8, "", (255, 255, 255), "computerupgrademenu", "computerselectionright",
+                    defaultfont)
+rightbutton.image = images[6]
+scalefactor = 6
+rightbutton.width = 210 / scalefactor
+rightbutton.height = 210 / scalefactor
+gameinfo.buttons.append(rightbutton)
+
+# computer upgrade button
+
+gameinfo.buttons.append(Button(500, 410, 200, 50, 39, 8, "Upgrade", (255, 255, 255), "computerupgrademenu", "computerupgradeclick", defaultfont))
 
 # Add messages
 
@@ -270,6 +299,10 @@ gameinfo.messages.append(Message(500, 480, "Shields upgraded", "shieldsupgrademe
 
 gameinfo.messages.append(Message(500, 590, "Weapon upgraded", "weaponsupgrademenu", gameinfo.resolution.normalfont))
 #functions.setResolution(width, height, gameinfo, screen, stars, images, spacestationIMG, shipIMG, enemyshipIMG)
+
+# computer upgrade screen message
+
+gameinfo.messages.append(Message(500, 480, "Computer upgraded", "computerupgrademenu", gameinfo.resolution.normalfont))
 
 # main game loop
 

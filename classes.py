@@ -80,6 +80,7 @@ class Button():
             sys.exit()
         if self.onclick == "warpclick":
             if gameinfo.selectedstation == None: return
+            functions.spawnEnemyShips(enemyships, spacestations, gameinfo)
             myship.autostate = "warp_rot"
             myship.warping = True
             myship.startWarpRot(spacestations[gameinfo.selectedstation])
@@ -115,13 +116,16 @@ class Button():
             if gameinfo.weaponsel > 1:
                 gameinfo.weaponsel -= 1
                 gameinfo.weaponclasssel = 1
+                gameinfo.messages[2].message = ""
         if self.onclick == "weaponselectionright":
             if gameinfo.weaponsel < 7:
                 gameinfo.weaponsel += 1
                 gameinfo.weaponclasssel = 1
+                gameinfo.messages[2].message = ""
         if self.onclick == "weaponclassselectionleft":
             if gameinfo.weaponclasssel > 1:
                 gameinfo.weaponclasssel -= 1
+                gameinfo.messages[2].message = ""
         if self.onclick == "weaponclassselectionright":
             weaponnames = ["Laser", "Bullet", "Torpedo", "Flux Ray", "Disruptor", "Radial Burst", "Particle Beam"]
             maxclasses = {"Laser": 2, "Bullet": 1, "Torpedo": 2, "Flux Ray": 3, "Disruptor": 1, "Particle Beam": 1,
@@ -134,6 +138,7 @@ class Button():
             else: highestclass = maxclasses[selectedweapon.name]
             if gameinfo.weaponclasssel < highestclass:
                 gameinfo.weaponclasssel += 1
+            gameinfo.messages[2].message = ""
         if self.onclick == "shieldsupgradeclick":
             gameinfo.messages[1].visible = True
             gameinfo.messages[1].message = "Shields upgraded."
@@ -158,26 +163,6 @@ class Button():
                     gameinfo.weaponsel = i + 1
             gameinfo.weaponclasssel = myship.weapons[gameinfo.selweaponslot].classnum
             gameinfo.screen = "weaponsupgrademenu"
-        '''
-        if self.onclick == "upgradeweapons1stclick":
-            gameinfo.selweaponslot = 0
-            name = myship.weapons[gameinfo.selweaponslot].name
-            weaponnames = ["Laser", "Bullet", "Torpedo", "Flux Ray", "Disruptor", "Radial Burst", "Particle Beam"]
-            for i in range(len(weaponnames)):
-                if weaponnames[i] == name:
-                    gameinfo.weaponsel = i + 1
-            gameinfo.weaponclasssel = myship.weapons[gameinfo.selweaponslot].classnum
-            gameinfo.screen = "weaponsupgrademenu"
-        if self.onclick == "upgradeweapons2ndclick":
-            gameinfo.selweaponslot = 1
-            name = myship.weapons[gameinfo.selweaponslot].name
-            weaponnames = ["Laser", "Bullet", "Torpedo", "Flux Ray", "Disruptor", "Radial Burst", "Particle Beam"]
-            for i in range(len(weaponnames)):
-                if weaponnames[i] == name:
-                    gameinfo.weaponsel = i + 1
-            gameinfo.weaponclasssel = myship.weapons[gameinfo.selweaponslot].classnum
-            gameinfo.screen = "weaponsupgrademenu"
-        '''
         if self.onclick == "weaponsupgradeclick":
             gameinfo.messages[2].visible = True
             gameinfo.messages[2].message = "Weapon " + str(gameinfo.selweaponslot + 1) + " upgraded."
@@ -196,8 +181,29 @@ class Button():
         if self.onclick == "weaponsupgradebackclick":
             gameinfo.messages[2].visible = False
             gameinfo.screen = "upgrademenu"
-
-
+        if self.onclick == "upgradecomputerclick":
+            gameinfo.screen = "computerupgrademenu"
+        if self.onclick == "computerupgradebackclick":
+            #gameinfo.messages[1].visible = False
+            gameinfo.screen = "upgrademenu"
+        if self.onclick == "computerselectionright":
+            if gameinfo.computersel < 4:
+                gameinfo.computersel += 1
+                gameinfo.messages[3].message = ""
+        if self.onclick == "computerselectionleft":
+            if gameinfo.computersel > 1:
+                gameinfo.computersel -= 1
+                gameinfo.messages[3].message = ""
+        if self.onclick == "computerupgradeclick":
+            gameinfo.messages[3].visible = True
+            gameinfo.messages[3].message = "Computer upgraded."
+            currentvalue = myship.computer.cost
+            truecost = gameinfo.allcomputers[gameinfo.computersel - 1].cost - currentvalue
+            currentcomputer = myship.computer.classnum
+            if currentcomputer > gameinfo.computersel:
+                gameinfo.messages[3].message = "Computer downgraded."
+            myship.computer = Computer(gameinfo.computersel)
+            gameinfo.credits -= truecost
 
 class Message():
     def __init__(self, x, y, message, screen, font):
@@ -317,6 +323,23 @@ class Shield():
             self.fullname = "Shield (Class 10)"
             self.cost = 125000
 
+class Computer():
+    def __init__(self, computerclass):
+        self.classnum = computerclass
+        self.cost = 0
+        self.hitrate = 0
+        if computerclass == 1:
+            self.hitrate = 25
+            self.cost = 2000
+        if computerclass == 2:
+            self.hitrate = 35
+            self.cost = 12500
+        if computerclass == 3:
+            self.hitrate = 45
+            self.cost = 20000
+        if computerclass == 4:
+            self.hitrate = 60
+            self.cost = 35000
 
 class Weapon():
     def __init__(self, fulltype):
@@ -529,6 +552,8 @@ class GameInfo():
         self.allshields = []
         self.allweapons = []
         self.weaponclasssel = 0
+        self.allcomputers = []
+        self.computersel = 1
 
 class Point():
     def __init__(self):

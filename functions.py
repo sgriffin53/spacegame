@@ -3,6 +3,7 @@ from classes import *
 from myship import *
 import station
 import enemies
+from enemies import EnemyShip
 
 def midpoint(x1, y1, x2, y2):
     mid_x = (x2 + x1) / 2
@@ -201,12 +202,13 @@ def startGame(gameinfo, myship, enemyships, spacestations, music):
     #myship.weapons.append(Weapon("disruptor-c1"))
     #myship.weapons.append(Weapon("particlebeam-c1"))
     for i in range(4): myship.shields.append(Shield("shield-c2"))
-
-    myship.respawn(spacestations[7])
+    myship.computer = Computer(1)
+    gameinfo.selectedstation = 7
+    myship.respawn(spacestations[gameinfo.selectedstation])
 
     # spawn enemies
 
-    enemyships = enemies.spawnEnemyShips(enemyships, spacestations)
+    enemyships = functions.spawnEnemyShips(enemyships, spacestations, gameinfo)
     functions.playMusic(music)
     gameinfo.screen = "game"
     # should be -> actually is
@@ -215,3 +217,44 @@ def startGame(gameinfo, myship, enemyships, spacestations, music):
     # 2 -> 3
     # 3 -> 0
     #myship.shields[3].charge = 0
+
+
+def spawnEnemyShips(enemyships, spacestations, gameinfo):
+    j = 0
+    k = -1
+    enemyshipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
+    enemyships_new = []
+    retries = 0
+    for enemyship in enemyships:
+        enemyships.pop()
+    for spacestation in spacestations:
+        if spacestation.index != gameinfo.selectedstation: continue
+        for i in range(350):
+            k+=1
+            enemyships.append(EnemyShip())
+            #enemyships[k].weapons.append(Weapon(None))
+            for weapon in enemyships[k].weapons:
+                enemyships[k].weapons.pop()
+            level1weapons = ["bullet-c1","torpedo-c1","laser-c1"]
+            weapon1index = random.randint(0,len(level1weapons) - 1)
+            weapon2index = random.randint(0,len(level1weapons) - 1)
+            enemyships[k].weapons.append(Weapon(level1weapons[weapon1index]))
+            enemyships[k].weapons.append(Weapon(level1weapons[weapon2index]))
+            #enemyships[k].weapons.append(Weapon("bullet-c1"))
+            #enemyships[k].weapons.append(Weapon("particlebeam-c1"))
+            enemyships[k].index = k
+            enemyships[k].state = "patrol"
+            enemyships[k].shipIMG = enemyshipIMG
+            for i in range(4): enemyships[k].shields.append(Shield("shield-c1"))
+            while True: # choose random locations until one is outside a space station
+                enemyships[k].x = random.randint(spacestation.x - 15000, spacestation.x + 15000)
+                enemyships[k].y = random.randint(spacestation.y - 15000, spacestation.y + 15000)
+                dist = functions.distance(spacestation, enemyships[k])
+                if dist > spacestation.width / 2 + 50:
+                   break
+                retries += 1
+            enemyships_new.append(enemyships[k])
+
+            enemyships[k].startPatrol()
+        j += 1
+    return enemyships_new # return new list instead of modifying original

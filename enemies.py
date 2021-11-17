@@ -197,38 +197,3 @@ class EnemyShip():
                     animation.angle -= 90
                 animations.append(animation)
                 break
-
-def spawnEnemyShips(enemyships, spacestations):
-    j = 0
-    k = -1
-    enemyshipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
-    enemyships_new = []
-    retries = 0
-    for spacestation in spacestations:
-        for i in range(250):
-            k+=1
-            enemyships.append(EnemyShip())
-            enemyships[k].weapons.append(Weapon(None))
-            level1weapons = ["bullet-c1","torpedo-c1","laser-c1","fluxray-c1","particlebeam-c1","disruptor-c1"]
-            weapon1index = random.randint(0,len(level1weapons) - 1)
-            weapon2index = random.randint(0,len(level1weapons) - 1)
-            enemyships[k].weapons.append(Weapon(level1weapons[weapon1index]))
-            enemyships[k].weapons.append(Weapon(level1weapons[weapon2index]))
-            #enemyships[k].weapons.append(Weapon("bullet-c1"))
-            #enemyships[k].weapons.append(Weapon("particlebeam-c1"))
-            enemyships[k].index = k
-            enemyships[k].state = "patrol"
-            enemyships[k].shipIMG = enemyshipIMG
-            for i in range(4): enemyships[k].shields.append(Shield("shield-c1"))
-            while True: # choose random locations until one is outside a space station
-                enemyships[k].x = random.randint(spacestation.x - 15000, spacestation.x + 15000)
-                enemyships[k].y = random.randint(spacestation.y - 15000, spacestation.y + 15000)
-                dist = functions.distance(spacestation, enemyships[k])
-                if dist > spacestation.width / 2 + 50:
-                   break
-                retries += 1
-            enemyships_new.append(enemyships[k])
-
-            enemyships[k].startPatrol()
-        j += 1
-    return enemyships_new # return new list instead of modifying original

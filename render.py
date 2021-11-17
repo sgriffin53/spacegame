@@ -299,8 +299,8 @@ def renderUpgradeMenu(screen, images, gameinfo, myship):
     baseshipText = menulabelfont.render("Base Ship", False, (255, 255, 255))
     screen.blit(baseshipText, (100 * factorx, 120 * factory))
     screen.blit(myship.image, (130 * factorx, 160 * factory))
-    warpenginesText = menulabelfont.render("Warp Engines: Class 3", False, (255, 255, 255))
-    screen.blit(warpenginesText, (381 * factorx, 120 * factory))
+    warpenginesText = menulabelfont.render("Computer: Class " + str(myship.computer.classnum), False, (255, 255, 255))
+    screen.blit(warpenginesText, (420 * factorx, 120 * factory))
     combatenginesText = menulabelfont.render("Combat Engines: Class 1", False, (255, 255, 255))
     screen.blit(combatenginesText, (350 * factorx, 160 * factory))
     shield = myship.shields[0]
@@ -985,7 +985,7 @@ def renderWeaponsUpgradeMenu(screen, gameinfo, images, myship):
     if truecost < 0: ugdg = "Downgrade"
     gameinfo.buttons[27].visible = True
     if truecost == 0 and selectedweapon.fullname == myship.weapons[gameinfo.selweaponslot].fullname:
-        message = "You already have this weapon."
+        message = "You currently have this weapon."
         gameinfo.buttons[27].visible = False
     elif truecost > gameinfo.credits:
         message = "You cannot afford this."
@@ -993,12 +993,57 @@ def renderWeaponsUpgradeMenu(screen, gameinfo, images, myship):
     else:
         message = ugdg + " to  " + selectedweapon.fullname + "?"
     messageText = normalfont.render(message, False, (255, 255, 255))
-    screen.blit(messageText, (420 * factorx, 460 * factory))
-#    descText = normalfont.render("Description: " + str(selectedweapon.description),
-  #                                   False, (255, 255, 255))
- #   screen.blit(descText, (342 * factorx, 430 * factory))
+    screen.blit(messageText, (420 * factorx, 520 * factory))
+    descText = normalfont.render("Description: " + str(selectedweapon.description),
+                                     False, (255, 255, 255))
+    screen.blit(descText, (342 * factorx, 470 * factory))
 
     pass
+
+def renderComputerUpgradeMenu(screen, gameinfo, images, myship):
+
+    screen.fill((0, 0, 0))
+    if gameinfo.shieldsel == None:
+        gameinfo.shieldsel = myship.shields[0].classnum
+    factorx = gameinfo.width / gameinfo.nativewidth
+    factory = gameinfo.height / gameinfo.nativeheight
+    bg = images[1]
+    bg = pygame.transform.scale(bg, (gameinfo.width, gameinfo.height))
+    screen.blit(bg, (0, 0))
+    titlefont = gameinfo.resolution.headerfont
+    normalfont = gameinfo.resolution.normalfont
+    currentvalue = myship.computer.cost
+    truecost = gameinfo.allcomputers[gameinfo.computersel - 1].cost - currentvalue
+    titleText = titlefont.render("Upgrade Computer", False,
+                                 (255, 255, 255))
+    screen.blit(titleText, (450 * factorx, 30 * factory))
+    currentText = normalfont.render("Current Computer: Class " + str(myship.computer.classnum), False, (255, 255, 255))
+    screen.blit(currentText, (481 * factorx, 120 * factory))
+    upgradeText = normalfont.render("Upgrade to:", False, (255, 255, 255))
+    screen.blit(upgradeText, (411 * factorx, 180 * factory))
+    selectedText = normalfont.render("Class " + str(gameinfo.computersel), False, (255, 255, 255))
+    screen.blit(selectedText, (605 * factorx, 180 * factory))
+    hitrateText = normalfont.render("Hit rate: " + str(gameinfo.allcomputers[gameinfo.computersel - 1].hitrate) + "%", False, (255, 255, 255))
+    screen.blit(hitrateText, (555 * factorx, 230 * factory))
+    costText = normalfont.render("Cost: " + str(truecost), False, (255, 255, 255))
+    screen.blit(costText, (588 * factorx, 260 * factory))
+    availableText = normalfont.render("Available balance: " + str(gameinfo.credits), False, (255, 255, 255))
+    screen.blit(availableText, (442 * factorx, 290 * factory))
+    message = ""
+    ugdg = "Upgrade"
+    if truecost < 0: ugdg = "Downgrade"
+    gameinfo.buttons[26].visible = True
+    if truecost == 0:
+        message = "You currently have this computer."
+        gameinfo.buttons[26].visible = False
+    elif truecost > gameinfo.credits:
+        message = "You cannot afford this."
+        gameinfo.buttons[26].visible = False
+    else:
+        message = ugdg + " to a class " + str(gameinfo.computersel) + " computer?"
+    messageText = normalfont.render(message, False, (255, 255, 255))
+    screen.blit(messageText, (420 * factorx, 350 * factory))
+
 
 def renderFrame(screen, stars, myship, enemyships, spacestations, images, shipIMG, enemyshipIMG, spacestationIMG, gameinfo, animations):
     if gameinfo.screen == "upgrademenu":
@@ -1015,7 +1060,8 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, images, shipIM
         renderShieldsUpgradeMenu(screen, gameinfo, images, myship)
     if gameinfo.screen == "weaponsupgrademenu":
         renderWeaponsUpgradeMenu(screen, gameinfo, images, myship)
-
+    if gameinfo.screen == "computerupgrademenu":
+        renderComputerUpgradeMenu(screen, gameinfo, images, myship)
     if gameinfo.screen == "game":
         renderGame(screen, stars, myship, gameinfo, spacestations, enemyships, shipIMG, animations, images)
     for button in gameinfo.buttons:

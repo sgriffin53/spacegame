@@ -40,6 +40,7 @@ class MyShip():
         self.turretrot = 0
         self.turretrotaccel = 0
         self.turrentpos = (0, 0)
+        self.computer = None
     def respawn(self, spacestation):
         dist = spacestation.width / 2 + 75
         angle = random.randint(0, 360)
@@ -122,12 +123,18 @@ class MyShip():
 
                 endpos[0] = self.x + math.cos(turret_ang_rads) * weapon.range
                 endpos[1] = self.y - math.sin(turret_ang_rads) * weapon.range
-                animation.endpos = endpos
                 animation.firer = "myship"
                 animation.damage = weapon.damage
                 animation.classnum = weapon.classnum
                 animation.angle = self.turretrot + 90
                 animation.angle = functions.clampAngle(animation.angle)
+                if random.randint(1,100) <= self.computer.hitrate and self.targeted != None: # 25% chance of auto-hit
+                    animation.angle = functions.angleBetween(self, enemyships[self.targeted]) - 90
+                    animation.angle = functions.clampAngle(animation.angle)
+                    animation_angle_rads = (animation.angle - 90) * math.pi / 180
+                    endpos[0] = self.x + math.cos(animation_angle_rads) * weapon.range
+                    endpos[1] = self.y - math.sin(animation_angle_rads) * weapon.range
+                animation.endpos = endpos
                 animation.x = self.x
                 animation.y = self.y
                 animation.velocity = weapon.velocity + self.vel
