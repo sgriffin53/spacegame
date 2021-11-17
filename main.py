@@ -144,6 +144,16 @@ for i in range(10):
     shieldstring = "shield-c" + str(i+1)
     gameinfo.allshields.append(Shield(shieldstring))
 
+# create list of weapons
+
+weaponnames = ["Laser", "Bullet", "Torpedo", "Flux Ray", "Disruptor", "Radial Burst", "Particle Beam"]
+weaponshortnames = ["laser", "bullet", "torpedo", "fluxray", "disruptor", "radialburst", "particlebeam"]
+maxclasses = {"laser": 2, "bullet": 1, "torpedo": 2, "fluxray": 3, "disruptor": 1, "particlebeam": 1, "radialburst": 1}
+for weapon in weaponshortnames:
+    for i in range(maxclasses[weapon]):
+        id = weapon + "-c" + str(i+1)
+        gameinfo.allweapons.append(Weapon(id))
+
 # add buttons
 
 defaultfont = pygame.font.SysFont('Calibri', 34)
@@ -177,10 +187,14 @@ gameinfo.buttons.append(Button(1000, 640, 250, 50, 30, 8, "Back to Menu", (255, 
 gameinfo.buttons.append(Button(660, 115, 150, 35, 35, 8, "Upgrade", (255, 255, 255), "upgrademenu", "upgradewarpenginesclick", smallfont))
 gameinfo.buttons.append(Button(660, 155, 150, 35, 35, 8, "Upgrade", (255, 255, 255), "upgrademenu", "upgradecombatenginesclick", smallfont))
 gameinfo.buttons.append(Button(660, 195, 150, 35, 35, 8, "Upgrade", (255, 255, 255), "upgrademenu", "upgradeshieldsclick", smallfont))
+gameinfo.buttons.append(Button(835, 235, 150, 35, 35, 8, "Upgrade", (255, 255, 255), "upgrademenu", "upgradeweapons1stclick", smallfont))
+gameinfo.buttons.append(Button(835, 275, 150, 35, 35, 8, "Upgrade", (255, 255, 255), "upgrademenu", "upgradeweapons2ndclick", smallfont))
+gameinfo.buttons.append(Button(835, 315, 150, 35, 35, 8, "Upgrade", (255, 255, 255), "upgrademenu", "upgradeweapons3rdclick", smallfont))
+gameinfo.buttons.append(Button(835, 355, 150, 35, 35, 8, "Upgrade", (255, 255, 255), "upgrademenu", "upgradeweapons4thclick", smallfont))
 
 # shields upgrade menu buttons
 
-gameinfo.buttons.append(Button(1000, 640, 250, 50, 30, 8, "Back to Menu", (255, 255, 255), "shieldsupgrademenu", "shieldsupgradebackclick", defaultfont))
+gameinfo.buttons.append(Button(1000, 640, 250, 50, 30, 8, "Back to Menu", (255, 255, 255), "shieldsupgrademenu", "shieldsupgradebackclick", smallfont))
 
 leftbutton = Button(560, 180, 210, 210, 80, 8, "", (255, 255, 255), "shieldsupgrademenu", "shieldselectionleft",
                     defaultfont)
@@ -198,9 +212,51 @@ rightbutton.width = 210 / scalefactor
 rightbutton.height = 210 / scalefactor
 gameinfo.buttons.append(rightbutton)
 
+leftbutton_weapons = Button(560, 220, 210, 210, 80, 8, "", (255, 255, 255), "weaponsupgrademenu", "weaponselectionleft",
+                    defaultfont)
+leftbutton_weapons.image = images[4]
+scalefactor = 6
+leftbutton_weapons.width = 210 / scalefactor
+leftbutton_weapons.height = 210 / scalefactor
+gameinfo.buttons.append(leftbutton_weapons)
+
+rightbutton_weapons = Button(800, 220, 210, 210, 80, 8, "", (255, 255, 255), "weaponsupgrademenu", "weaponselectionright",
+                    defaultfont)
+rightbutton_weapons.image = images[6]
+scalefactor = 6
+rightbutton_weapons.width = 210 / scalefactor
+rightbutton_weapons.height = 210 / scalefactor
+gameinfo.buttons.append(rightbutton_weapons)
+
+leftbutton_weapons2 = Button(560, 260, 210, 210, 80, 8, "", (255, 255, 255), "weaponsupgrademenu", "weaponclassselectionleft",
+                    defaultfont)
+leftbutton_weapons2.image = images[4]
+scalefactor = 6
+leftbutton_weapons2.width = 210 / scalefactor
+leftbutton_weapons2.height = 210 / scalefactor
+gameinfo.buttons.append(leftbutton_weapons2)
+
+rightbutton_weapons2 = Button(800, 260, 210, 210, 80, 8, "", (255, 255, 255), "weaponsupgrademenu", "weaponclassselectionright",
+                    defaultfont)
+rightbutton_weapons2.image = images[6]
+scalefactor = 6
+rightbutton_weapons2.width = 210 / scalefactor
+rightbutton_weapons2.height = 210 / scalefactor
+gameinfo.buttons.append(rightbutton_weapons2)
+
 gameinfo.buttons.append(Button(1000, 640, 250, 50, 30, 8, "Back to Menu", (255, 255, 255), "shieldsupgrademenu", "shieldsupgradebackclick", defaultfont))
 
+# shield upgrade button
+
 gameinfo.buttons.append(Button(500, 410, 200, 50, 39, 8, "Upgrade", (255, 255, 255), "shieldsupgrademenu", "shieldsupgradeclick", defaultfont))
+
+# weapon upgrade button
+
+gameinfo.buttons.append(Button(500, 510, 200, 50, 39, 8, "Upgrade", (255, 255, 255), "weaponsupgrademenu", "weaponsupgradeclick", defaultfont))
+
+# back to menu button on weapons upgrade menu
+
+gameinfo.buttons.append(Button(1000, 640, 250, 50, 30, 8, "Back to Menu", (255, 255, 255), "weaponsupgrademenu", "weaponsupgradebackclick", defaultfont))
 
 # Add messages
 
@@ -210,6 +266,9 @@ gameinfo.messages.append(Message(50, 290, "No Repair Needed", "stationmenu", pyg
 
 gameinfo.messages.append(Message(500, 480, "Shields upgraded", "shieldsupgrademenu", gameinfo.resolution.normalfont))
 
+# weapon upgrade screen message
+
+gameinfo.messages.append(Message(500, 590, "Weapon upgraded", "weaponsupgrademenu", gameinfo.resolution.normalfont))
 #functions.setResolution(width, height, gameinfo, screen, stars, images, spacestationIMG, shipIMG, enemyshipIMG)
 
 # main game loop

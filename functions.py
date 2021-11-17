@@ -174,7 +174,7 @@ def setResolution(width, height, gameinfo, screen, stars, images, spacestationIM
         stars[i]['y'] = random.random() * height
     for button in gameinfo.buttons:
         button.font = gameinfo.resolution.buttonfont
-        smallbuttons = ["upgradecombatenginesclick", "upgradeshieldsclick", "upgradewarpenginesclick"]
+        smallbuttons = ["upgradecombatenginesclick", "upgradeshieldsclick", "upgradewarpenginesclick", "upgradeweapons1stclick", "upgradeweapons2ndclick","upgradeweapons3rdclick","upgradeweapons4thclick"]
         if button.onclick in smallbuttons:
             button.font = gameinfo.resolution.smallbuttonfont
 
@@ -193,11 +193,13 @@ def startGame(gameinfo, myship, enemyships, spacestations, music):
     # create my ship object
     del myship.weapons[:]
 
-    myship.weapons.append(Weapon("disruptor-c1"))
-    #myship.weapons.append(Weapon(None))
-    myship.weapons.append(Weapon("torpedo-c1"))
-    myship.weapons.append(Weapon("disruptor-c1"))
-    myship.weapons.append(Weapon("particlebeam-c1"))
+    myship.weapons.append(Weapon("bullet-c1"))
+    myship.weapons.append(Weapon("laser-c1"))
+    myship.weapons.append(Weapon(None))
+    myship.weapons.append(Weapon(None))
+    #myship.weapons.append(Weapon("torpedo-c1"))
+    #myship.weapons.append(Weapon("disruptor-c1"))
+    #myship.weapons.append(Weapon("particlebeam-c1"))
     for i in range(4): myship.shields.append(Shield("shield-c2"))
 
     myship.respawn(spacestations[7])

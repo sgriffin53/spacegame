@@ -32,7 +32,7 @@ def handleMouseButtonUp(gameinfo, myship, mousepos, enemyships, spacestations, m
                     return
             gameinfo.selectedstation = None
     for button in gameinfo.buttons:
-        if button.screen == gameinfo.screen:
+        if button.screen == gameinfo.screen and button.visible:
             factorx = gameinfo.width / gameinfo.nativewidth
             factory = gameinfo.height / gameinfo.nativeheight
             buttonRect = pygame.Rect((button.x * factorx, button.y * factory, button.width * factorx, button.height * factory))
@@ -50,12 +50,12 @@ def handleMouseOver(gameinfo, images):
             button.textcol = (0, 255, 0)
         else:
             button.textcol = (255, 255, 255)
-        if button.onclick == "shieldselectionleft":
+        if button.onclick == "shieldselectionleft" or button.onclick == "weaponselectionleft" or button.onclick == "weaponclassselectionleft":
             if buttonRect.collidepoint(mousepos):
                 button.image = images[5]
             else:
                 button.image = images[4]
-        if button.onclick == "shieldselectionright":
+        if button.onclick == "shieldselectionright" or button.onclick == "weaponselectionright" or button.onclick == "weaponclassselectionright":
             if buttonRect.collidepoint(mousepos):
                 button.image = images[7]
             else:

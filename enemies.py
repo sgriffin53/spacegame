@@ -209,6 +209,11 @@ def spawnEnemyShips(enemyships, spacestations):
             k+=1
             enemyships.append(EnemyShip())
             enemyships[k].weapons.append(Weapon(None))
+            level1weapons = ["bullet-c1","torpedo-c1","laser-c1","fluxray-c1","particlebeam-c1","disruptor-c1"]
+            weapon1index = random.randint(0,len(level1weapons) - 1)
+            weapon2index = random.randint(0,len(level1weapons) - 1)
+            enemyships[k].weapons.append(Weapon(level1weapons[weapon1index]))
+            enemyships[k].weapons.append(Weapon(level1weapons[weapon2index]))
             #enemyships[k].weapons.append(Weapon("bullet-c1"))
             #enemyships[k].weapons.append(Weapon("particlebeam-c1"))
             enemyships[k].index = k

@@ -111,6 +111,29 @@ class Button():
         if self.onclick == "shieldselectionright":
             if gameinfo.shieldsel <= 9:
                 gameinfo.shieldsel += 1
+        if self.onclick == "weaponselectionleft":
+            if gameinfo.weaponsel > 1:
+                gameinfo.weaponsel -= 1
+                gameinfo.weaponclasssel = 1
+        if self.onclick == "weaponselectionright":
+            if gameinfo.weaponsel < 7:
+                gameinfo.weaponsel += 1
+                gameinfo.weaponclasssel = 1
+        if self.onclick == "weaponclassselectionleft":
+            if gameinfo.weaponclasssel > 1:
+                gameinfo.weaponclasssel -= 1
+        if self.onclick == "weaponclassselectionright":
+            weaponnames = ["Laser", "Bullet", "Torpedo", "Flux Ray", "Disruptor", "Radial Burst", "Particle Beam"]
+            maxclasses = {"Laser": 2, "Bullet": 1, "Torpedo": 2, "Flux Ray": 3, "Disruptor": 1, "Particle Beam": 1,
+                          "Radial Burst": 1}
+            selectedweapon = None
+            for weapon in gameinfo.allweapons:
+                if weapon.name == weaponnames[gameinfo.weaponsel - 1]:
+                    selectedweapon = weapon
+            if selectedweapon == None: highestclass = 1
+            else: highestclass = maxclasses[selectedweapon.name]
+            if gameinfo.weaponclasssel < highestclass:
+                gameinfo.weaponclasssel += 1
         if self.onclick == "shieldsupgradeclick":
             gameinfo.messages[1].visible = True
             gameinfo.messages[1].message = "Shields upgraded."
@@ -123,6 +146,58 @@ class Button():
             for i in range(4):
                 myship.shields[i] = Shield(shieldstring)
             gameinfo.credits -= truecost
+        if "upgradeweapons" in self.onclick and "click" in self.onclick:
+            if self.onclick == "upgradeweapons1stclick": gameinfo.selweaponslot = 0
+            if self.onclick == "upgradeweapons2ndclick": gameinfo.selweaponslot = 1
+            if self.onclick == "upgradeweapons3rdclick": gameinfo.selweaponslot = 2
+            if self.onclick == "upgradeweapons4thclick": gameinfo.selweaponslot = 3
+            name = myship.weapons[gameinfo.selweaponslot].name
+            weaponnames = ["Laser", "Bullet", "Torpedo", "Flux Ray", "Disruptor", "Radial Burst", "Particle Beam"]
+            for i in range(len(weaponnames)):
+                if weaponnames[i] == name:
+                    gameinfo.weaponsel = i + 1
+            gameinfo.weaponclasssel = myship.weapons[gameinfo.selweaponslot].classnum
+            gameinfo.screen = "weaponsupgrademenu"
+        '''
+        if self.onclick == "upgradeweapons1stclick":
+            gameinfo.selweaponslot = 0
+            name = myship.weapons[gameinfo.selweaponslot].name
+            weaponnames = ["Laser", "Bullet", "Torpedo", "Flux Ray", "Disruptor", "Radial Burst", "Particle Beam"]
+            for i in range(len(weaponnames)):
+                if weaponnames[i] == name:
+                    gameinfo.weaponsel = i + 1
+            gameinfo.weaponclasssel = myship.weapons[gameinfo.selweaponslot].classnum
+            gameinfo.screen = "weaponsupgrademenu"
+        if self.onclick == "upgradeweapons2ndclick":
+            gameinfo.selweaponslot = 1
+            name = myship.weapons[gameinfo.selweaponslot].name
+            weaponnames = ["Laser", "Bullet", "Torpedo", "Flux Ray", "Disruptor", "Radial Burst", "Particle Beam"]
+            for i in range(len(weaponnames)):
+                if weaponnames[i] == name:
+                    gameinfo.weaponsel = i + 1
+            gameinfo.weaponclasssel = myship.weapons[gameinfo.selweaponslot].classnum
+            gameinfo.screen = "weaponsupgrademenu"
+        '''
+        if self.onclick == "weaponsupgradeclick":
+            gameinfo.messages[2].visible = True
+            gameinfo.messages[2].message = "Weapon " + str(gameinfo.selweaponslot + 1) + " upgraded."
+            weaponnames = ["Laser", "Bullet", "Torpedo", "Flux Ray", "Disruptor", "Radial Burst", "Particle Beam"]
+            selectedweapon = None
+            for weapon in gameinfo.allweapons:
+                if weapon.name == weaponnames[gameinfo.weaponsel - 1] and weapon.classnum == gameinfo.weaponclasssel:
+                    selectedweapon = weapon
+            currentvalue = myship.weapons[gameinfo.selweaponslot].cost
+            truecost = selectedweapon.cost - currentvalue
+            if truecost < 0:
+                gameinfo.messages[2].message = "Weapon " + str(gameinfo.selweaponslot + 1) + " downgraded."
+            myship.weapons[gameinfo.selweaponslot] = selectedweapon
+            gameinfo.credits -= truecost
+
+        if self.onclick == "weaponsupgradebackclick":
+            gameinfo.messages[2].visible = False
+            gameinfo.screen = "upgrademenu"
+
+
 
 class Message():
     def __init__(self, x, y, message, screen, font):
@@ -214,7 +289,7 @@ class Shield():
         elif type == "shield-c6":
             self.maxcharge = 800
             self.charge = 800
-            self.classnum = 2
+            self.classnum = 6
             self.fullname = "Shield (Class 6)"
             self.cost = 30000
         elif type == "shield-c7":
@@ -256,114 +331,162 @@ class Weapon():
         self.lastfired = 0
         self.range = 0
         self.velocity = 1500
+        self.name = ""
+        self.cost = 0
+        if fulltype == "None":
+            self.damage = 0
+            self.type = "none"
+            self.classnum = 0
+            self.name = "None"
+            #self.description = "A concentrated beam of subatomic particles."
+            self.fullname = "None"
+            self.duration = 0.5
+            self.chargetime = 1.5
+            self.lastfired = 0
+            self.range = 1600
+            self.velocity = 500
+            self.cost = 30000
         if fulltype == "particlebeam-c1":
             self.damage = 40
             self.type = "particlebeam"
             self.classnum = 1
+            self.name = "Particle Beam"
+            self.description = "A concentrated beam of subatomic particles."
             self.fullname = "Particle Beam (Class 1)"
             self.duration = 0.5
             self.chargetime = 1.5
             self.lastfired = 0
             self.range = 1600
             self.velocity = 500
+            self.cost = 30000
         if fulltype == "radialburst-c1":
             self.damage = 20
             self.type = "radialburst"
             self.classnum = 1
+            self.name = "Radial Burst"
             self.fullname = "Radial Burst (Class 1)"
+            self.description = "A burst of energy that radiates outwards. Damages all four shields."
             self.duration = 0.5
             self.chargetime = 1.5
             self.lastfired = 0
             self.range = 600
             self.velocity = 500
+            self.cost = 100000
         if fulltype == "disruptor-c1":
             self.damage = 35
             self.type = "disruptor"
             self.classnum = 1
+            self.name = "Disruptor"
             self.fullname = "Disruptor (Class 1)"
+            self.description = "A powerful energy beam weapon."
             self.duration = 0.5
             self.chargetime = 1.5
             self.lastfired = 0
             self.range = 600
             self.velocity = 1500
+            self.cost = 25000
         if fulltype == "fluxray-c1":
             self.damage = 20
             self.type = "fluxray"
             self.classnum = 1
+            self.name = "Flux Ray"
+            self.description = "A powerful beam of fluxed energy."
             self.fullname = "Flux Ray (Class 1)"
             self.duration = 0.5
             self.chargetime = 1.5
             self.lastfired = 0
             self.range = 600
             self.velocity = 1500
+            self.cost = 15000
         if fulltype == "fluxray-c2":
             self.damage = 60
             self.type = "fluxray"
             self.classnum = 2
+            self.name = "Flux Ray"
+            self.description = "A powerful beam of fluxed energy."
             self.fullname = "Flux Ray (Class 2)"
             self.duration = 0.5
             self.chargetime = 1.5
             self.lastfired = 0
             self.range = 600
             self.velocity = 1500
+            self.cost = 35000
         if fulltype == "fluxray-c3":
-            self.damage = 6000
+            self.damage = 90
             self.type = "fluxray"
-            self.classnum = 2
+            self.classnum = 3
+            self.name = "Flux Ray"
+            self.description = "A powerful beam of fluxed energy."
             self.fullname = "Flux Ray (Class 3)"
             self.duration = 0.5
             self.chargetime = 1.5
             self.lastfired = 0
             self.range = 600
             self.velocity = 1500
+            self.cost = 60000
         if fulltype == "torpedo-c1":
             self.damage = 20
             self.type = "torpedo"
             self.classnum = 1
+            self.name = "Torpedo"
+            self.description = "A projectile armed with a nuclear warhead."
             self.fullname = "Torpedo (Class 1)"
             self.duration = 5
             self.chargetime = 1
             self.lastfired = 0
             self.range = 600
             self.velocity = 800
+            self.cost = 10000
         elif fulltype == "torpedo-c2":
             self.damage = 35
             self.type = "torpedo"
             self.classnum = 2
+            self.name = "Torpedo"
+            self.description = "A projectile armed with a nuclear warhead."
             self.fullname = "Torpedo (Class 2)"
             self.duration = 5
             self.chargetime = 3
             self.lastfired = 0
             self.range = 600
             self.velocity = 500
+            self.cost = 20000
         elif fulltype == "bullet-c1":
             self.damage = 1
             self.type = "bullet"
             self.classnum = 1
+            self.name = "Bullet"
+            self.description = "A small projectile armed with a plasma warhead."
             self.fullname = "Bullet (Class 1)"
             self.duration = 2
             self.chargetime = 0.05
             self.lastfired = 0
             self.range = 600
             self.velocity = 1500
+            self.cost = 5000
         elif fulltype == "laser-c1":
             self.damage = 10
             self.type = "laser"
             self.classnum = 1
+            self.name = "Laser"
+            self.description = "A laser beam energy weapon."
             self.fullname = "Laser (Class 1)"
             self.duration = 0.2
             self.chargetime = 1
             self.lastfired = 0
             self.range = 600
+            self.cost = 5000
         elif fulltype == "laser-c2":
             self.damage = 20
             self.type = "laser"
             self.classnum = 2
+            self.name = "Laser"
+            self.description = "A laser beam energy weapon."
             self.fullname = "Laser (Class 2)"
             self.duration = 0.3
             self.chargetime = 1.2
             self.lastfired = 0
             self.range = 600
+            self.cost = 15000
 
 class ShipWeapon():
     def __init__(self):
@@ -377,6 +500,7 @@ class ShipWeapon():
 
 class GameInfo():
     def __init__(self):
+        self.selweaponslot = 0
         self.timefactor = 1
         self.redalert = False
         self.alive = True
@@ -401,7 +525,10 @@ class GameInfo():
         self.resolution = 0
         self.resindex = 0
         self.shieldsel = 1
+        self.weaponsel = 1
         self.allshields = []
+        self.allweapons = []
+        self.weaponclasssel = 0
 
 class Point():
     def __init__(self):

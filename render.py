@@ -663,8 +663,8 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships, images):
                             r = myship.width / 2 + 30
                             if dist < r: breakFree = True
                     else:
-                        dist = functions.distance(animation.target, mypoint)
-                        r = animation.target.width / 2 + 30
+                        dist = functions.distance(myship, mypoint)
+                        r = myship.width / 2 + 30
                         if dist < r: breakFree = True
                     if breakFree: break
 
@@ -839,6 +839,7 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships, images):
             if time.time() >= animation.endtime:
                 if animation.targettype != "myship":
                     enemyships.pop(animation.hitship.index)
+                    functions.reIndexEnemies(enemyships)
                     loot = random.randint(500, 1500)
                     gameinfo.credits += loot
                     gameinfo.gamemessage = "Looted " + str(loot) + " credits"
@@ -887,9 +888,6 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships, images):
 
                     screen.blit(newIMG, es_centre)
 
-def set_difficulty(difficulty):
-    pass
-
 def renderShieldsUpgradeMenu(screen, gameinfo, images, myship):
     screen.fill((0, 0, 0))
     if gameinfo.shieldsel == None:
@@ -921,17 +919,86 @@ def renderShieldsUpgradeMenu(screen, gameinfo, images, myship):
     message = ""
     ugdg = "Upgrade"
     if truecost < 0: ugdg = "Downgrade"
-    gameinfo.buttons[18].visible = True
+    gameinfo.buttons[26].visible = True
     if truecost == 0:
         message = "You already have these shields."
-        gameinfo.buttons[18].visible = False
+        gameinfo.buttons[26].visible = False
     elif truecost > gameinfo.credits:
         message = "You cannot afford this."
-        gameinfo.buttons[18].visible = False
+        gameinfo.buttons[26].visible = False
     else:
         message = ugdg + " to class " + str(gameinfo.shieldsel) + " shields?"
     messageText = normalfont.render(message, False, (255, 255, 255))
     screen.blit(messageText, (420 * factorx, 350 * factory))
+
+def renderWeaponsUpgradeMenu(screen, gameinfo, images, myship):
+    screen.fill((0, 0, 0))
+    if gameinfo.shieldsel == None:
+        gameinfo.shieldsel = myship.shields[0].classnum
+    factorx = gameinfo.width / gameinfo.nativewidth
+    factory = gameinfo.height / gameinfo.nativeheight
+    bg = images[1]
+    bg = pygame.transform.scale(bg, (gameinfo.width, gameinfo.height))
+    screen.blit(bg, (0, 0))
+    titlefont = gameinfo.resolution.headerfont
+    normalfont = gameinfo.resolution.normalfont
+    currentvalue = myship.weapons[gameinfo.selweaponslot].cost
+    titleText = titlefont.render("Upgrade Weapon", False,
+                                 (255, 255, 255))
+    screen.blit(titleText, (450 * factorx, 30 * factory))
+
+    currentText = normalfont.render("Current Weapon (slot " + str(gameinfo.selweaponslot + 1) + "): " + myship.weapons[gameinfo.selweaponslot].fullname, False, (255, 255, 255))
+    screen.blit(currentText, (401 * factorx, 120 * factory))
+    upgradeText = normalfont.render("Upgrade to:", False, (255, 255, 255))
+    screen.blit(upgradeText, (411 * factorx, 180 * factory))
+    weaponText = normalfont.render("Weapon:", False, (255, 255, 255))
+    screen.blit(weaponText, (446 * factorx, 220 * factory))
+    weaponnames = ["Laser", "Bullet", "Torpedo", "Flux Ray", "Disruptor", "Radial Burst", "Particle Beam"]
+    selectedweapon = None
+    for weapon in gameinfo.allweapons:
+        if weapon.name == weaponnames[gameinfo.weaponsel - 1] and weapon.classnum == gameinfo.weaponclasssel:
+            selectedweapon = weapon
+    truecost = selectedweapon.cost - currentvalue
+    selectedWeaponText = normalfont.render(str(weaponnames[gameinfo.weaponsel - 1]), False, (255, 255, 255))
+    screen.blit(selectedWeaponText, (605 * factorx, 220 * factory))
+    classText = normalfont.render("Class:", False, (255, 255, 255))
+    screen.blit(classText, (484 * factorx, 260 * factory))
+    selectedClassText = normalfont.render("Class " + str(gameinfo.weaponclasssel), False, (255, 255, 255))
+    screen.blit(selectedClassText, (605 * factorx, 260 * factory))
+    maxchargeText = normalfont.render("Damage: " + str(selectedweapon.damage),
+                                      False, (255, 255, 255))
+    screen.blit(maxchargeText, (535 * factorx, 300 * factory))
+    rechargeText = normalfont.render("Recharge time: " + str(selectedweapon.chargetime) + " seconds",
+                                     False, (255, 255, 255))
+    screen.blit(rechargeText, (465 * factorx, 330 * factory))
+    dps = float(selectedweapon.damage) / float(selectedweapon.chargetime)
+    dps = round(dps,2)
+    rechargeText = normalfont.render("Damage per second (@100% acc.): " + str(dps),
+                                     False, (255, 255, 255))
+    screen.blit(rechargeText, (242 * factorx, 360 * factory))
+    costText = normalfont.render("Cost: " + str(truecost), False, (255, 255, 255))
+    screen.blit(costText, (579 * factorx, 390 * factory))
+    availableText = normalfont.render("Available balance: " + str(gameinfo.credits), False, (255, 255, 255))
+    screen.blit(availableText, (432 * factorx, 420 * factory))
+    message = ""
+    ugdg = "Upgrade"
+    if truecost < 0: ugdg = "Downgrade"
+    gameinfo.buttons[27].visible = True
+    if truecost == 0 and selectedweapon.fullname == myship.weapons[gameinfo.selweaponslot].fullname:
+        message = "You already have this weapon."
+        gameinfo.buttons[27].visible = False
+    elif truecost > gameinfo.credits:
+        message = "You cannot afford this."
+        gameinfo.buttons[27].visible = False
+    else:
+        message = ugdg + " to  " + selectedweapon.fullname + "?"
+    messageText = normalfont.render(message, False, (255, 255, 255))
+    screen.blit(messageText, (420 * factorx, 460 * factory))
+#    descText = normalfont.render("Description: " + str(selectedweapon.description),
+  #                                   False, (255, 255, 255))
+ #   screen.blit(descText, (342 * factorx, 430 * factory))
+
+    pass
 
 def renderFrame(screen, stars, myship, enemyships, spacestations, images, shipIMG, enemyshipIMG, spacestationIMG, gameinfo, animations):
     if gameinfo.screen == "upgrademenu":
@@ -946,6 +1013,8 @@ def renderFrame(screen, stars, myship, enemyships, spacestations, images, shipIM
         renderMap(screen, gameinfo, myship, spacestations)
     if gameinfo.screen == "shieldsupgrademenu":
         renderShieldsUpgradeMenu(screen, gameinfo, images, myship)
+    if gameinfo.screen == "weaponsupgrademenu":
+        renderWeaponsUpgradeMenu(screen, gameinfo, images, myship)
 
     if gameinfo.screen == "game":
         renderGame(screen, stars, myship, gameinfo, spacestations, enemyships, shipIMG, animations, images)
