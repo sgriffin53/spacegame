@@ -51,9 +51,9 @@ def drawEnemyHealthBar(screen, enemyship, myship, gameinfo):
     centre = (gameinfo.width / 2, gameinfo.height / 2)
 
     drawX = centre[0] + enemyship.x - myship.x  - enemyship.width / 2 + 10
-    drawY = centre[1] - enemyship.y + myship.y  +  myship.width / 2 + 8
+    drawY = centre[1] - enemyship.y + myship.y  +  enemyship.width / 2 + 8
 
-    drawW = (myship.width - 10) * (percentage / 100)
+    drawW = (enemyship.width - 10) * (percentage / 100)
     # draw health bar
     colour = (0, 168, 0)
     if percentage <= 50: colour = (168, 0, 0)
@@ -277,8 +277,9 @@ def drawEnemyShields(screen, enemyship, myship, gameinfo):
         if redcolour < 0: redcolour = 0
         enemydrawX = centre[0] + enemyship.x - myship.x
         enemydrawY = centre[1] - enemyship.y + myship.y
+        margin = 0
         pygame.draw.arc(screen, (redcolour, greencolour, 0), (
-        enemydrawX - enemyship.width / 2 - margin, enemydrawY - myship.width / 2 - margin, enemyship.width + margin * 2,
+        enemydrawX - enemyship.width / 2 - margin, enemydrawY - enemyship.width / 2 - margin, enemyship.width + margin * 2,
         enemyship.width + margin * 2), start_ang_rads, end_ang_rads, 2)
 
 def renderUpgradeMenu(screen, images, gameinfo, myship):
@@ -508,7 +509,7 @@ def renderGame(screen, stars, myship, gameinfo, spacestations, enemyships, shipI
             (img, spacestationcentre) = rot_center(img, spacestation.rotation, spacestationX, spacestationY)
             screen.blit(img, spacestationcentre)
             spacestation.centre = spacestationcentre
-        if dist < 3000:
+        if dist < 1500:
             pygame.draw.circle(screen, (0, 0, 255), (spacestationX, spacestationY), spacestation.radius + 400, 1)
         elif dist < 5000:  # not on screen and within short range sensor range
             drawTargetLine(screen, myship, spacestation, spacestations, gameinfo)

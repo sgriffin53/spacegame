@@ -3,7 +3,7 @@ import sys
 import functions
 from classes import Point, Weapon
 
-def handleMouseButtonUp(gameinfo, myship, mousepos, enemyships, spacestations, music):
+def handleMouseButtonUp(gameinfo, myship, mousepos, enemyships, spacestations, music, images):
     if gameinfo.screen == "map":
         onmap = False
         factorx = gameinfo.width / gameinfo.nativewidth
@@ -37,7 +37,7 @@ def handleMouseButtonUp(gameinfo, myship, mousepos, enemyships, spacestations, m
             factory = gameinfo.height / gameinfo.nativeheight
             buttonRect = pygame.Rect((button.x * factorx, button.y * factory, button.width * factorx, button.height * factory))
             if buttonRect.collidepoint(mousepos):
-                button.onClick(gameinfo, myship, enemyships, spacestations, music)
+                button.onClick(gameinfo, myship, enemyships, spacestations, music, images)
 
 def handleMouseOver(gameinfo, images):
     mousepos = pygame.mouse.get_pos()
@@ -68,15 +68,10 @@ def detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animat
             running = False
             pygame.quit()
         if event.type == pygame.KEYDOWN and event.key == pygame.K_F3:
-            if not fullscreen:
-                screen = pygame.display.set_mode([width, height], pygame.FULLSCREEN)
-            else:
-                screen = pygame.display.set_mode([width, height])
-            fullscreen = not fullscreen
-            game.fullscreen = fullscreen
+            gameinfo.credits += 10000
         if event.type == pygame.MOUSEBUTTONUP:
             pos = pygame.mouse.get_pos()
-            handleMouseButtonUp(gameinfo, myship, pos, enemyships, spacestations, music)
+            handleMouseButtonUp(gameinfo, myship, pos, enemyships, spacestations, music, images)
         if event.type == pygame.KEYDOWN:
             if gameinfo.alive:
                 if gameinfo.screen == "game":

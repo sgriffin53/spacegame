@@ -184,7 +184,7 @@ def scaleToScreen(width, height, gameinfo):
     newheight = height * (gameinfo.height / gameinfo.nativeheight)
     return newwidth, newheight
 
-def startGame(gameinfo, myship, enemyships, spacestations, music):
+def startGame(gameinfo, myship, enemyships, spacestations, music, images):
     # spawn space stations
 
     spacestations = []
@@ -205,10 +205,11 @@ def startGame(gameinfo, myship, enemyships, spacestations, music):
     myship.computer = Computer(1)
     gameinfo.selectedstation = 7
     myship.respawn(spacestations[gameinfo.selectedstation])
+    gameinfo.credits = 1000
 
     # spawn enemies
 
-    enemyships = functions.spawnEnemyShips(enemyships, spacestations, gameinfo)
+    enemyships = functions.spawnEnemyShips(enemyships, spacestations, gameinfo, images)
     functions.playMusic(music)
     gameinfo.screen = "game"
     # should be -> actually is
@@ -219,33 +220,76 @@ def startGame(gameinfo, myship, enemyships, spacestations, music):
     #myship.shields[3].charge = 0
 
 
-def spawnEnemyShips(enemyships, spacestations, gameinfo):
+def spawnEnemyShips(enemyships, spacestations, gameinfo, images):
     j = 0
     k = -1
     enemyshipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
     enemyships_new = []
+    enemyimages = []
+    enemyimages.append(enemyshipIMG)
+    enemyimages.append(images[8])
+    enemyimages.append(images[9])
+    enemyimages.append(images[10])
     retries = 0
     for enemyship in enemyships:
         enemyships.pop()
     for spacestation in spacestations:
         if spacestation.index != gameinfo.selectedstation: continue
-        for i in range(350):
+        for i in range(1200):
+            enemyclass = 0
+            if i <= 50:
+                enemyclass = 0
+            elif i <= 200:
+                enemyclass = 1
+            elif i <= 600:
+                enemyclass = 2
+            else:
+                enemyclass = 3
+
             k+=1
             enemyships.append(EnemyShip())
             #enemyships[k].weapons.append(Weapon(None))
-            for weapon in enemyships[k].weapons:
+            enemyships[k].hull = (enemyclass + 1) * 100
+            enemyships[k].maxhull = (enemyclass + 1) * 100
+            shipnames = ["Frigate", "Interceptor", "Destroyer", "Marauder"]
+            enemyships[k].type = shipnames[enemyclass]
+            weaponslist = []
+            weaponslist.append(["bullet-c1","torpedo-c1","laser-c1"]) # 0
+            weaponslist.append(["bullet-c1", "torpedo-c2", "disruptor-c1"]) # 1
+            weaponslist.append(["fluxray-c1", "fluxray-c2", "disruptor-c1", "particlebeam-c1"])
+            weaponslist.append(["fluxray-c3", "torpedo-c2", "particlebeam-c1"])
+            levelweapons = weaponslist[enemyclass]
+            for weapon in enemyships[k].weapons: # remove all original weapons
                 enemyships[k].weapons.pop()
-            level1weapons = ["bullet-c1","torpedo-c1","laser-c1"]
-            weapon1index = random.randint(0,len(level1weapons) - 1)
-            weapon2index = random.randint(0,len(level1weapons) - 1)
-            enemyships[k].weapons.append(Weapon(level1weapons[weapon1index]))
-            enemyships[k].weapons.append(Weapon(level1weapons[weapon2index]))
+            for shield in enemyships[k].shields: # remove all shields
+                enemyships[k].shields.pop()
+            for i in range(enemyclass + 1):
+                randweapon_idx = random.randint(0,len(levelweapons) - 1)
+                randweapon = levelweapons[randweapon_idx]
+                enemyships[k].weapons.append(Weapon(randweapon))
+            shieldstring = "shield-c" + str((enemyclass + 1))
+            for i in range(4):
+                enemyships[k].shields.append(Shield(shieldstring))
             #enemyships[k].weapons.append(Weapon("bullet-c1"))
             #enemyships[k].weapons.append(Weapon("particlebeam-c1"))
             enemyships[k].index = k
             enemyships[k].state = "patrol"
-            enemyships[k].shipIMG = enemyshipIMG
+            enemyships[k].shipIMG = enemyimages[enemyclass]
+            dist = 1000
+            if enemyclass == 0:
+                enemyships[k].width = 65
+                dist = random.randint(900, 5000)
+            elif enemyclass == 1:
+                enemyships[k].width = 75
+                dist = random.randint(5000, 10000)
+            elif enemyclass == 2:
+                enemyships[k].width = 85
+                dist = random.randint(10000, 15000)
+            elif enemyclass == 3:
+                enemyships[k].width = 100
+                dist = random.randint(15000, 20000)
             for i in range(4): enemyships[k].shields.append(Shield("shield-c1"))
+            '''
             while True: # choose random locations until one is outside a space station
                 enemyships[k].x = random.randint(spacestation.x - 15000, spacestation.x + 15000)
                 enemyships[k].y = random.randint(spacestation.y - 15000, spacestation.y + 15000)
@@ -253,6 +297,10 @@ def spawnEnemyShips(enemyships, spacestations, gameinfo):
                 if dist > spacestation.width / 2 + 50:
                    break
                 retries += 1
+            '''
+            angle = random.randint(0, 360) * math.pi / 180
+            enemyships[k].x = spacestation.x + math.cos(angle) * dist
+            enemyships[k].y = spacestation.y + math.sin(angle) * dist
             enemyships_new.append(enemyships[k])
 
             enemyships[k].startPatrol()

@@ -14,7 +14,7 @@ class EnemyShip():
         self.x = 800
         self.y = 800
         self.visible = True
-        self.width = 50
+        self.width = 90
         self.index = 0
         self.type = "Frigate"
         self.state = None

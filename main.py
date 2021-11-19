@@ -137,6 +137,9 @@ images.append(pygame.image.load(os.path.join('images','GUI','Backward_BTN.png'))
 images.append(pygame.image.load(os.path.join('images','GUI','Backward_BTN_hover.png')))
 images.append(pygame.image.load(os.path.join('images','GUI','Forward_BTN.png')))
 images.append(pygame.image.load(os.path.join('images','GUI','Forward_BTN_hover.png')))
+images.append(pygame.image.load(os.path.join('images','enemyship_class2.png')))
+images.append(pygame.image.load(os.path.join('images','enemyship_class3.png')))
+images.append(pygame.image.load(os.path.join('images','enemyship_class4.png')))
 
 # create list of shields
 

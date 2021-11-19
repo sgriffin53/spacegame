@@ -73,14 +73,14 @@ class Button():
         buttonText = self.font.render(self.text, False,
                                      self.textcol)
         screen.blit(buttonText, (scaled_x + scaled_textx, scaled_y + scaled_texty))
-    def onClick(self, gameinfo, myship, enemyships, spacestations, music):
+    def onClick(self, gameinfo, myship, enemyships, spacestations, music, images):
         if self.onclick == "startgame":
-            functions.startGame(gameinfo, myship, enemyships, spacestations, music)
+            functions.startGame(gameinfo, myship, enemyships, spacestations, music, images)
         if self.onclick == "exit":
             sys.exit()
         if self.onclick == "warpclick":
             if gameinfo.selectedstation == None: return
-            functions.spawnEnemyShips(enemyships, spacestations, gameinfo)
+            functions.spawnEnemyShips(enemyships, spacestations, gameinfo, images)
             myship.autostate = "warp_rot"
             myship.warping = True
             myship.startWarpRot(spacestations[gameinfo.selectedstation])
