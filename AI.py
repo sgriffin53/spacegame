@@ -55,7 +55,7 @@ def enemyAITick(myship, enemyship, spacestations, animations, sounds, gameinfo):
         mypoint.y = enemyship.patrolstart[1]
         dist = functions.distance(enemyship, mypoint)
         if dist >= enemyship.patroldist:
-            enemyship.state == "patrol"
+            enemyship.state = "patrol"
     if enemyship.state == "attack_delay":
         if not myship.alive:
             enemyship.state = "patrol"
@@ -63,6 +63,7 @@ def enemyAITick(myship, enemyship, spacestations, animations, sounds, gameinfo):
         if time.time() - enemyship.attackstart >= 1.0 or enemyship.substate == "attack":
             spacestation = spacestations[0]
             enemyship.state = "attack"
+            enemyship.startMakeDistance()
             enemyship.patrolspeed = random.randint(int(0.7 * enemyship.maxspeed), int(1 * enemyship.maxspeed))
             enemyship.patrolstart = [enemyship.x, enemyship.y]
             enemyship.accel = 250
@@ -124,6 +125,22 @@ def enemyAITick(myship, enemyship, spacestations, animations, sounds, gameinfo):
             enemyship.accel = -250
         if dist >= enemyship.patroldist:
             pass
+        if time.time() - enemyship.lastveltested >= 0.4:
+            enemyship.lastveltested = time.time()
+            if enemyship.lastvel <= 40:
+                enemyship.startMakeDistance()
+                enemyship.state = "attack_makedistance"
+            enemyship.lastvel = enemyship.vel
+    if enemyship.state == "attack_makedistance":
+        # flies a short distance away before returning to attack
+        enemyship.fireNextWeapon(myship, animations, sounds, gameinfo, spacestations)
+        mypoint = Point()
+        mypoint.x = enemyship.patrolstart[0]
+        mypoint.y = enemyship.patrolstart[1]
+        dist = functions.distance(enemyship, mypoint)
+        if dist >= enemyship.patroldist:
+            enemyship.state = "attack"
+        pass
     if enemyship.state == "patrol":
         if enemyship.vel == 0 and enemyship.accel == 0:
             enemyship.startPatrol()

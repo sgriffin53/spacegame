@@ -42,6 +42,8 @@ class EnemyShip():
         self.attackstart = 0
         self.gridsector = 0
         self.shields = []
+        self.lastveltested = 0
+        self.lastvel = 0
     def startPatrol(self):
         self.totrotations = 0
         self.accel = 250
@@ -117,6 +119,27 @@ class EnemyShip():
         self.rotaccel = 120
         if angle_deg >= 180:
             self.rotaccel = -120
+    def startMakeDistance(self):
+        self.state = "attack_makedistance"
+        self.patrolspeed = random.randint(int(0.7 * self.maxspeed), int(1 * self.maxspeed))
+        self.patrolstart = [self.x, self.y]
+        self.accel = 250
+        self.rotaccel = 120
+        targetx = self.x + random.randint(-1300, 1300)
+        targety = self.y + random.randint(-1300, 1300)
+        dy = targety - self.y
+        dx = targetx - self.x
+        angle_deg = 360 - math.atan2(dy, dx) * 180 / math.pi - 90
+        if angle_deg >= 180:
+            self.rotaccel = -120
+        self.patrolangle = angle_deg
+        if self.patrolangle < 0: self.patrolangle += 360
+        if self.patrolangle > 360: self.patrolangle -= 360
+        mypoint = Point()
+        mypoint.x = targetx
+        mypoint.y = targety
+        dist = int(functions.distance(self, mypoint))
+        self.patroldist = 200
     def explode(self, animations):
         self.vel = 0
         animation = Animation()

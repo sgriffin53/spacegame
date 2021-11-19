@@ -125,7 +125,7 @@ def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinf
                             shield = enemyship.shields[j]
                             shield.charge -= animation.damage
                             if shield.charge < 0: shield.charge = 0
-                        if enemyship.state != "attack" and enemyship.state != "attack_delay":
+                        if enemyship.state != "attack" and enemyship.state != "attack_delay" and enemyship.state != "attack_makedistance":
                             enemyship.state = "attack_delay"
                         if enemyship.hull <= 50 and enemyship.state != "retreat":
                             enemyship.state = "retreat"
@@ -166,7 +166,7 @@ def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinf
                             if angle >= 315: shieldnum = 0
                             if shieldnum >= 4: shieldnum = 3
                             shieldcharge = enemyship.shields[shieldnum].charge
-                            if enemyship.state != "attack" and enemyship.state != "attack_delay":
+                            if enemyship.state != "attack" and enemyship.state != "attack_delay" and enemyship.state != "attack_makedistance":
                                 enemyship.state = "attack_delay"
                             if shieldcharge <= 0:
                                 animation.shielddown = True

@@ -182,7 +182,7 @@ class MyShip():
                         if angle >= 315: shieldnum = 0
                         if shieldnum >= 4: shieldnum = 3
                         shieldcharge = enemyship.shields[shieldnum].charge
-                        if enemyship.state != "attack" and enemyship.state != "attack_delay":
+                        if enemyship.state != "attack" and enemyship.state != "attack_delay" and enemyship.state != "attack_makedistance":
                             enemyship.state = "attack_delay"
                         residualdamage = animation.damage - shieldcharge
                         if shieldcharge > 0: shieldcharge -= animation.damage
