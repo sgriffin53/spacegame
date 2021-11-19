@@ -573,6 +573,7 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships, images):
         if animation.type == "radialburst":
             if time.time() >= animation.endtime:
                 animations.pop(i)
+                i -= 1
             timerunning = time.time() - animation.starttime
             radius = animation.velocity * timerunning
             drawX = centre[0]
@@ -620,6 +621,7 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships, images):
                     else:
                         myship.shields[shieldnum].charge -= animation.damage
                 animations.pop(i)
+                i -= 1
             if animation.firer == "myship" or animation.firer == "enemyship":
                 del animation.points[:]
                 lastx = None
@@ -723,6 +725,7 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships, images):
                     # already gets handled on myship.fireNextWeapon code
                     pass
                 animations.pop(i)
+                i -= 1
             if animation.firer == "myship":
                 if animation.hitship != None:
                     r = animation.hitship.width / 2 + 10
@@ -845,6 +848,7 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships, images):
                     gameinfo.gamemessage = "Looted " + str(loot) + " credits"
                     gameinfo.gamemessagedisplayed = time.time()
                 animations.pop(i)
+                i -= 1
                 functions.reIndexEnemies(enemyships)
                 myship.targeted = None
                 break

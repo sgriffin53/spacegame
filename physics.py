@@ -1,5 +1,6 @@
 import math
 import functions
+import pygame
 from classes import Point
 import time
 
@@ -29,6 +30,19 @@ def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinf
         myship.x += (myship.vel) * math.sin(rotation_rads) * time_since_phys_tick * timefactor
         myship.y += (myship.vel) * math.cos(rotation_rads) * time_since_phys_tick * timefactor
         myship.gridsector = functions.gridSector(myship)
+
+        # set ship turret
+
+        mousepos = pygame.mouse.get_pos()
+        mousePoint = Point()
+        centre = (gameinfo.width / 2, gameinfo.height / 2)
+        mouseX = - mousepos[0] + myship.x + centre[0]
+        mouseY = + mousepos[1] + myship.y - centre[1]
+        mousePoint.x = mouseX
+        mousePoint.y = mouseY
+        myship.turretrot = functions.angleBetween(myship, mousePoint)
+        myship.turretrot = functions.clampAngle(myship.turretrot)
+
         if myship.gridsector != lastsector or myship.allowedsectors == []: myship.allowedsectors = functions.allowedSectors(myship.gridsector)
         # enemy ships
 

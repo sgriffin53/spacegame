@@ -146,15 +146,17 @@ def detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animat
     keys = pygame.key.get_pressed()  # checking pressed keys
 
     if gameinfo.alive and not myship.warping and gameinfo.screen == "game":
-        if keys[pygame.K_LEFT]:
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             myship.rotaccel = -160
-        elif keys[pygame.K_RIGHT]:
+        elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             myship.rotaccel = 160
         elif not myship.warping:
             myship.rotaccel = 0
         if keys[pygame.K_a]:
+            pass
             myship.turretrotaccel = -180
         elif keys[pygame.K_d]:
+            pass
             myship.turretrotaccel = 180
         else:
             myship.turretrotaccel = 0
@@ -164,7 +166,7 @@ def detectKeyPresses(event_get, fullscreen, myship, enemyships, gameinfo, animat
             myship.accel = -250
         else:
             myship.accel = 0
-        if keys[pygame.K_SPACE]:
+        if keys[pygame.K_SPACE] or pygame.mouse.get_pressed()[0]:
             myship.fireNextWeapon(enemyships, animations, sounds, spacestations)
     if keys[pygame.K_ESCAPE]:
         sys.exit()
