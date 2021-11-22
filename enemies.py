@@ -44,6 +44,9 @@ class EnemyShip():
         self.shields = []
         self.lastveltested = 0
         self.lastvel = 0
+        self.formchildren = []
+        self.formparent = None
+        self.classnum = 0
     def startPatrol(self):
         self.totrotations = 0
         self.accel = 250

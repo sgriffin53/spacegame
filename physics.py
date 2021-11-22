@@ -46,6 +46,13 @@ def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinf
         if myship.gridsector != lastsector or myship.allowedsectors == []: myship.allowedsectors = functions.allowedSectors(myship.gridsector)
         # enemy ships
 
+        formpositions = [(45, 130),
+                         (165, 130),
+                         (285, 130),
+                         (0, 260),
+                         (120, 260),
+                         (240, 260)]
+
         for enemyship in enemyships:
             enemyship.gridsector = functions.gridSector(enemyship)
             enemysector = enemyship.gridsector
@@ -65,6 +72,22 @@ def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinf
                 enemyship.lasty = enemyship.y
                 enemyship.x += (enemyship.vel) * math.sin(rotation_rads) * time_since_phys_tick * timefactor
                 enemyship.y += (enemyship.vel) * math.cos(rotation_rads) * time_since_phys_tick * timefactor
+            if enemyship.formparent != None:
+                # get position in formation
+                index = 0
+                i = - 1
+                for ship in enemyship.formparent.formchildren:
+                    i += 1
+                    if ship == enemyship:
+                        index = i
+                angle = formpositions[index][0]
+                dist = formpositions[index][1]
+                angle_rads = angle * math.pi / 180
+                enemyship.x = enemyship.formparent.x + math.cos(angle_rads) * dist
+                enemyship.y = enemyship.formparent.y + math.sin(angle_rads) * dist
+                enemyship.rotation = enemyship.formparent.rotation
+                enemyship.state = enemyship.formparent.state
+
 
         for spacestation in spacestations:
             stationsector = spacestation.gridsector
