@@ -180,7 +180,7 @@ def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinf
                                     enemyship.explode(animations)
                             else:
                                 enemyship.shields[shieldnum].charge -= animation.damage
-                            animations.pop(i)
+                            if len(animations) != 0: animations.pop(i)
                             i -= 1
                 elif animation.firer == "enemyship":
                     enemyship = animation.target
@@ -216,4 +216,5 @@ def physicsTick(myship, enemyships, spacestations, time_since_phys_tick, gameinf
                                 myship.explode(animations)
                         else:
                             myship.shields[shieldnum].charge -= animation.damage
-                        animations.pop(i)
+                        if len(animations) != 0: animations.pop(i)
+                        i -= 1

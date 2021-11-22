@@ -60,7 +60,7 @@ else:
 
 spacestationIMG = pygame.image.load(os.path.join('images', 'station.png')).convert_alpha()
 shipIMG = pygame.image.load(os.path.join('images','ship.png')).convert_alpha()
-enemyshipIMG = pygame.image.load(os.path.join('images', 'enemyship.png')).convert_alpha()
+enemyshipIMG = pygame.image.load(os.path.join('images', 'enemyship_class2_red.png')).convert_alpha()
 
 # generate stars
 
@@ -140,7 +140,17 @@ images.append(pygame.image.load(os.path.join('images','GUI','Forward_BTN_hover.p
 images.append(pygame.image.load(os.path.join('images','enemyship_class2.png')))
 images.append(pygame.image.load(os.path.join('images','enemyship_class3.png')))
 images.append(pygame.image.load(os.path.join('images','enemyship_class4.png')))
-
+images.append(pygame.image.load(os.path.join('images','enemyship_class5.png')))
+images.append(pygame.image.load(os.path.join('images','enemyship_class1_red.png')))
+images.append(pygame.image.load(os.path.join('images','enemyship_class2_red.png')))
+images.append(pygame.image.load(os.path.join('images','enemyship_class3_red.png')))
+images.append(pygame.image.load(os.path.join('images','enemyship_class4_red.png')))
+images.append(pygame.image.load(os.path.join('images','enemyship_class5_red.png')))
+images.append(pygame.image.load(os.path.join('images','enemyship_class1_blue.png')))
+images.append(pygame.image.load(os.path.join('images','enemyship_class2_blue.png')))
+images.append(pygame.image.load(os.path.join('images','enemyship_class3_blue.png')))
+images.append(pygame.image.load(os.path.join('images','enemyship_class4_blue.png')))
+images.append(pygame.image.load(os.path.join('images','enemyship_class5_blue.png')))
 # create list of shields
 
 for i in range(10):
