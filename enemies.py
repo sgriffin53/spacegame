@@ -163,6 +163,13 @@ class EnemyShip():
             if functions.distance(self, closeststation) <= closeststation.width / 2 + 400: continue
             if functions.distance(myship, closeststation) <= closeststation.width / 2 + 400: continue
             if time.time() - weapon.lastfired >= weapon.chargetime:
+                if time.time() < weapon.coolend:
+                    continue
+                if weapon.type == "missile":
+                    weapon.numfired += 1
+                    if weapon.numfired >= 5:
+                        weapon.coolend = time.time() + 3
+                        weapon.numfired = 0
                 # weapon is charged
 
                 weapon.lastfired = time.time()

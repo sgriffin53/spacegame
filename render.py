@@ -863,7 +863,7 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships, images):
             pygame.draw.circle(screen, (255, 50, 50), (drawX - animation.width / 2 + 30,
                                                        drawY - animation.width / 2 + 30),
                                circlesize)
-        elif animation.type == "torpedo" or animation.type == "bullet":
+        elif animation.type == "torpedo" or animation.type == "bullet" or animation.type == "missile":
             if time.time() >= animation.endtime:
                 # collision code here
                 animations.pop(i)
@@ -889,6 +889,14 @@ def renderAnimations(screen, animations, myship, gameinfo, enemyships, images):
                     #   enemyshipIMG = pygame.transform.scale(enemyshipIMG, (functions.scaleToScreen(enemyship.width, enemyship.width, gameinfo)))
                     torpedoIMG = pygame.transform.scale(torpedoIMG, (98 / 6, 247 / 6))
                     (newIMG, es_centre) = rot_center(torpedoIMG, animation.imgrot + 180, drawX,
+                                                     drawY)  # rotate ship appropriately
+
+                    screen.blit(newIMG, es_centre)
+                elif animation.type == "missile":
+                    torpedoIMG = images[22]
+                    #   enemyshipIMG = pygame.transform.scale(enemyshipIMG, (functions.scaleToScreen(enemyship.width, enemyship.width, gameinfo)))
+                    torpedoIMG = pygame.transform.scale(torpedoIMG, (143 / 6, 284 / 6))
+                    (newIMG, es_centre) = rot_center(torpedoIMG, animation.imgrot, drawX,
                                                      drawY)  # rotate ship appropriately
 
                     screen.blit(newIMG, es_centre)
@@ -958,7 +966,7 @@ def renderWeaponsUpgradeMenu(screen, gameinfo, images, myship):
     screen.blit(upgradeText, (411 * factorx, 180 * factory))
     weaponText = normalfont.render("Weapon:", False, (255, 255, 255))
     screen.blit(weaponText, (446 * factorx, 220 * factory))
-    weaponnames = ["Laser", "Bullet", "Torpedo", "Flux Ray", "Disruptor", "Radial Burst", "Particle Beam"]
+    weaponnames = ["Laser", "Bullet", "Torpedo", "Flux Ray", "Disruptor", "Radial Burst", "Particle Beam", "Missile"]
     selectedweapon = None
     for weapon in gameinfo.allweapons:
         if weapon.name == weaponnames[gameinfo.weaponsel - 1] and weapon.classnum == gameinfo.weaponclasssel:

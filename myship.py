@@ -102,7 +102,10 @@ class MyShip():
                 if animation.firer == "myship":
                     break
             if time.time() - weapon.lastfired >= weapon.chargetime:
-
+                if time.time() < weapon.coolend:
+                    continue
+                if weapon.type == "missile" and self.targeted == None:
+                    continue
                 # weapon is charged
                 weapon.lastfired = time.time()
 
@@ -137,13 +140,19 @@ class MyShip():
                 animation.endpos = endpos
                 animation.x = self.x
                 animation.y = self.y
-                animation.velocity = weapon.velocity + self.vel
+                #animation.velocity = weapon.velocity + self.vel
                 animation.colour = (0, 255, 0)
                 animation.imgrot = animation.angle
-                if animation.type == "torpedo" or animation.type == "bullet":
+                if animation.type == "torpedo" or animation.type == "bullet" or animation.type == "missile":
                     animation.colour = (255, 0, 0)
                 elif animation.type == "particlebeam":
                     animation.colour = (255, 255, 255)
+                if animation.type == "missile":
+                    weapon.numfired += 1
+                    if weapon.numfired >= 5:
+                        weapon.coolend = time.time() + 3
+                        weapon.numfired = 0
+                    #animation.velocity += self.vel
                 if animation.type == "fluxray" or animation.type == "disruptor":
                     animation.angle -= 90
                 if animation.type == "laser" or animation.type == "fluxray" or animation.type == "disruptor" or animation.type == "particlebeam":

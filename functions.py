@@ -194,8 +194,8 @@ def startGame(gameinfo, myship, enemyships, spacestations, music, images):
     # create my ship object
     del myship.weapons[:]
 
-    myship.weapons.append(Weapon("bullet-c1"))
-    myship.weapons.append(Weapon("laser-c1"))
+    myship.weapons.append(Weapon("missile-c1"))
+    myship.weapons.append(Weapon(None))
     myship.weapons.append(Weapon(None))
     myship.weapons.append(Weapon(None))
     #myship.weapons.append(Weapon("torpedo-c1"))
@@ -313,12 +313,19 @@ def spawnEnemyShip(enemyships, spacestations, gameinfo, images, enemyimages, i, 
     enemyships[k].y = spacestation.y + math.sin(angle) * dist
     enemyships[k].startPatrol()
 
+    del enemyships[k].weapons[:]
+    enemyships[k].weapons = []
+    enemyships[k].weapons.append(Weapon("missile-c1"))
+    enemyships[k].weapons.append(Weapon(None))
+    enemyships[k].weapons.append(Weapon(None))
+    enemyships[k].weapons.append(Weapon(None))
     enemyships_new = enemyships
 
     return enemyships
 
 def createFormation(index, enemyships, gameinfo):
     leader = enemyships[index]
+    if len(leader.formchildren) > 0: return
     leaderclass = leader.classnum
     totchildren = 0
     limit = random.randint(2, 6)
@@ -356,10 +363,10 @@ def spawnEnemyShips(enemyships, spacestations, gameinfo, images):
         enemyships.pop()
     for spacestation in spacestations:
         if spacestation.index != gameinfo.selectedstation: continue
-        for i in range(1200):
+        for i in range(1800):
             k += 1
             enemyships_new = spawnEnemyShip(enemyships, spacestations, gameinfo, images, enemyimages, i, k, spacestation)
-            if random.randint(1,100) <= 10:
+            if random.randint(1,100) <= 2:
                 createFormation(k, enemyships_new, gameinfo)
         j += 1
 

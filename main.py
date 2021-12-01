@@ -151,6 +151,7 @@ images.append(pygame.image.load(os.path.join('images','enemyship_class2_blue.png
 images.append(pygame.image.load(os.path.join('images','enemyship_class3_blue.png')))
 images.append(pygame.image.load(os.path.join('images','enemyship_class4_blue.png')))
 images.append(pygame.image.load(os.path.join('images','enemyship_class5_blue.png')))
+images.append(pygame.image.load(os.path.join('images','missile.png')))
 # create list of shields
 
 for i in range(10):
@@ -159,9 +160,9 @@ for i in range(10):
 
 # create list of weapons
 
-weaponnames = ["Laser", "Bullet", "Torpedo", "Flux Ray", "Disruptor", "Radial Burst", "Particle Beam"]
-weaponshortnames = ["laser", "bullet", "torpedo", "fluxray", "disruptor", "radialburst", "particlebeam"]
-maxclasses = {"laser": 2, "bullet": 1, "torpedo": 2, "fluxray": 3, "disruptor": 1, "particlebeam": 1, "radialburst": 1}
+weaponnames = ["Laser", "Bullet", "Torpedo", "Flux Ray", "Disruptor", "Radial Burst", "Particle Beam", "Missile"]
+weaponshortnames = ["laser", "bullet", "torpedo", "fluxray", "disruptor", "radialburst", "particlebeam", "missile"]
+maxclasses = {"laser": 2, "bullet": 1, "torpedo": 2, "fluxray": 3, "disruptor": 1, "particlebeam": 1, "radialburst": 1, "missile": 1}
 for weapon in weaponshortnames:
     for i in range(maxclasses[weapon]):
         id = weapon + "-c" + str(i+1)

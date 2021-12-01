@@ -118,7 +118,7 @@ class Button():
                 gameinfo.weaponclasssel = 1
                 gameinfo.messages[2].message = ""
         if self.onclick == "weaponselectionright":
-            if gameinfo.weaponsel < 7:
+            if gameinfo.weaponsel < 8:
                 gameinfo.weaponsel += 1
                 gameinfo.weaponclasssel = 1
                 gameinfo.messages[2].message = ""
@@ -245,6 +245,7 @@ class Animation():
         self.imgrot = 0
         self.hashit = False
         self.hitships = []
+        self.numfired = 0
 
 class Music():
     def __init__(self):
@@ -356,6 +357,9 @@ class Weapon():
         self.velocity = 1500
         self.name = ""
         self.cost = 0
+        self.numfired = 0
+        self.cooldown = 0
+        self.coolend = 0
         if fulltype == "None":
             self.damage = 0
             self.type = "none"
@@ -364,11 +368,25 @@ class Weapon():
             #self.description = "A concentrated beam of subatomic particles."
             self.fullname = "None"
             self.duration = 0.5
-            self.chargetime = 1.5
+            self.chargetime = 0.75
             self.lastfired = 0
             self.range = 1600
-            self.velocity = 500
+            self.velocity = 100
             self.cost = 30000
+        if fulltype == "missile-c1":
+            self.damage = 5
+            self.type = "missile"
+            self.classnum = 1
+            self.name = "Missile"
+            self.fullname = "Missile (Class 1)"
+            self.description = "A missile with an antimatter warhead."
+            self.duration = 120
+            self.chargetime = 0.05
+            self.lastfired = 0
+            self.range = 1600
+            self.velocity = 350
+            self.cost = 18000
+            self.numfired = 0
         if fulltype == "particlebeam-c1":
             self.damage = 40
             self.type = "particlebeam"
